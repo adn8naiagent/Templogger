@@ -10,8 +10,8 @@ import {
   fridges,
   temperatureLogs
 } from "@shared/schema";
-import { drizzle } from "drizzle-orm/neon-serverless";
-import { Pool } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import { eq, and, desc } from "drizzle-orm";
 
 // modify the interface with any CRUD methods
@@ -45,8 +45,8 @@ export class DatabaseStorage implements IStorage {
   private db;
 
   constructor() {
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-    this.db = drizzle(pool);
+    const sql = postgres(process.env.DATABASE_URL!, { ssl: 'require' });
+    this.db = drizzle(sql);
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -92,8 +92,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUser(id: string): Promise<boolean> {
-    const result = await this.db.delete(users).where(eq(users.id, id));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      await this.db.delete(users).where(eq(users.id, id));
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
   // Fridge methods
@@ -122,9 +126,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteFridge(id: string, userId: string): Promise<boolean> {
-    const result = await this.db.delete(fridges)
-      .where(and(eq(fridges.id, id), eq(fridges.userId, userId)));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      await this.db.delete(fridges)
+        .where(and(eq(fridges.id, id), eq(fridges.userId, userId)));
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
   // Temperature log methods
