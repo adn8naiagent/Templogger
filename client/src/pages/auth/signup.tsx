@@ -31,16 +31,10 @@ export default function Signup() {
 
   const signupMutation = useMutation({
     mutationFn: async (data: SignUpData) => {
-      const response = await fetch("/auth/signup", {
+      return apiRequest("/api/auth/signup", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Sign up failed");
-      }
-      return await response.json();
     },
     onSuccess: (data) => {
       toast({
@@ -48,7 +42,7 @@ export default function Signup() {
         description: "Welcome! Your account has been created successfully.",
       });
       queryClient.invalidateQueries();
-      setLocation("/dashboard");
+      setLocation("/");
     },
     onError: (error: any) => {
       toast({

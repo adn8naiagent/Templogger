@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link } from "wouter";
 import { 
   Thermometer, 
   Shield, 
@@ -11,10 +12,6 @@ import {
 } from "lucide-react";
 
 export default function Landing() {
-  const handleLogin = () => {
-    window.location.href = "/api/login";
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
@@ -26,9 +23,18 @@ export default function Landing() {
               TempGuard Pro
             </h1>
           </div>
-          <Button onClick={handleLogin} data-testid="button-login">
-            Sign In
-          </Button>
+          <div className="flex gap-2">
+            <Link href="/auth/login">
+              <Button variant="outline" data-testid="button-login">
+                Sign In
+              </Button>
+            </Link>
+            <Link href="/auth/signup">
+              <Button data-testid="button-signup">
+                Sign Up
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -44,9 +50,11 @@ export default function Landing() {
             and comprehensive reporting for regulatory compliance.
           </p>
           <div className="flex gap-4 justify-center">
-            <Button size="lg" onClick={handleLogin} data-testid="button-get-started">
-              Get Started Free
-            </Button>
+            <Link href="/auth/signup">
+              <Button size="lg" data-testid="button-get-started">
+                Get Started Free
+              </Button>
+            </Link>
             <Button variant="outline" size="lg">
               View Demo
             </Button>
@@ -279,9 +287,11 @@ export default function Landing() {
             Join thousands of healthcare professionals who trust TempGuard Pro 
             for their temperature monitoring needs.
           </p>
-          <Button size="lg" onClick={handleLogin} data-testid="button-start-monitoring">
-            Start Monitoring Now
-          </Button>
+          <Link href="/auth/signup">
+            <Button size="lg" data-testid="button-start-monitoring">
+              Start Monitoring Now
+            </Button>
+          </Link>
         </div>
       </section>
 

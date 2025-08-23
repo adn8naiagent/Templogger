@@ -72,6 +72,12 @@ declare module "express-session" {
   }
 }
 
+declare module "express" {
+  interface Request {
+    user?: any;
+  }
+}
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;

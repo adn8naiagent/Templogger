@@ -29,16 +29,10 @@ export default function Login() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: SignInData) => {
-      const response = await fetch("/auth/signin", {
+      return apiRequest("/api/auth/signin", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Sign in failed");
-      }
-      return await response.json();
     },
     onSuccess: (data) => {
       toast({
@@ -46,7 +40,7 @@ export default function Login() {
         description: "You've been signed in successfully.",
       });
       queryClient.invalidateQueries();
-      setLocation("/dashboard");
+      setLocation("/");
     },
     onError: (error: any) => {
       toast({

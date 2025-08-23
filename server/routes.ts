@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { requireAuth, requireAdmin, signUp, signIn, signOut, getCurrentUser } from "./auth";
 import { body, validationResult } from "express-validator";
 import { 
   updateProfileSchema, 
@@ -12,25 +12,7 @@ import {
   type User 
 } from "@shared/schema";
 
-// Admin middleware
-function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ error: "Authentication required" });
-  }
-  
-  const user = req.user as any;
-  const userId = user.claims?.sub;
-  
-  // Get user from database to check role
-  storage.getUser(userId).then(dbUser => {
-    if (!dbUser || dbUser.role !== userRoles.ADMIN) {
-      return res.status(403).json({ error: "Admin access required" });
-    }
-    next();
-  }).catch(() => {
-    res.status(500).json({ error: "Failed to verify admin status" });
-  });
-}
+// Note: requireAdmin is now imported from ./auth
 
 // Input validation helper
 function handleValidationErrors(req: Request, res: Response, next: NextFunction) {
@@ -45,31 +27,24 @@ function handleValidationErrors(req: Request, res: Response, next: NextFunction)
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware setup
-  await setupAuth(app);
-
-  // Auth routes - Get current user
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
+  // Authentication routes
+  app.post('/api/auth/signup', signUp);
+  app.post('/api/auth/signin', signIn);
+  app.post('/api/auth/signout', signOut);
+  app.get('/api/auth/user', getCurrentUser);
 
   // Get current user profile
-  app.get("/api/user/profile", isAuthenticated, async (req: any, res) => {
+  app.get("/api/user/profile", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
 
-      res.json(user);
+      // Return user without password
+      const { password: _, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
     } catch (error: any) {
       console.error("Get profile error:", error);
       res.status(500).json({ error: "Failed to get user profile" });
@@ -77,7 +52,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user profile
-  app.put("/api/user/profile", isAuthenticated, async (req: any, res) => {
+  app.put("/api/user/profile", requireAuth, async (req: any, res) => {
     try {
       const result = updateProfileSchema.safeParse(req.body);
       if (!result.success) {
@@ -87,7 +62,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const updatedUser = await storage.updateUser(userId, result.data);
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
@@ -104,10 +79,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Settings update (dark mode, etc)
-  app.put("/api/user/settings", isAuthenticated, async (req: any, res) => {
+  app.put("/api/user/settings", requireAuth, async (req: any, res) => {
     try {
       const { darkMode } = req.body;
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       
       const updatedUser = await storage.updateUser(userId, { darkMode });
       if (!updatedUser) {
@@ -125,9 +100,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete account
-  app.delete("/api/user/account", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/user/account", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const deleted = await storage.deleteUser(userId);
       if (!deleted) {
         return res.status(404).json({ error: "User not found" });
@@ -141,9 +116,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export user data
-  app.get("/api/user/export", isAuthenticated, async (req: any, res) => {
+  app.get("/api/user/export", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
@@ -176,7 +151,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Get all users
-  app.get("/api/admin/users", requireAdmin, async (req, res) => {
+  app.get("/api/admin/users", requireAdmin, async (req: any, res) => {
     try {
       const users = await storage.getAllUsers();
       res.json(users);
@@ -226,9 +201,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Temperature Logging API Endpoints
   
   // Get user's fridges
-  app.get("/api/fridges", isAuthenticated, async (req: any, res: Response) => {
+  app.get("/api/fridges", requireAuth, async (req: any, res: Response) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const fridges = await storage.getFridges(userId);
       res.json(fridges);
     } catch (error: any) {
@@ -238,7 +213,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new fridge
-  app.post("/api/fridges", isAuthenticated, [
+  app.post("/api/fridges", requireAuth, [
     body("name").trim().isLength({ min: 1 }),
     body("minTemp").isFloat(),
     body("maxTemp").isFloat(),
@@ -254,7 +229,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { name, minTemp, maxTemp } = result.data;
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       
       const newFridge = await storage.createFridge({
         userId,
@@ -274,7 +249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Log temperature
-  app.post("/api/temperature-logs", isAuthenticated, [
+  app.post("/api/temperature-logs", requireAuth, [
     body("fridgeId").notEmpty(),
     body("temperature").isFloat(),
     body("personName").trim().isLength({ min: 1 }),
@@ -290,7 +265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { fridgeId, temperature, personName } = result.data;
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       
       // Verify fridge belongs to user
       const fridge = await storage.getFridge(fridgeId, userId);
@@ -326,10 +301,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get temperature logs for a fridge
-  app.get("/api/fridges/:fridgeId/logs", isAuthenticated, async (req: any, res: Response) => {
+  app.get("/api/fridges/:fridgeId/logs", requireAuth, async (req: any, res: Response) => {
     try {
       const { fridgeId } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const logs = await storage.getTemperatureLogs(fridgeId, userId);
       res.json(logs);
     } catch (error: any) {
@@ -339,9 +314,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get recent temperature for all fridges
-  app.get("/api/fridges/recent-temps", isAuthenticated, async (req: any, res: Response) => {
+  app.get("/api/fridges/recent-temps", requireAuth, async (req: any, res: Response) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const fridges = await storage.getFridges(userId);
       const fridgesWithRecentTemps = await Promise.all(
         fridges.map(async (fridge) => {
@@ -361,9 +336,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export all temperature logs as CSV
-  app.get("/api/export/temperature-logs", isAuthenticated, async (req: any, res: Response) => {
+  app.get("/api/export/temperature-logs", requireAuth, async (req: any, res: Response) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const logs = await storage.getAllTemperatureLogsForUser(userId);
       
       // Set CSV headers

@@ -15,9 +15,10 @@ export const sessions = pgTable(
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: text("email").unique(),
-  firstName: text("first_name"),
-  lastName: text("last_name"),
+  email: text("email").unique().notNull(),
+  password: text("password").notNull(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
   profileImageUrl: text("profile_image_url"),
   role: text("role").notNull().default("user"),
   subscriptionTier: text("subscription_tier").default("free"),
@@ -61,6 +62,7 @@ export const temperatureLogs = pgTable("temperature_logs", {
 export const insertUserSchema = createInsertSchema(users).pick({
   id: true,
   email: true,
+  password: true,
   firstName: true,
   lastName: true,
   profileImageUrl: true,
@@ -70,6 +72,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const upsertUserSchema = createInsertSchema(users).pick({
   id: true,
   email: true,
+  password: true,
   firstName: true,
   lastName: true,
   profileImageUrl: true,
