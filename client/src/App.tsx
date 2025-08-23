@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
+import Login from "@/pages/auth/login";
+import Signup from "@/pages/auth/signup";
 import Home from "@/pages/home";
 import Account from "@/pages/account";
 import Settings from "@/pages/settings";
@@ -16,6 +18,10 @@ function Router() {
 
   return (
     <Switch>
+      {/* Public routes - accessible when not authenticated */}
+      <Route path="/auth/login" component={Login} />
+      <Route path="/auth/signup" component={Signup} />
+      
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (
