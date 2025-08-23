@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2, UserPlus, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, UserPlus, AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { signUpSchema, type SignUpData } from "@shared/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -58,11 +58,13 @@ export default function Signup() {
   };
 
   const password = form.watch("password");
+  const [showPassword, setShowPassword] = useState(false);
+  
   const passwordStrength = {
     hasLength: password?.length >= 8,
     hasUpper: /[A-Z]/.test(password || ""),
     hasLower: /[a-z]/.test(password || ""),
-    hasNumber: /\\d/.test(password || ""),
+    hasNumber: /\d/.test(password || ""),
     hasSymbol: /[@$!%*?&]/.test(password || ""),
   };
 
@@ -148,13 +150,29 @@ export default function Signup() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                        type="password"
-                        placeholder="Enter a strong password"
-                        data-testid="input-password"
-                        disabled={signupMutation.isPending}
-                      />
+                      <div className="relative">
+                        <Input
+                          {...field}
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Enter a strong password"
+                          data-testid="input-password"
+                          disabled={signupMutation.isPending}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                          data-testid="button-toggle-password"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                     
