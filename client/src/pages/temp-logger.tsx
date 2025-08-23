@@ -8,6 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,10 +27,19 @@ import {
   Refrigerator,
   User,
   CheckCircle2,
-  Calendar
+  Calendar,
+  Settings,
+  LogOut,
+  Shield,
+  Crown,
+  Star
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { isUnauthorizedError } from "@/lib/authUtils";
 import { createFridgeSchema, logTemperatureSchema, type CreateFridgeData, type LogTemperatureData } from "@shared/schema";
+import { Link } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
 
 interface Fridge {
   id: string;
@@ -42,6 +58,7 @@ interface Fridge {
 
 export default function TempLogger() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showAddFridge, setShowAddFridge] = useState(false);
 
@@ -52,6 +69,20 @@ export default function TempLogger() {
       const response = await fetch("/api/fridges/recent-temps");
       if (!response.ok) throw new Error("Failed to fetch fridges");
       return response.json();
+    },
+    retry: (failureCount, error) => {
+      if (isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return false;
+      }
+      return failureCount < 3;
     },
   });
 
@@ -172,25 +203,117 @@ export default function TempLogger() {
 
   const alertFridges = fridges.filter((fridge: Fridge) => fridge.recentLog?.isAlert);
 
+  const getSubscriptionBadge = (tier: string) => {
+    switch (tier) {
+      case "free":
+        return <Badge variant="secondary">Free</Badge>;
+      case "pro":
+        return <Badge className="bg-blue-600"><Star className="h-3 w-3 mr-1" />Pro</Badge>;
+      case "enterprise":
+        return <Badge className="bg-purple-600"><Crown className="h-3 w-3 mr-1" />Enterprise</Badge>;
+      default:
+        return <Badge variant="outline">Free</Badge>;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background p-4 max-w-md mx-auto" data-testid="temp-logger-container">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <Thermometer className="h-8 w-8 text-blue-600" />
-          <h1 className="text-2xl font-bold text-foreground">Temperature Logger</h1>
+    <div className="min-h-screen bg-background">
+      {/* Navigation Header */}
+      <header className="bg-card border-b border-border sticky top-0 z-50">
+        <div className="max-w-md mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Thermometer className="h-6 w-6 text-blue-600" />
+              <h1 className="text-lg font-bold text-foreground">TempGuard Pro</h1>
+              {user?.subscriptionTier && getSubscriptionBadge(user.subscriptionTier)}
+            </div>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="relative" data-testid="button-user-menu">
+                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                    {user?.profileImageUrl ? (
+                      <img 
+                        src={user.profileImageUrl} 
+                        alt="Profile" 
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-sm font-bold text-blue-600">
+                        {user?.firstName?.charAt(0) || 'U'}
+                      </span>
+                    )}
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-2 py-2">
+                  <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
+                  <p className="text-xs text-muted-foreground">{user?.email}</p>
+                </div>
+                <DropdownMenuSeparator />
+                <Link href="/account">
+                  <DropdownMenuItem data-testid="menu-account">
+                    <User className="h-4 w-4 mr-2" />
+                    Account
+                  </DropdownMenuItem>
+                </Link>
+                <Link href="/settings">
+                  <DropdownMenuItem data-testid="menu-settings">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Settings
+                  </DropdownMenuItem>
+                </Link>
+                {user?.role === 'admin' && (
+                  <Link href="/admin">
+                    <DropdownMenuItem data-testid="menu-admin">
+                      <Shield className="h-4 w-4 mr-2" />
+                      Admin Dashboard
+                    </DropdownMenuItem>
+                  </Link>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => window.location.href = "/api/logout"}
+                  data-testid="menu-logout"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-        <p className="text-muted-foreground">Monitor your pharmacy fridges</p>
-        
-        {alertFridges.length > 0 && (
-          <Alert variant="destructive" className="mt-4" data-testid="alert-banner">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              {alertFridges.length} fridge{alertFridges.length > 1 ? 's' : ''} with temperature alerts!
-            </AlertDescription>
-          </Alert>
-        )}
-      </div>
+      </header>
+
+      <div className="p-4 max-w-md mx-auto" data-testid="temp-logger-container">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h2 className="text-xl font-bold text-foreground">Temperature Monitoring</h2>
+              <p className="text-muted-foreground">Monitor your pharmacy fridges</p>
+            </div>
+            <Button 
+              onClick={handleExport} 
+              variant="outline" 
+              size="sm" 
+              data-testid="button-export"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </div>
+          
+          {alertFridges.length > 0 && (
+            <Alert variant="destructive" className="mt-4" data-testid="alert-banner">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                {alertFridges.length} fridge{alertFridges.length > 1 ? 's' : ''} with temperature alerts!
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 gap-3 mb-6">
@@ -447,6 +570,7 @@ export default function TempLogger() {
           })
         )}
       </div>
+    </div>
     </div>
   );
 }

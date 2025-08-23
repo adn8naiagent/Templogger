@@ -1,12 +1,9 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { z } from "zod";
-import bcrypt from "bcrypt";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 import { body, validationResult } from "express-validator";
 import { 
-  signUpSchema, 
-  signInSchema, 
   updateProfileSchema, 
   changePasswordSchema,
   createFridgeSchema,
@@ -15,20 +12,24 @@ import {
   type User 
 } from "@shared/schema";
 
-// Authentication middleware
-function requireAuth(req: Request, res: Response, next: NextFunction) {
-  if (!req.session.userId) {
-    return res.status(401).json({ error: "Authentication required" });
-  }
-  next();
-}
-
 // Admin middleware
 function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  if (!req.session.userId || req.session.userRole !== userRoles.ADMIN) {
-    return res.status(403).json({ error: "Admin access required" });
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Authentication required" });
   }
-  next();
+  
+  const user = req.user as any;
+  const userId = user.claims?.sub;
+  
+  // Get user from database to check role
+  storage.getUser(userId).then(dbUser => {
+    if (!dbUser || dbUser.role !== userRoles.ADMIN) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+    next();
+  }).catch(() => {
+    res.status(500).json({ error: "Failed to verify admin status" });
+  });
 }
 
 // Input validation helper
@@ -44,129 +45,31 @@ function handleValidationErrors(req: Request, res: Response, next: NextFunction)
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Authentication Routes
-  
-  // Sign up endpoint
-  app.post("/auth/signup", [
-    body("email").isEmail().normalizeEmail(),
-    body("password").isLength({ min: 8 }).matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/),
-    body("firstName").trim().isLength({ min: 1 }),
-    body("lastName").trim().isLength({ min: 1 }),
-    handleValidationErrors
-  ], async (req: Request, res: Response) => {
+  // Auth middleware setup
+  await setupAuth(app);
+
+  // Auth routes - Get current user
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const result = signUpSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid input data", 
-          details: result.error.errors 
-        });
-      }
-
-      const { email, password, firstName, lastName } = result.data;
-
-      // Check if user already exists
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(409).json({ error: "User already exists with this email" });
-      }
-
-      // Hash password
-      const saltRounds = 12;
-      const passwordHash = await bcrypt.hash(password, saltRounds);
-
-      // Create user
-      const newUser = await storage.createUser({
-        email,
-        passwordHash,
-        firstName,
-        lastName,
-        role: userRoles.USER,
-      });
-
-      // Create session
-      req.session.userId = newUser.id;
-      req.session.userRole = newUser.role;
-
-      // Return user without password
-      const { passwordHash: _, ...userResponse } = newUser;
-      res.status(201).json({ 
-        message: "User created successfully", 
-        user: userResponse 
-      });
-    } catch (error: any) {
-      console.error("Signup error:", error);
-      res.status(500).json({ error: "Failed to create user" });
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
     }
   });
 
-  // Sign in endpoint
-  app.post("/auth/signin", [
-    body("email").isEmail().normalizeEmail(),
-    body("password").notEmpty(),
-    handleValidationErrors
-  ], async (req: Request, res: Response) => {
+  // Get current user profile
+  app.get("/api/user/profile", isAuthenticated, async (req: any, res) => {
     try {
-      const result = signInSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid input data", 
-          details: result.error.errors 
-        });
-      }
-
-      const { email, password } = result.data;
-
-      // Find user
-      const user = await storage.getUserByEmail(email);
-      if (!user) {
-        return res.status(401).json({ error: "Invalid email or password" });
-      }
-
-      // Check password
-      const isValidPassword = await bcrypt.compare(password, user.passwordHash);
-      if (!isValidPassword) {
-        return res.status(401).json({ error: "Invalid email or password" });
-      }
-
-      // Create session
-      req.session.userId = user.id;
-      req.session.userRole = user.role;
-
-      // Return user without password
-      const { passwordHash: _, ...userResponse } = user;
-      res.json({ 
-        message: "Signed in successfully", 
-        user: userResponse 
-      });
-    } catch (error: any) {
-      console.error("Signin error:", error);
-      res.status(500).json({ error: "Failed to sign in" });
-    }
-  });
-
-  // Sign out endpoint
-  app.post("/auth/signout", (req: Request, res: Response) => {
-    req.session.destroy((err) => {
-      if (err) {
-        console.error("Signout error:", err);
-        return res.status(500).json({ error: "Failed to sign out" });
-      }
-      res.clearCookie("connect.sid");
-      res.json({ message: "Signed out successfully" });
-    });
-  });
-
-  // Get current user
-  app.get("/api/user/profile", requireAuth, async (req, res) => {
-    try {
-      const user = await storage.getUser(req.session.userId!);
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
 
-      const { passwordHash: _, ...userResponse } = user;
-      res.json(userResponse);
+      res.json(user);
     } catch (error: any) {
       console.error("Get profile error:", error);
       res.status(500).json({ error: "Failed to get user profile" });
@@ -174,7 +77,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user profile
-  app.put("/api/user/profile", requireAuth, async (req, res) => {
+  app.put("/api/user/profile", isAuthenticated, async (req: any, res) => {
     try {
       const result = updateProfileSchema.safeParse(req.body);
       if (!result.success) {
@@ -184,15 +87,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const updatedUser = await storage.updateUser(req.session.userId!, result.data);
+      const userId = req.user.claims.sub;
+      const updatedUser = await storage.updateUser(userId, result.data);
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
 
-      const { passwordHash: _, ...userResponse } = updatedUser;
       res.json({ 
         message: "Profile updated successfully", 
-        user: userResponse 
+        user: updatedUser 
       });
     } catch (error: any) {
       console.error("Update profile error:", error);
@@ -200,61 +103,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Change password
-  app.put("/api/user/password", requireAuth, [
-    body("currentPassword").notEmpty(),
-    body("newPassword").isLength({ min: 8 }).matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/),
-    handleValidationErrors
-  ], async (req: Request, res: Response) => {
+  // Settings update (dark mode, etc)
+  app.put("/api/user/settings", isAuthenticated, async (req: any, res) => {
     try {
-      const result = changePasswordSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid input data", 
-          details: result.error.errors 
-        });
-      }
-
-      const { currentPassword, newPassword } = result.data;
-      const user = await storage.getUser(req.session.userId!);
-      if (!user) {
+      const { darkMode } = req.body;
+      const userId = req.user.claims.sub;
+      
+      const updatedUser = await storage.updateUser(userId, { darkMode });
+      if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
 
-      // Verify current password
-      const isValidPassword = await bcrypt.compare(currentPassword, user.passwordHash);
-      if (!isValidPassword) {
-        return res.status(401).json({ error: "Current password is incorrect" });
-      }
-
-      // Hash new password
-      const saltRounds = 12;
-      const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
-
-      // Update password
-      await storage.updateUser(req.session.userId!, { passwordHash: newPasswordHash });
-
-      res.json({ message: "Password changed successfully" });
+      res.json({ 
+        message: "Settings updated successfully", 
+        user: updatedUser 
+      });
     } catch (error: any) {
-      console.error("Change password error:", error);
-      res.status(500).json({ error: "Failed to change password" });
+      console.error("Update settings error:", error);
+      res.status(500).json({ error: "Failed to update settings" });
     }
   });
 
   // Delete account
-  app.delete("/api/user/account", requireAuth, async (req, res) => {
+  app.delete("/api/user/account", isAuthenticated, async (req: any, res) => {
     try {
-      const deleted = await storage.deleteUser(req.session.userId!);
+      const userId = req.user.claims.sub;
+      const deleted = await storage.deleteUser(userId);
       if (!deleted) {
         return res.status(404).json({ error: "User not found" });
       }
-
-      // Destroy session
-      req.session.destroy((err) => {
-        if (err) {
-          console.error("Session destroy error:", err);
-        }
-      });
 
       res.json({ message: "Account deleted successfully" });
     } catch (error: any) {
@@ -264,24 +141,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export user data
-  app.get("/api/user/export", requireAuth, async (req, res) => {
+  app.get("/api/user/export", isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.session.userId!);
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
 
-      // Remove sensitive data
-      const { passwordHash: _, ...exportData } = user;
+      // Get user's temperature logs as well
+      const temperatureLogs = await storage.getAllTemperatureLogsForUser(userId);
       
       // Set CSV headers
       res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', 'attachment; filename="user-data.csv"');
+      res.setHeader('Content-Disposition', 'attachment; filename="my-data.csv"');
       
-      // Create CSV content
-      const headers = Object.keys(exportData).join(',');
-      const values = Object.values(exportData).join(',');
-      const csvContent = `${headers}\n${values}`;
+      // Create comprehensive CSV content
+      let csvContent = 'User Profile\n';
+      csvContent += `ID,Email,First Name,Last Name,Role,Subscription Tier,Dark Mode,Created At\n`;
+      csvContent += `"${user.id}","${user.email || ''}","${user.firstName || ''}","${user.lastName || ''}","${user.role}","${user.subscriptionTier}","${user.darkMode}","${user.createdAt}"\n\n`;
+      
+      csvContent += 'Temperature Logs\n';
+      csvContent += 'Fridge Name,Temperature,Person Name,Date,Time,Alert Status\n';
+      temperatureLogs.forEach(log => {
+        const date = new Date(log.createdAt!);
+        csvContent += `"${log.fridgeName}","${log.temperature}","${log.personName}","${date.toLocaleDateString()}","${date.toLocaleTimeString()}","${log.isAlert ? 'ALERT' : 'Normal'}"\n`;
+      });
       
       res.send(csvContent);
     } catch (error: any) {
@@ -293,20 +178,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Get all users
   app.get("/api/admin/users", requireAdmin, async (req, res) => {
     try {
-      // This would need to be implemented in storage layer
-      res.status(501).json({ error: "Admin user listing not yet implemented" });
+      const users = await storage.getAllUsers();
+      res.json(users);
     } catch (error: any) {
       console.error("Admin get users error:", error);
       res.status(500).json({ error: "Failed to get users" });
     }
   });
 
+  // Admin: Update user role/subscription
+  app.put("/api/admin/users/:userId", requireAdmin, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { role, subscriptionTier } = req.body;
+      
+      const updatedUser = await storage.updateUser(userId, { role, subscriptionTier });
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json({ 
+        message: "User updated successfully", 
+        user: updatedUser 
+      });
+    } catch (error: any) {
+      console.error("Admin update user error:", error);
+      res.status(500).json({ error: "Failed to update user" });
+    }
+  });
+
+  // Admin: Delete user
+  app.delete("/api/admin/users/:userId", requireAdmin, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const deleted = await storage.deleteUser(userId);
+      if (!deleted) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json({ message: "User deleted successfully" });
+    } catch (error: any) {
+      console.error("Admin delete user error:", error);
+      res.status(500).json({ error: "Failed to delete user" });
+    }
+  });
+
   // Temperature Logging API Endpoints
   
   // Get user's fridges
-  app.get("/api/fridges", requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/fridges", isAuthenticated, async (req: any, res: Response) => {
     try {
-      const fridges = await storage.getFridges(req.session.userId!);
+      const userId = req.user.claims.sub;
+      const fridges = await storage.getFridges(userId);
       res.json(fridges);
     } catch (error: any) {
       console.error("Get fridges error:", error);
@@ -315,12 +238,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new fridge
-  app.post("/api/fridges", [
+  app.post("/api/fridges", isAuthenticated, [
     body("name").trim().isLength({ min: 1 }),
     body("minTemp").isFloat(),
     body("maxTemp").isFloat(),
     handleValidationErrors
-  ], async (req: Request, res: Response) => {
+  ], async (req: any, res: Response) => {
     try {
       const result = createFridgeSchema.safeParse(req.body);
       if (!result.success) {
@@ -331,9 +254,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { name, minTemp, maxTemp } = result.data;
+      const userId = req.user.claims.sub;
       
       const newFridge = await storage.createFridge({
-        userId: 'standalone-user',
+        userId,
         name,
         minTemp,
         maxTemp,
@@ -350,12 +274,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Log temperature
-  app.post("/api/temperature-logs", [
+  app.post("/api/temperature-logs", isAuthenticated, [
     body("fridgeId").notEmpty(),
     body("temperature").isFloat(),
     body("personName").trim().isLength({ min: 1 }),
     handleValidationErrors
-  ], async (req: Request, res: Response) => {
+  ], async (req: any, res: Response) => {
     try {
       const result = logTemperatureSchema.safeParse(req.body);
       if (!result.success) {
@@ -366,9 +290,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { fridgeId, temperature, personName } = result.data;
+      const userId = req.user.claims.sub;
       
-      // Verify fridge exists
-      const fridge = await storage.getFridge(fridgeId, 'standalone-user');
+      // Verify fridge belongs to user
+      const fridge = await storage.getFridge(fridgeId, userId);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
@@ -401,10 +326,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get temperature logs for a fridge
-  app.get("/api/fridges/:fridgeId/logs", requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/fridges/:fridgeId/logs", isAuthenticated, async (req: any, res: Response) => {
     try {
       const { fridgeId } = req.params;
-      const logs = await storage.getTemperatureLogs(fridgeId, req.session.userId!);
+      const userId = req.user.claims.sub;
+      const logs = await storage.getTemperatureLogs(fridgeId, userId);
       res.json(logs);
     } catch (error: any) {
       console.error("Get temperature logs error:", error);
@@ -413,12 +339,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get recent temperature for all fridges
-  app.get("/api/fridges/recent-temps", async (req: Request, res: Response) => {
+  app.get("/api/fridges/recent-temps", isAuthenticated, async (req: any, res: Response) => {
     try {
-      const fridges = await storage.getFridges('standalone-user');
+      const userId = req.user.claims.sub;
+      const fridges = await storage.getFridges(userId);
       const fridgesWithRecentTemps = await Promise.all(
         fridges.map(async (fridge) => {
-          const recentLog = await storage.getRecentTemperatureLog(fridge.id, 'standalone-user');
+          const recentLog = await storage.getRecentTemperatureLog(fridge.id, userId);
           return {
             ...fridge,
             recentLog
@@ -434,9 +361,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export all temperature logs as CSV
-  app.get("/api/export/temperature-logs", async (req: Request, res: Response) => {
+  app.get("/api/export/temperature-logs", isAuthenticated, async (req: any, res: Response) => {
     try {
-      const logs = await storage.getAllTemperatureLogsForUser('standalone-user');
+      const userId = req.user.claims.sub;
+      const logs = await storage.getAllTemperatureLogsForUser(userId);
       
       // Set CSV headers
       res.setHeader('Content-Type', 'text/csv');

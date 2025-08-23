@@ -3,12 +3,22 @@ import { pgTable, text, varchar, timestamp, boolean, decimal } from "drizzle-orm
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Session storage table for Replit Auth
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: text("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  }
+);
+
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: text("email").notNull().unique(),
-  passwordHash: text("password_hash").notNull(),
-  firstName: text("first_name").notNull(),
-  lastName: text("last_name").notNull(),
+  email: text("email").unique(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  profileImageUrl: text("profile_image_url"),
   role: text("role").notNull().default("user"),
   subscriptionTier: text("subscription_tier").default("free"),
   darkMode: boolean("dark_mode").default(false),
@@ -49,11 +59,20 @@ export const temperatureLogs = pgTable("temperature_logs", {
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
+  id: true,
   email: true,
-  passwordHash: true,
   firstName: true,
   lastName: true,
+  profileImageUrl: true,
   role: true,
+});
+
+export const upsertUserSchema = createInsertSchema(users).pick({
+  id: true,
+  email: true,
+  firstName: true,
+  lastName: true,
+  profileImageUrl: true,
 });
 
 export const insertSubscriptionSchema = createInsertSchema(subscriptions).pick({
@@ -140,6 +159,7 @@ export const logTemperatureSchema = z.object({
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpsertUser = z.infer<typeof upsertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type SignUpData = z.infer<typeof signUpSchema>;
 export type SignInData = z.infer<typeof signInSchema>;
