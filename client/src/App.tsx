@@ -3,13 +3,17 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Dashboard from "@/pages/dashboard";
+import TempLogger from "@/pages/temp-logger";
+import Login from "@/pages/auth/login";
+import Signup from "@/pages/auth/signup";
 import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Dashboard}/>
+      <Route path="/" component={TempLogger}/>
+      <Route path="/auth/login" component={Login}/>
+      <Route path="/auth/signup" component={Signup}/>
       <Route component={NotFound} />
     </Switch>
   );

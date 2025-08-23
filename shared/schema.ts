@@ -1,16 +1,19 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
-  password: text("password").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  role: text("role").notNull().default("user"),
+  subscriptionTier: text("subscription_tier").default("free"),
+  darkMode: boolean("dark_mode").default(false),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
-  subscriptionTier: text("subscription_tier").default("free"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -26,10 +29,31 @@ export const subscriptions = pgTable("subscriptions", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const fridges = pgTable("fridges", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  minTemp: decimal("min_temp", { precision: 4, scale: 1 }).notNull(),
+  maxTemp: decimal("max_temp", { precision: 4, scale: 1 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const temperatureLogs = pgTable("temperature_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
+  temperature: decimal("temperature", { precision: 4, scale: 1 }).notNull(),
+  personName: text("person_name").notNull(),
+  isAlert: boolean("is_alert").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
   email: true,
-  password: true,
+  passwordHash: true,
+  firstName: true,
+  lastName: true,
+  role: true,
 });
 
 export const insertSubscriptionSchema = createInsertSchema(subscriptions).pick({
@@ -38,10 +62,97 @@ export const insertSubscriptionSchema = createInsertSchema(subscriptions).pick({
   status: true,
 });
 
+export const insertFridgeSchema = createInsertSchema(fridges).pick({
+  userId: true,
+  name: true,
+  minTemp: true,
+  maxTemp: true,
+});
+
+export const insertTemperatureLogSchema = createInsertSchema(temperatureLogs).pick({
+  fridgeId: true,
+  temperature: true,
+  personName: true,
+  isAlert: true,
+});
+
+// Sign up schema for frontend forms
+export const signUpSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 
+      "Password must include uppercase, lowercase, numbers, and symbols"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+});
+
+// Sign in schema
+export const signInSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),
+});
+
+// Profile update schema
+export const updateProfileSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  subscriptionTier: z.enum(["free", "pro", "enterprise"]).optional(),
+  darkMode: z.boolean().optional(),
+});
+
+// Change password schema
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 
+      "Password must include uppercase, lowercase, numbers, and symbols"),
+});
+
+// Fridge management schemas
+export const createFridgeSchema = z.object({
+  name: z.string().min(1, "Fridge name is required"),
+  minTemp: z.string().refine((val) => {
+    const num = parseFloat(val);
+    return !isNaN(num) && num >= -50 && num <= 50;
+  }, "Minimum temperature must be between -50°C and 50°C"),
+  maxTemp: z.string().refine((val) => {
+    const num = parseFloat(val);
+    return !isNaN(num) && num >= -50 && num <= 50;
+  }, "Maximum temperature must be between -50°C and 50°C"),
+}).refine((data) => {
+  const min = parseFloat(data.minTemp);
+  const max = parseFloat(data.maxTemp);
+  return min < max;
+}, {
+  message: "Minimum temperature must be less than maximum temperature",
+  path: ["maxTemp"],
+});
+
+export const logTemperatureSchema = z.object({
+  fridgeId: z.string().min(1, "Fridge selection is required"),
+  temperature: z.string().refine((val) => {
+    const num = parseFloat(val);
+    return !isNaN(num) && num >= -50 && num <= 50;
+  }, "Temperature must be between -50°C and 50°C"),
+  personName: z.string().min(1, "Person name is required"),
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type SignUpData = z.infer<typeof signUpSchema>;
+export type SignInData = z.infer<typeof signInSchema>;
+export type UpdateProfileData = z.infer<typeof updateProfileSchema>;
+export type ChangePasswordData = z.infer<typeof changePasswordSchema>;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertFridge = z.infer<typeof insertFridgeSchema>;
+export type Fridge = typeof fridges.$inferSelect;
+export type InsertTemperatureLog = z.infer<typeof insertTemperatureLogSchema>;
+export type TemperatureLog = typeof temperatureLogs.$inferSelect;
+export type CreateFridgeData = z.infer<typeof createFridgeSchema>;
+export type LogTemperatureData = z.infer<typeof logTemperatureSchema>;
 
 export const subscriptionTiers = {
   FREE: "free",
@@ -49,4 +160,10 @@ export const subscriptionTiers = {
   ENTERPRISE: "enterprise"
 } as const;
 
+export const userRoles = {
+  USER: "user",
+  ADMIN: "admin"
+} as const;
+
 export type SubscriptionTier = typeof subscriptionTiers[keyof typeof subscriptionTiers];
+export type UserRole = typeof userRoles[keyof typeof userRoles];
