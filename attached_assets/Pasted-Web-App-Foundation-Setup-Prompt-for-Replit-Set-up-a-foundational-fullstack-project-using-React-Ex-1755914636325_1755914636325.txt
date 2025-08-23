@@ -1,0 +1,92 @@
+Web App Foundation Setup Prompt for Replit
+Set up a foundational fullstack project using React + Express with TypeScript, optimized for Replit development and subscription-based applications.
+🏗️ Project Architecture
+Create a monorepo structure with separate client and server directories, plus shared utilities. Configure for Replit's environment with proper port mapping and development workflow.
+🧱 Core Stack
+•	Frontend: React 18 with Vite and TypeScript (strict mode)
+•	Backend: Express.js with TypeScript and hot reload
+•	Package Manager: npm for Replit compatibility
+•	Node Version: 18+ with proper Replit configuration
+🛠️ Development Environment
+Set up comprehensive tooling including:
+•	ESLint with TypeScript, React, and Node.js rules
+•	Prettier for consistent formatting across frontend/backend
+•	Jest testing framework for both client and server
+•	Husky pre-commit hooks for linting and testing
+•	Hot reload for both development servers
+•	Claude Code CLI integration for AI-assisted development
+📦 Essential Dependencies
+Install and configure key packages:
+•	Icons: lucide-react for consistent iconography
+•	Database: Supabase client library (both frontend/backend)
+•	Payments: Stripe for server-side and @stripe/stripe-js for client
+•	Security: CORS, Helmet, and environment variable management
+⚙️ Replit Configuration
+Create proper .replit and replit.nix files that:
+•	Run both client and server simultaneously
+•	Map ports correctly (3000 for frontend, 5000 for backend)
+•	Support TypeScript compilation and hot reload
+•	Enable deployment to cloudrun when ready
+🌍 Environment Management
+Set up environment variable structure for:
+•	Supabase connection (URL, anon key, service role key)
+•	Stripe configuration (secret key, publishable key, webhook secret)
+•	Claude Code API access
+•	Development vs production settings
+💻 Claude Code Setup
+Install and configure Claude Code CLI:
+•	Global installation and project initialization
+•	Workspace configuration for TypeScript + React + Express
+•	API key configuration through environment variables
+•	Test integration and ensure project context understanding
+💳 Subscription Foundation
+Build subscription-ready architecture:
+•	Backend Routes: Create endpoint structure for checkout sessions, webhooks, subscription status, and plan management
+•	Frontend Integration: Initialize Stripe.js and create subscription utility functions
+•	Tier Concepts: Establish Free/Pro/Enterprise tier structure in code
+•	Payment Flow: Set up basic checkout and webhook handling framework
+•	TypeScript Interfaces: Define types for subscriptions, plans, and payment data
+🗄️ Database Integration
+Connect to Supabase:
+•	Install client libraries and create connection utilities
+•	Add health check endpoint to verify database connectivity
+•	Set up for future schema implementation (no tables yet)
+•	Configure authentication-ready structure
+🎨 Foundation Examples
+Create simple demonstration components:
+•	Icon usage example with lucide-react
+•	API connectivity test between frontend and backend
+•	Environment variable validation display
+•	Stripe configuration status checker
+•	Basic subscription tier display (mock data)
+🚀 Deployment Preparation
+Configure for Railway deployment:
+•	Set up build and start scripts for production
+•	Configure environment variable management
+•	Create GitHub Actions workflow for CI/CD
+•	Set up monorepo deployment strategy
+✅ Validation Requirements
+Ensure the foundation meets these criteria:
+•	Both servers run simultaneously in Replit without errors
+•	TypeScript compiles cleanly across the entire project
+•	Hot reload functions properly for development workflow
+•	All external service connections can be established
+•	Linting and testing pipeline executes successfully
+•	Environment variables load correctly
+•	Git repository initializes with appropriate .gitignore
+🚫 Scope Limitations
+This is foundation setup only - do NOT implement:
+•	Actual business logic or app-specific features
+•	Complete payment processing workflows
+•	Database schema or table creation
+•	Authentication system implementation
+•	Production optimization or performance tuning
+•	Complex state management systems
+📋 Prerequisites
+Before running this setup, ensure you have:
+•	Active Supabase project with API keys
+•	Stripe account in test mode with API keys
+•	Claude API access for code integration
+•	GitHub repository ready for version control
+Goal: Create a solid, working development environment that's ready for building subscription-based applications, with all foundational services connected and operational.
+
