@@ -37,7 +37,7 @@ export default function Signup() {
     onSuccess: (data) => {
       toast({
         title: "Account created!",
-        description: "Welcome! Your account has been created successfully.",
+        description: "Welcome! Your account has been created successfully. Let's set up your first fridge!",
       });
       queryClient.invalidateQueries();
       setLocation("/");
