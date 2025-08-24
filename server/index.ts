@@ -47,31 +47,20 @@ const authLimiter = rateLimit({
 });
 app.use("/auth", authLimiter);
 
-// Session configuration - use memory store for development to avoid WebSocket issues
+// Session configuration - simplified for debugging
 app.use(session({
-  store: process.env.NODE_ENV === "production" ? 
-    new PgSession({
-      pool: new Pool({ 
-        connectionString: process.env.DATABASE_URL,
-        max: 5
-      }),
-      tableName: "session",
-      createTableIfMissing: true,
-    }) : 
-    new MemoryStoreSession({
-      checkPeriod: 86400000 // prune expired entries every 24h
-    }),
+  store: new MemoryStoreSession({
+    checkPeriod: 86400000
+  }),
   secret: process.env.SESSION_SECRET || "dev-secret-change-in-production",
-  resave: false,
-  saveUninitialized: true, // Change to true to force cookie creation
-  name: "connect.sid",
+  resave: true, // Change to true to force session save
+  saveUninitialized: true,
+  name: "sessionId", // Use simpler name
   cookie: {
-    secure: true, // Set to true for HTTPS Replit environment
-    httpOnly: false, // Keep false for debugging
+    secure: false, // Try false first to eliminate HTTPS issues
+    httpOnly: false,
     maxAge: 24 * 60 * 60 * 1000,
-    sameSite: "lax",
-    domain: undefined,
-    path: "/",
+    sameSite: false, // Disable SameSite completely
   },
 }));
 

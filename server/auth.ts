@@ -117,18 +117,30 @@ export async function signIn(req: Request, res: Response) {
     console.log("signIn - setting session userId:", user.id);
     console.log("signIn - session ID:", req.sessionID);
     
-    // Explicitly save the session before responding
-    req.session.save((err) => {
+    // Force session regeneration to ensure fresh session
+    req.session.regenerate((err) => {
       if (err) {
-        console.error("Session save error:", err);
-        return res.status(500).json({ error: "Failed to save session" });
+        console.error("Session regeneration error:", err);
+        return res.status(500).json({ error: "Failed to create session" });
       }
       
-      console.log("signIn - session saved successfully");
+      // Set userId again after regeneration
+      req.session.userId = user.id;
       
-      // Return user without password
-      const { password: _, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
+      // Save the session
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error("Session save error:", saveErr);
+          return res.status(500).json({ error: "Failed to save session" });
+        }
+        
+        console.log("signIn - session regenerated and saved successfully");
+        console.log("signIn - new session ID:", req.sessionID);
+        
+        // Return user without password
+        const { password: _, ...userWithoutPassword } = user;
+        res.json(userWithoutPassword);
+      });
     });
   } catch (error: any) {
     console.error("Sign in error:", error);
