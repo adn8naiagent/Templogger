@@ -1,0 +1,77 @@
+Create an application with the following features:
+
+## Authentication & User Management
+- Implement user authentication with email sign-up/sign-in using Replit Auth
+- Enforce strong password requirements: minimum 8 characters, must include uppercase, lowercase, numbers, and symbols
+- Include captcha verification on the sign-up form
+- Display user avatar in top-right corner showing first letter of first name only
+- Avatar should act as dropdown menu with options: Account Info, Settings, Log Out
+
+## User Roles & Permissions
+- Implement role-based access control with at least two roles:
+  - Regular User: Standard access to their own data
+  - Admin: Full access to all user records and system management
+- Admin users should have a dedicated admin dashboard for user management
+- Ensure proper authorization checks on all routes and API endpoints
+
+## Subscription Tiers
+- Create three subscription tiers: Free, Pro, Enterprise
+- Each tier should have different feature limitations and access levels
+- Display current subscription tier in user account page
+- Include upgrade/downgrade functionality with proper proration
+
+## Account Management Page
+- Create comprehensive account page showing user information overview
+- Allow editing of all fields except email address
+- Include "Change Password" functionality with current password verification
+- Add "Delete Account" button with confirmation dialog that removes all user data
+- Implement "Download My Data" feature that exports all user data to CSV format
+
+## Settings Page
+- Include dark mode toggle that persists across sessions
+- Store dark mode preference in user profile
+- Apply dark mode globally across entire application
+- Additional settings as needed for your specific app
+
+## Technical Requirements
+- Use Lucide React icons throughout the application
+- Implement proper error handling and user feedback
+- Ensure all forms have proper validation
+- Use secure session management
+- Implement CSRF protection
+- Follow responsive design principles
+
+## Database Schema
+- Users table with fields: id, email, password_hash, first_name, last_name, role, subscription_tier, dark_mode, created_at, updated_at
+- Subscriptions table with fields: id, user_id, tier, status, start_date, end_date
+- Additional tables as needed for your specific app
+
+## API Endpoints
+- POST /auth/signup - User registration with captcha validation
+- POST /auth/signin - User login
+- POST /auth/signout - User logout
+- GET /api/user/profile - Get user profile
+- PUT /api/user/profile - Update user profile
+- PUT /api/user/password - Change password
+- DELETE /api/user/account - Delete account
+- GET /api/user/export - Export user data as CSV
+- PUT /api/user/settings - Update user settings (including dark mode)
+- GET /api/admin/users - Admin endpoint to list all users
+- Additional endpoints as needed
+
+## Security Considerations
+- Hash passwords using bcrypt or similar
+- Implement rate limiting on authentication endpoints
+- Use secure HTTP-only cookies for sessions
+- Validate and sanitize all user inputs
+- Implement proper CORS policies
+- Use environment variables for sensitive configuration
+
+## UI/UX Requirements
+- Clean, modern interface with consistent styling
+- Clear visual hierarchy
+- Proper loading states and error messages
+- Accessible design following WCAG guidelines
+- Mobile-responsive layout
+
+Build this application following best practices for security, performance, and maintainability. Ensure all features are fully functional and properly tested.
