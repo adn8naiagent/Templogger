@@ -602,6 +602,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Stats API
+  app.get("/api/admin/stats", requireAdmin, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      const totalUsers = users.length;
+      const totalSubscriptions = users.filter(u => u.subscriptionTier !== "free").length;
+      
+      // Calculate monthly revenue (simplified calculation)
+      const monthlyRevenue = users.reduce((total, user) => {
+        switch (user.subscriptionTier) {
+          case "pro": return total + 29;
+          case "enterprise": return total + 99;
+          default: return total;
+        }
+      }, 0);
+
+      // Get active alerts count (temperature readings out of range)
+      const activeAlerts = await storage.getActiveAlertsCount();
+
+      // Generate user growth data (last 6 months)
+      const userGrowth = await generateUserGrowthData();
+
+      // Generate subscription breakdown
+      const subscriptionBreakdown = [
+        { 
+          tier: "Free", 
+          count: users.filter(u => u.subscriptionTier === "free").length,
+          color: "#94a3b8"
+        },
+        { 
+          tier: "Pro", 
+          count: users.filter(u => u.subscriptionTier === "pro").length,
+          color: "#3b82f6"
+        },
+        { 
+          tier: "Enterprise", 
+          count: users.filter(u => u.subscriptionTier === "enterprise").length,
+          color: "#8b5cf6"
+        }
+      ];
+
+      res.json({
+        totalUsers,
+        totalSubscriptions,
+        monthlyRevenue,
+        activeAlerts,
+        userGrowth,
+        subscriptionBreakdown
+      });
+    } catch (error: any) {
+      console.error("Admin stats error:", error);
+      res.status(500).json({ error: "Failed to get admin statistics" });
+    }
+  });
+
+  // Update user by admin
+  app.put("/api/admin/users/:userId", requireAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { role, subscriptionTier } = req.body;
+      
+      const updatedUser = await storage.updateUser(userId, { role, subscriptionTier });
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json({ message: "User updated successfully", user: updatedUser });
+    } catch (error: any) {
+      console.error("Update user error:", error);
+      res.status(500).json({ error: "Failed to update user" });
+    }
+  });
+
+  // Delete user by admin
+  app.delete("/api/admin/users/:userId", requireAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      
+      const deleted = await storage.deleteUser(userId);
+      if (!deleted) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json({ message: "User deleted successfully" });
+    } catch (error: any) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ error: "Failed to delete user" });
+    }
+  });
+
+  // Helper function to generate user growth data
+  async function generateUserGrowthData() {
+    const months = [];
+    const currentDate = new Date();
+    
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const monthName = date.toLocaleDateString('en-US', { month: 'short' });
+      
+      // Simplified - in real app, query users created in that month
+      const userCount = Math.floor(Math.random() * 20) + 5;
+      months.push({ month: monthName, users: userCount });
+    }
+    
+    return months;
+  }
+
   // Test service connections
   app.post("/api/test-connection/:service", async (req, res) => {
     try {

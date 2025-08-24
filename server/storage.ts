@@ -39,6 +39,9 @@ export interface IStorage {
   getRecentTemperatureLog(fridgeId: string, userId: string): Promise<TemperatureLog | undefined>;
   createTemperatureLog(logData: InsertTemperatureLog): Promise<TemperatureLog>;
   getAllTemperatureLogsForUser(userId: string): Promise<(TemperatureLog & { fridgeName: string })[]>;
+  
+  // Admin methods
+  getActiveAlertsCount(): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -171,6 +174,26 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(temperatureLogs.createdAt));
     
     return result;
+  }
+
+  async getActiveAlertsCount(): Promise<number> {
+    // Count temperature logs that are outside their fridge's acceptable range
+    const logs = await this.db
+      .select({
+        temperature: temperatureLogs.temperature,
+        minTemp: fridges.minTemp,
+        maxTemp: fridges.maxTemp
+      })
+      .from(temperatureLogs)
+      .innerJoin(fridges, eq(temperatureLogs.fridgeId, fridges.id))
+      .orderBy(desc(temperatureLogs.createdAt))
+      .limit(100); // Check recent logs
+
+    const alertCount = logs.filter(log => 
+      log.temperature < log.minTemp || log.temperature > log.maxTemp
+    ).length;
+
+    return alertCount;
   }
 }
 

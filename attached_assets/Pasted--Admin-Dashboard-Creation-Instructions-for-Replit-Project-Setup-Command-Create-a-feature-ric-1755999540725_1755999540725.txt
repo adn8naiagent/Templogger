@@ -1,0 +1,99 @@
+# Admin Dashboard Creation Instructions for Replit
+
+## Project Setup Command
+Create a feature-rich admin dashboard for user and subscription management with the following requirements:
+
+### Core Features Required:
+1. **User Management Dashboard**
+   - View all users in a searchable, sortable table
+   - Edit user profiles and subscription status
+   - Assign/remove admin roles
+   - User activity monitoring
+
+2. **Subscription Management**
+   - View all subscriptions with status indicators
+   - Modify subscription plans and expiration dates
+   - Handle subscription cancellations and renewals
+   - Revenue analytics dashboard
+
+3. **Security & Authentication**
+   - Admin-only access with role-based permissions
+   - Protected routes that redirect non-admins
+   - Secure API endpoints for admin operations
+
+4. **Modern UI Components**
+   - Responsive design with Tailwind CSS
+   - Data tables with pagination and filtering
+   - Modal dialogs for editing operations
+   - Loading states and error handling
+   - Charts for analytics (using recharts)
+
+### Technical Requirements:
+- Use Next.js 14 with App Router
+- TypeScript throughout the project
+- Supabase for database and authentication
+- Tailwind CSS for styling
+- React Hook Form for form handling
+- Zod for validation
+- Lucide React for icons
+
+### File Structure:
+```
+src/
+├── app/
+│   ├── admin/
+│   │   ├── page.tsx (main dashboard)
+│   │   ├── users/
+│   │   │   ├── page.tsx (user management)
+│   │   │   └── [id]/page.tsx (edit user)
+│   │   ├── subscriptions/
+│   │   │   └── page.tsx (subscription management)
+│   │   └── layout.tsx (admin layout with auth check)
+│   ├── api/admin/ (secure API routes)
+│   └── middleware.ts (route protection)
+├── components/admin/ (reusable admin components)
+├── lib/ (utilities and Supabase client)
+└── types/ (TypeScript definitions)
+```
+
+## CRITICAL SECRETS HANDLING INSTRUCTIONS FOR REPLIT:
+
+### ⚠️ NEVER store secrets in files - use Replit Secrets only!
+
+1. **DO NOT create any .env files in the project**
+2. **Use ONLY the Replit Secrets tab (lock icon in sidebar)**
+3. **Access secrets in code using process.env.SECRET_NAME**
+4. **Add this to your .gitignore immediately:**
+   ```
+   .env*
+   !.env.example
+   ```
+
+### Environment Variables Setup:
+The project will need these secrets (you'll add them in Step 2):
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+### Code Structure for Secrets:
+```typescript
+// lib/supabase.ts
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+
+// Client for user operations
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+// Admin client for bypassing RLS (server-side only)
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+```
+
+### Additional Requirements:
+- Create middleware to protect admin routes
+- Implement proper error boundaries
+- Add loading skeletons for better UX
+- Include form validation with proper error messages
+- Create reusable components for common admin operations
+
+Please create this admin dashboard following these exact specifications, ensuring all secrets are handled through Replit's Secrets system only.

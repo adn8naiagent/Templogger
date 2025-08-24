@@ -11,6 +11,8 @@ import Home from "@/pages/home";
 import Account from "@/pages/account";
 import Settings from "@/pages/settings";
 import AdminDashboard from "@/pages/admin/dashboard";
+import AdminUsers from "@/pages/admin/users";
+import AdminSubscriptions from "@/pages/admin/subscriptions";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -29,6 +31,9 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/account" component={Account} />
           <Route path="/settings" component={Settings} />
+          <Route path="/admin/dashboard" component={AdminDashboard} />
+          <Route path="/admin/users" component={AdminUsers} />
+          <Route path="/admin/subscriptions" component={AdminSubscriptions} />
           <Route path="/admin" component={AdminDashboard} />
         </>
       )}
