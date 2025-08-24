@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import helmet from "helmet";
+import cors from "cors";
 import rateLimit from "express-rate-limit";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -65,15 +66,24 @@ app.use(session({
   saveUninitialized: true, // Change to true to force cookie creation
   name: "connect.sid",
   cookie: {
-    secure: false,
+    secure: true, // Set to true for HTTPS Replit environment
     httpOnly: false, // Keep false for debugging
     maxAge: 24 * 60 * 60 * 1000,
-    sameSite: "lax", // Use lax instead of none when secure is false
+    sameSite: "lax",
     domain: undefined,
     path: "/",
   },
 }));
 
+
+// CORS configuration for credentials  
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+  exposedHeaders: ['Set-Cookie'],
+}));
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
