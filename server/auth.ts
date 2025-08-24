@@ -12,26 +12,54 @@ export async function verifyPassword(password: string, hashedPassword: string): 
   return bcrypt.compare(password, hashedPassword);
 }
 
-// Authentication middleware
+// Authentication middleware - updated for token-based auth
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
-  if (!req.session.userId) {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ message: "Unauthorized" });
   }
+
+  const token = authHeader.substring(7);
+  let userId: string;
+  
+  try {
+    // Decode the token (simple base64 decode for now)
+    userId = Buffer.from(token, 'base64').toString();
+  } catch (error) {
+    return res.status(401).json({ message: "Invalid token" });
+  }
+  
+  // Add userId to request object for downstream use
+  (req as any).userId = userId;
   next();
 }
 
-// Admin middleware
+// Admin middleware - updated for token-based auth
 export async function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  if (!req.session.userId) {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: "Authentication required" });
+  }
+
+  const token = authHeader.substring(7);
+  let userId: string;
+  
+  try {
+    // Decode the token
+    userId = Buffer.from(token, 'base64').toString();
+  } catch (error) {
+    return res.status(401).json({ error: "Invalid token" });
   }
   
   try {
-    const user = await storage.getUser(req.session.userId);
+    const user = await storage.getUser(userId);
     if (!user || user.role !== "admin") {
       return res.status(403).json({ error: "Admin access required" });
     }
     req.user = user;
+    (req as any).userId = userId;
     next();
   } catch (error) {
     res.status(500).json({ error: "Failed to verify admin status" });

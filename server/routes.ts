@@ -36,7 +36,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get current user profile
   app.get("/api/user/profile", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId;
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
@@ -62,7 +62,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const userId = req.session.userId;
+      const userId = req.userId;
       const updatedUser = await storage.updateUser(userId, result.data);
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
@@ -82,7 +82,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/user/settings", requireAuth, async (req: any, res) => {
     try {
       const { darkMode } = req.body;
-      const userId = req.session.userId;
+      const userId = req.userId;
       
       const updatedUser = await storage.updateUser(userId, { darkMode });
       if (!updatedUser) {
@@ -102,7 +102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete account
   app.delete("/api/user/account", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId;
       const deleted = await storage.deleteUser(userId);
       if (!deleted) {
         return res.status(404).json({ error: "User not found" });
@@ -118,7 +118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Export user data
   app.get("/api/user/export", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId;
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
@@ -203,7 +203,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user's fridges
   app.get("/api/fridges", requireAuth, async (req: any, res: Response) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId;
       const fridges = await storage.getFridges(userId);
       res.json(fridges);
     } catch (error: any) {
@@ -229,7 +229,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { name, minTemp, maxTemp } = result.data;
-      const userId = req.session.userId;
+      const userId = req.userId;
       
       const newFridge = await storage.createFridge({
         userId,
@@ -265,7 +265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { fridgeId, temperature, personName } = result.data;
-      const userId = req.session.userId;
+      const userId = req.userId;
       
       // Verify fridge belongs to user
       const fridge = await storage.getFridge(fridgeId, userId);
@@ -304,7 +304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/fridges/:fridgeId/logs", requireAuth, async (req: any, res: Response) => {
     try {
       const { fridgeId } = req.params;
-      const userId = req.session.userId;
+      const userId = req.userId;
       const logs = await storage.getTemperatureLogs(fridgeId, userId);
       res.json(logs);
     } catch (error: any) {
@@ -316,7 +316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get recent temperature for all fridges
   app.get("/api/fridges/recent-temps", requireAuth, async (req: any, res: Response) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId;
       const fridges = await storage.getFridges(userId);
       const fridgesWithRecentTemps = await Promise.all(
         fridges.map(async (fridge) => {
@@ -338,7 +338,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Export all temperature logs as CSV
   app.get("/api/export/temperature-logs", requireAuth, async (req: any, res: Response) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.userId;
       const logs = await storage.getAllTemperatureLogsForUser(userId);
       
       // Set CSV headers
