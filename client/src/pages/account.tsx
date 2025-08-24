@@ -27,11 +27,15 @@ import {
   Shield,
   Crown,
   Star,
-  ArrowLeft
+  ArrowLeft,
+  Lock,
+  CreditCard,
+  Clock,
+  CheckCircle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { updateProfileSchema, type UpdateProfileData } from "@shared/schema";
+import { updateProfileSchema, type UpdateProfileData, resetPasswordSchema, type ResetPasswordData } from "@shared/schema";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -40,6 +44,11 @@ export default function Account() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
+  // Calculate trial days remaining
+  const trialDaysRemaining = user?.trialEndDate ? 
+    Math.max(0, Math.ceil((new Date(user.trialEndDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
+    : 0;
 
   // Profile form
   const profileForm = useForm<UpdateProfileData>({
@@ -50,13 +59,19 @@ export default function Account() {
     },
   });
 
+  // Password form
+  const passwordForm = useForm<ResetPasswordData>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
   // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (data: UpdateProfileData) => {
-      return apiRequest("/api/user/profile", {
-        method: "PUT",
-        body: JSON.stringify(data),
-      });
+      return apiRequest("PUT", "/api/user/profile", data);
     },
     onSuccess: () => {
       toast({
@@ -74,10 +89,31 @@ export default function Account() {
     },
   });
 
+  // Reset password mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: async (data: ResetPasswordData) => {
+      return apiRequest("PUT", "/api/user/reset-password", { newPassword: data.newPassword });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Password updated!",
+        description: "Your password has been changed successfully.",
+      });
+      passwordForm.reset();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Delete account mutation
   const deleteAccountMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("/api/user/account", { method: "DELETE" });
+      return apiRequest("DELETE", "/api/user/account");
     },
     onSuccess: () => {
       toast({
@@ -124,14 +160,12 @@ export default function Account() {
     }
   };
 
-  const getSubscriptionBadge = (tier: string) => {
-    switch (tier) {
-      case "free":
-        return <Badge variant="secondary">Free</Badge>;
-      case "pro":
-        return <Badge className="bg-blue-600"><Star className="h-3 w-3 mr-1" />Pro</Badge>;
-      case "enterprise":
-        return <Badge className="bg-purple-600"><Crown className="h-3 w-3 mr-1" />Enterprise</Badge>;
+  const getSubscriptionBadge = (status: string) => {
+    switch (status) {
+      case "trial":
+        return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Trial</Badge>;
+      case "paid":
+        return <Badge className="bg-green-600"><CheckCircle className="h-3 w-3 mr-1" />Paid</Badge>;
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
@@ -167,15 +201,73 @@ export default function Account() {
         <p className="text-muted-foreground">Manage your profile and account settings</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Profile Information */}
-        <Card data-testid="profile-card">
+      <div className="grid gap-6">
+        {/* Account Status */}
+        <Card data-testid="account-status-card">
           <CardHeader>
-            <CardTitle>Profile Information</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              Account Status
+            </CardTitle>
             <CardDescription>
-              Update your personal information
+              Your subscription and billing information
             </CardDescription>
           </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-full">
+                    {user?.subscriptionStatus === 'paid' ? (
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <Clock className="h-5 w-5 text-blue-600" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-medium">
+                      {user?.subscriptionStatus === 'paid' ? 'Paid Subscription' : 'Free Trial'}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {user?.subscriptionStatus === 'paid' ? (
+                        'You have access to all features'
+                      ) : (
+                        `${trialDaysRemaining} days remaining`
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold">
+                    {user?.subscriptionStatus === 'paid' ? '$10/month' : 'Free'}
+                  </p>
+                  {user?.subscriptionStatus === 'trial' && (
+                    <p className="text-xs text-muted-foreground">Then $10/month</p>
+                  )}
+                </div>
+              </div>
+              
+              {user?.subscriptionStatus === 'trial' && (
+                <div className="text-center pt-2">
+                  <Button className="w-full" data-testid="button-upgrade-now">
+                    <Star className="h-4 w-4 mr-2" />
+                    Upgrade Now
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Profile Information */}
+          <Card data-testid="profile-card">
+            <CardHeader>
+              <CardTitle>Profile Information</CardTitle>
+              <CardDescription>
+                Update your personal information
+              </CardDescription>
+            </CardHeader>
           <CardContent>
             <div className="space-y-4 mb-6">
               <div className="flex items-center gap-4">
@@ -196,7 +288,7 @@ export default function Account() {
                   <p className="font-semibold">{user?.firstName} {user?.lastName}</p>
                   <p className="text-sm text-muted-foreground">{user?.email}</p>
                   <div className="flex gap-2 mt-1">
-                    {user?.subscriptionTier && getSubscriptionBadge(user.subscriptionTier)}
+                    {user?.subscriptionStatus && getSubscriptionBadge(user.subscriptionStatus)}
                     {user?.role && getRoleBadge(user.role)}
                   </div>
                 </div>
@@ -247,6 +339,72 @@ export default function Account() {
             </Form>
           </CardContent>
         </Card>
+
+          {/* Change Password */}
+          <Card data-testid="password-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lock className="h-5 w-5" />
+                Change Password
+              </CardTitle>
+              <CardDescription>
+                Update your account password
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...passwordForm}>
+                <form onSubmit={passwordForm.handleSubmit((data) => resetPasswordMutation.mutate(data))} className="space-y-4">
+                  <FormField
+                    control={passwordForm.control}
+                    name="newPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>New Password</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder="Enter new password"
+                            {...field} 
+                            data-testid="input-new-password" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={passwordForm.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirm Password</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder="Confirm new password"
+                            {...field} 
+                            data-testid="input-confirm-password" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={resetPasswordMutation.isPending}
+                    data-testid="button-change-password"
+                  >
+                    {resetPasswordMutation.isPending ? "Updating..." : "Change Password"}
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Account Actions */}
         <Card data-testid="actions-card">

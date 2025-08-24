@@ -11,6 +11,7 @@ import {
   userRoles,
   type User 
 } from "@shared/schema";
+import bcrypt from "bcrypt";
 
 // Note: requireAdmin is now imported from ./auth
 
@@ -96,6 +97,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Update settings error:", error);
       res.status(500).json({ error: "Failed to update settings" });
+    }
+  });
+
+  // Reset password (no current password required)
+  app.put("/api/user/reset-password", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      const { newPassword } = req.body;
+      
+      // Hash the new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      
+      const updatedUser = await storage.updateUser(userId, { 
+        password: hashedPassword 
+      });
+      
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json({ message: "Password updated successfully" });
+    } catch (error: any) {
+      console.error("Reset password error:", error);
+      res.status(500).json({ error: "Failed to update password" });
     }
   });
 

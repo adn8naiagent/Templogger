@@ -134,6 +134,18 @@ export const changePasswordSchema = z.object({
       "Password must include uppercase, lowercase, numbers, and symbols"),
 });
 
+// Reset password schema (no current password required)
+export const resetPasswordSchema = z.object({
+  newPassword: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 
+      "Password must include uppercase, lowercase, numbers, and symbols"),
+  confirmPassword: z.string(),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
 // Fridge management schemas
 export const createFridgeSchema = z.object({
   name: z.string().min(1, "Fridge name is required"),
@@ -170,6 +182,7 @@ export type SignUpData = z.infer<typeof signUpSchema>;
 export type SignInData = z.infer<typeof signInSchema>;
 export type UpdateProfileData = z.infer<typeof updateProfileSchema>;
 export type ChangePasswordData = z.infer<typeof changePasswordSchema>;
+export type ResetPasswordData = z.infer<typeof resetPasswordSchema>;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertFridge = z.infer<typeof insertFridgeSchema>;
