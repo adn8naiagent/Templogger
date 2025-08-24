@@ -34,21 +34,19 @@ export default function Login() {
       return response.json();
     },
     onSuccess: async (data) => {
+      // Store the auth token in localStorage
+      if (data.authToken) {
+        localStorage.setItem('authToken', data.authToken);
+      }
+      
       toast({
         title: "Welcome back!",
         description: "You've been signed in successfully.",
       });
       
-      // Wait a bit for the session cookie to be set
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Invalidate the auth query specifically and wait for it
+      // Invalidate the auth query and navigate
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      
-      // Small delay before navigation to ensure query is updated
-      setTimeout(() => {
-        setLocation("/");
-      }, 200);
+      setLocation("/");
     },
     onError: (error: any) => {
       toast({

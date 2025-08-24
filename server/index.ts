@@ -91,30 +91,11 @@ declare module "express" {
   }
 }
 
-// Cookie debugging middleware
+// Request logging middleware
 app.use((req, res, next) => {
   if (req.path.startsWith("/api/auth")) {
-    console.log("=== REQUEST DEBUG ===");
-    console.log("Path:", req.path);
-    console.log("Method:", req.method);
-    console.log("Cookies received:", req.headers.cookie);
-    console.log("Session ID:", req.sessionID);
-    console.log("Host:", req.headers.host);
-    console.log("Origin:", req.headers.origin);
-    console.log("=====================");
+    console.log(`${req.method} ${req.path}`);
   }
-  
-  // Also debug response headers
-  const originalSetHeader = res.setHeader;
-  res.setHeader = function(name, value) {
-    if (req.path.startsWith("/api/auth") && name.toLowerCase() === 'set-cookie') {
-      console.log("=== RESPONSE DEBUG ===");
-      console.log("Setting cookie:", value);
-      console.log("======================");
-    }
-    return originalSetHeader.call(this, name, value);
-  };
-  
   next();
 });
 

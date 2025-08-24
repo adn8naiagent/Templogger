@@ -34,12 +34,18 @@ export default function Signup() {
       const response = await apiRequest("POST", "/api/auth/signup", data);
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
+      // Store the auth token in localStorage
+      if (data.authToken) {
+        localStorage.setItem('authToken', data.authToken);
+      }
+      
       toast({
         title: "Account created!",
         description: "Welcome! Your account has been created successfully. Let's set up your first fridge!",
       });
-      queryClient.invalidateQueries();
+      
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       setLocation("/");
     },
     onError: (error: any) => {

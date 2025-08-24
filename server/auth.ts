@@ -67,19 +67,16 @@ export async function signUp(req: Request, res: Response) {
       role: "user",
     });
 
-    // Set session and save it explicitly
-    req.session.userId = user.id;
+    // Create auth token for new user
+    const authToken = Buffer.from(user.id).toString('base64');
     
-    // Explicitly save the session before responding
-    req.session.save((err) => {
-      if (err) {
-        console.error("Session save error:", err);
-        return res.status(500).json({ error: "Failed to save session" });
-      }
-      
-      // Return user without password
-      const { password: _, ...userWithoutPassword } = user;
-      res.status(201).json(userWithoutPassword);
+    console.log("signUp - new user created:", user.email);
+    
+    // Return user without password and include the auth token
+    const { password: _, ...userWithoutPassword } = user;
+    res.status(201).json({ 
+      ...userWithoutPassword, 
+      authToken 
     });
   } catch (error: any) {
     console.error("Sign up error:", error);
@@ -112,35 +109,16 @@ export async function signIn(req: Request, res: Response) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    // Set session and save it explicitly
-    req.session.userId = user.id;
-    console.log("signIn - setting session userId:", user.id);
-    console.log("signIn - session ID:", req.sessionID);
+    // Create a simple token for the user (using userId as token for simplicity)
+    const authToken = Buffer.from(user.id).toString('base64');
     
-    // Force session regeneration to ensure fresh session
-    req.session.regenerate((err) => {
-      if (err) {
-        console.error("Session regeneration error:", err);
-        return res.status(500).json({ error: "Failed to create session" });
-      }
-      
-      // Set userId again after regeneration
-      req.session.userId = user.id;
-      
-      // Save the session
-      req.session.save((saveErr) => {
-        if (saveErr) {
-          console.error("Session save error:", saveErr);
-          return res.status(500).json({ error: "Failed to save session" });
-        }
-        
-        console.log("signIn - session regenerated and saved successfully");
-        console.log("signIn - new session ID:", req.sessionID);
-        
-        // Return user without password
-        const { password: _, ...userWithoutPassword } = user;
-        res.json(userWithoutPassword);
-      });
+    console.log("signIn - user authenticated:", user.email);
+    
+    // Return user without password and include the auth token
+    const { password: _, ...userWithoutPassword } = user;
+    res.json({ 
+      ...userWithoutPassword, 
+      authToken 
     });
   } catch (error: any) {
     console.error("Sign in error:", error);
@@ -148,30 +126,35 @@ export async function signIn(req: Request, res: Response) {
   }
 }
 
-// Sign out route handler
+// Sign out route handler - for token-based auth, this is just a client-side operation
 export async function signOut(req: Request, res: Response) {
-  req.session.destroy((err) => {
-    if (err) {
-      console.error("Sign out error:", err);
-      return res.status(500).json({ error: "Failed to sign out" });
-    }
-    res.clearCookie("connect.sid");
-    res.json({ message: "Signed out successfully" });
-  });
+  // With token-based auth, logout is primarily handled on the client side
+  // Server just confirms the logout request
+  console.log("signOut - logout confirmed");
+  res.json({ message: "Signed out successfully" });
 }
 
 // Get current user route handler
 export async function getCurrentUser(req: Request, res: Response) {
   try {
-    console.log("getCurrentUser - session ID:", req.sessionID);
-    console.log("getCurrentUser - session data:", req.session);
-    console.log("getCurrentUser - userId:", req.session.userId);
+    // Check for auth token in Authorization header
+    const authHeader = req.headers.authorization;
     
-    if (!req.session.userId) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const user = await storage.getUser(req.session.userId);
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    let userId: string;
+    
+    try {
+      // Decode the token (simple base64 decode for now)
+      userId = Buffer.from(token, 'base64').toString();
+    } catch (error) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+
+    const user = await storage.getUser(userId);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
