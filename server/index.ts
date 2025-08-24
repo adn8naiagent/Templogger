@@ -6,8 +6,10 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { Pool } from "@neondatabase/serverless";
 import connectPgSimple from "connect-pg-simple";
+import MemoryStore from "memorystore";
 
 const PgSession = connectPgSimple(session);
+const MemoryStoreSession = MemoryStore(session);
 
 const app = express();
 
@@ -44,16 +46,20 @@ const authLimiter = rateLimit({
 });
 app.use("/auth", authLimiter);
 
-// Session configuration
+// Session configuration - use memory store for development to avoid WebSocket issues
 app.use(session({
-  store: new PgSession({
-    pool: new Pool({ 
-      connectionString: process.env.DATABASE_URL,
-      max: 5 // Limit connection pool size to prevent memory leaks
+  store: process.env.NODE_ENV === "production" ? 
+    new PgSession({
+      pool: new Pool({ 
+        connectionString: process.env.DATABASE_URL,
+        max: 5
+      }),
+      tableName: "session",
+      createTableIfMissing: true,
+    }) : 
+    new MemoryStoreSession({
+      checkPeriod: 86400000 // prune expired entries every 24h
     }),
-    tableName: "session",
-    createTableIfMissing: true,
-  }),
   secret: process.env.SESSION_SECRET || "dev-secret-change-in-production",
   resave: false,
   saveUninitialized: false,
