@@ -114,6 +114,8 @@ export async function signIn(req: Request, res: Response) {
 
     // Set session and save it explicitly
     req.session.userId = user.id;
+    console.log("signIn - setting session userId:", user.id);
+    console.log("signIn - session ID:", req.sessionID);
     
     // Explicitly save the session before responding
     req.session.save((err) => {
@@ -121,6 +123,8 @@ export async function signIn(req: Request, res: Response) {
         console.error("Session save error:", err);
         return res.status(500).json({ error: "Failed to save session" });
       }
+      
+      console.log("signIn - session saved successfully");
       
       // Return user without password
       const { password: _, ...userWithoutPassword } = user;
@@ -147,6 +151,10 @@ export async function signOut(req: Request, res: Response) {
 // Get current user route handler
 export async function getCurrentUser(req: Request, res: Response) {
   try {
+    console.log("getCurrentUser - session ID:", req.sessionID);
+    console.log("getCurrentUser - session data:", req.session);
+    console.log("getCurrentUser - userId:", req.session.userId);
+    
     if (!req.session.userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }

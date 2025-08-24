@@ -63,10 +63,12 @@ app.use(session({
   secret: process.env.SESSION_SECRET || "dev-secret-change-in-production",
   resave: false,
   saveUninitialized: false,
+  name: "connect.sid", // Explicitly set session cookie name
   cookie: {
-    secure: process.env.NODE_ENV === "production",
+    secure: false, // Set to false for development, even in HTTPS
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: "lax", // Explicitly set sameSite for cross-origin requests
   },
 }));
 
