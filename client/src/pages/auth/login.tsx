@@ -33,13 +33,22 @@ export default function Login() {
       const response = await apiRequest("POST", "/api/auth/signin", data);
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast({
         title: "Welcome back!",
         description: "You've been signed in successfully.",
       });
-      queryClient.invalidateQueries();
-      setLocation("/");
+      
+      // Wait a bit for the session cookie to be set
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Invalidate the auth query specifically and wait for it
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      
+      // Small delay before navigation to ensure query is updated
+      setTimeout(() => {
+        setLocation("/");
+      }, 200);
     },
     onError: (error: any) => {
       toast({

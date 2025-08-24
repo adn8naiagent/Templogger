@@ -90,6 +90,19 @@ declare module "express" {
   }
 }
 
+// Cookie debugging middleware
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api/auth")) {
+    console.log("=== REQUEST DEBUG ===");
+    console.log("Path:", req.path);
+    console.log("Method:", req.method);
+    console.log("Cookies received:", req.headers.cookie);
+    console.log("Session ID:", req.sessionID);
+    console.log("=====================");
+  }
+  next();
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
