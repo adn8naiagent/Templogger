@@ -45,7 +45,7 @@ interface AdminUser {
   firstName: string;
   lastName: string;
   role: string;
-  subscriptionTier: string;
+  subscriptionStatus: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -92,7 +92,7 @@ export default function AdminUsers() {
 
   // Update user mutation
   const updateUserMutation = useMutation({
-    mutationFn: async ({ userId, updates }: { userId: string; updates: { role?: string; subscriptionTier?: string } }) => {
+    mutationFn: async ({ userId, updates }: { userId: string; updates: { role?: string; subscriptionStatus?: string } }) => {
       return apiRequest("PUT", `/api/admin/users/${userId}`, updates);
     },
     onSuccess: () => {
@@ -140,14 +140,12 @@ export default function AdminUsers() {
     user.lastName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getSubscriptionBadge = (tier: string) => {
-    switch (tier) {
-      case "free":
-        return <Badge variant="secondary">Free</Badge>;
-      case "pro":
-        return <Badge className="bg-blue-600"><Star className="h-3 w-3 mr-1" />Pro</Badge>;
-      case "enterprise":
-        return <Badge className="bg-purple-600"><Crown className="h-3 w-3 mr-1" />Enterprise</Badge>;
+  const getSubscriptionBadge = (status: string) => {
+    switch (status) {
+      case "trial":
+        return <Badge variant="secondary">Trial</Badge>;
+      case "paid":
+        return <Badge className="bg-green-600"><Star className="h-3 w-3 mr-1" />Paid</Badge>;
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
@@ -207,22 +205,22 @@ export default function AdminUsers() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Pro Users</CardTitle>
+            <CardTitle className="text-sm font-medium">Trial Users</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {users.filter((u: AdminUser) => u.subscriptionTier === 'pro').length}
+              {users.filter((u: AdminUser) => u.subscriptionStatus === 'trial').length}
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Enterprise Users</CardTitle>
+            <CardTitle className="text-sm font-medium">Paid Users</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {users.filter((u: AdminUser) => u.subscriptionTier === 'enterprise').length}
+              {users.filter((u: AdminUser) => u.subscriptionStatus === 'paid').length}
             </div>
           </CardContent>
         </Card>
@@ -267,7 +265,7 @@ export default function AdminUsers() {
                     <TableHead>User</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
-                    <TableHead>Subscription</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Joined</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -289,7 +287,7 @@ export default function AdminUsers() {
                       </TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{getRoleBadge(user.role)}</TableCell>
-                      <TableCell>{getSubscriptionBadge(user.subscriptionTier)}</TableCell>
+                      <TableCell>{getSubscriptionBadge(user.subscriptionStatus)}</TableCell>
                       <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
@@ -352,7 +350,7 @@ export default function AdminUsers() {
             <AlertDialogHeader>
               <AlertDialogTitle>Edit User: {editingUser.firstName} {editingUser.lastName}</AlertDialogTitle>
               <AlertDialogDescription>
-                Update user role and subscription tier
+                Update user role and subscription status
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="space-y-4 py-4">
@@ -372,18 +370,17 @@ export default function AdminUsers() {
                 </Select>
               </div>
               <div>
-                <label className="text-sm font-medium">Subscription Tier</label>
+                <label className="text-sm font-medium">Subscription Status</label>
                 <Select
-                  defaultValue={editingUser.subscriptionTier}
-                  onValueChange={(value) => setEditingUser({ ...editingUser, subscriptionTier: value })}
+                  defaultValue={editingUser.subscriptionStatus}
+                  onValueChange={(value) => setEditingUser({ ...editingUser, subscriptionStatus: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="free">Free</SelectItem>
-                    <SelectItem value="pro">Pro</SelectItem>
-                    <SelectItem value="enterprise">Enterprise</SelectItem>
+                    <SelectItem value="trial">Trial</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -395,7 +392,7 @@ export default function AdminUsers() {
                   userId: editingUser.id,
                   updates: {
                     role: editingUser.role,
-                    subscriptionTier: editingUser.subscriptionTier
+                    subscriptionStatus: editingUser.subscriptionStatus
                   }
                 })}
                 disabled={updateUserMutation.isPending}

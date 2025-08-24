@@ -21,7 +21,9 @@ export const users = pgTable("users", {
   lastName: text("last_name").notNull(),
   profileImageUrl: text("profile_image_url"),
   role: text("role").notNull().default("user"),
-  subscriptionTier: text("subscription_tier").default("free"),
+  subscriptionStatus: text("subscription_status").notNull().default("trial"),
+  trialStartDate: timestamp("trial_start_date").defaultNow(),
+  trialEndDate: timestamp("trial_end_date"),
   darkMode: boolean("dark_mode").default(false),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
@@ -119,7 +121,7 @@ export const signInSchema = z.object({
 export const updateProfileSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  subscriptionTier: z.enum(["free", "pro", "enterprise"]).optional(),
+  subscriptionStatus: z.enum(["trial", "paid"]).optional(),
   darkMode: z.boolean().optional(),
 });
 
@@ -177,10 +179,22 @@ export type TemperatureLog = typeof temperatureLogs.$inferSelect;
 export type CreateFridgeData = z.infer<typeof createFridgeSchema>;
 export type LogTemperatureData = z.infer<typeof logTemperatureSchema>;
 
-export const subscriptionTiers = {
-  FREE: "free",
-  PRO: "pro", 
-  ENTERPRISE: "enterprise"
+// Helper function to calculate trial end date (14 days from start)
+export function calculateTrialEndDate(startDate: Date): Date {
+  const endDate = new Date(startDate);
+  endDate.setDate(endDate.getDate() + 14);
+  return endDate;
+}
+
+// Helper function to check if trial has expired
+export function isTrialExpired(trialEndDate: Date | null): boolean {
+  if (!trialEndDate) return false;
+  return new Date() > trialEndDate;
+}
+
+export const subscriptionStatus = {
+  TRIAL: "trial",
+  PAID: "paid"
 } as const;
 
 export const userRoles = {
@@ -188,5 +202,5 @@ export const userRoles = {
   ADMIN: "admin"
 } as const;
 
-export type SubscriptionTier = typeof subscriptionTiers[keyof typeof subscriptionTiers];
+export type SubscriptionStatus = typeof subscriptionStatus[keyof typeof subscriptionStatus];
 export type UserRole = typeof userRoles[keyof typeof userRoles];

@@ -21,7 +21,7 @@ interface AdminUser {
   firstName: string;
   lastName: string;
   role: string;
-  subscriptionTier: string;
+  subscriptionStatus: string;
   createdAt: string;
 }
 
@@ -70,38 +70,20 @@ export default function AdminSubscriptions() {
 
   // Calculate subscription statistics
   const subscriptionStats: SubscriptionStats = {
-    totalRevenue: users.reduce((total: number, user: AdminUser) => {
-      switch (user.subscriptionTier) {
-        case "pro": return total + 29;
-        case "enterprise": return total + 99;
-        default: return total;
-      }
-    }, 0),
-    monthlyRevenue: users.reduce((total: number, user: AdminUser) => {
-      switch (user.subscriptionTier) {
-        case "pro": return total + 29;
-        case "enterprise": return total + 99;
-        default: return total;
-      }
-    }, 0),
+    totalRevenue: users.filter((u: AdminUser) => u.subscriptionStatus === "paid").length * 29,
+    monthlyRevenue: users.filter((u: AdminUser) => u.subscriptionStatus === "paid").length * 29,
     subscriptionBreakdown: [
       { 
-        tier: "Free", 
-        count: users.filter((u: AdminUser) => u.subscriptionTier === "free").length,
+        tier: "Trial", 
+        count: users.filter((u: AdminUser) => u.subscriptionStatus === "trial").length,
         color: "#94a3b8",
         revenue: 0
       },
       { 
-        tier: "Pro", 
-        count: users.filter((u: AdminUser) => u.subscriptionTier === "pro").length,
-        color: "#3b82f6",
-        revenue: users.filter((u: AdminUser) => u.subscriptionTier === "pro").length * 29
-      },
-      { 
-        tier: "Enterprise", 
-        count: users.filter((u: AdminUser) => u.subscriptionTier === "enterprise").length,
-        color: "#8b5cf6",
-        revenue: users.filter((u: AdminUser) => u.subscriptionTier === "enterprise").length * 99
+        tier: "Paid", 
+        count: users.filter((u: AdminUser) => u.subscriptionStatus === "paid").length,
+        color: "#22c55e",
+        revenue: users.filter((u: AdminUser) => u.subscriptionStatus === "paid").length * 29
       }
     ],
     revenueGrowth: [
@@ -172,25 +154,25 @@ export default function AdminSubscriptions() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Pro Subscribers</CardTitle>
+            <CardTitle className="text-sm font-medium">Trial Users</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {users.filter((u: AdminUser) => u.subscriptionTier === 'pro').length}
+              {users.filter((u: AdminUser) => u.subscriptionStatus === 'trial').length}
             </div>
-            <p className="text-xs text-muted-foreground">${users.filter((u: AdminUser) => u.subscriptionTier === 'pro').length * 29}/mo</p>
+            <p className="text-xs text-muted-foreground">Free trial period</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Enterprise Subscribers</CardTitle>
+            <CardTitle className="text-sm font-medium">Paid Subscribers</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {users.filter((u: AdminUser) => u.subscriptionTier === 'enterprise').length}
+              {users.filter((u: AdminUser) => u.subscriptionStatus === 'paid').length}
             </div>
-            <p className="text-xs text-muted-foreground">${users.filter((u: AdminUser) => u.subscriptionTier === 'enterprise').length * 99}/mo</p>
+            <p className="text-xs text-muted-foreground">${users.filter((u: AdminUser) => u.subscriptionStatus === 'paid').length * 29}/mo</p>
           </CardContent>
         </Card>
       </div>

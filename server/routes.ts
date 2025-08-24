@@ -133,8 +133,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create comprehensive CSV content
       let csvContent = 'User Profile\n';
-      csvContent += `ID,Email,First Name,Last Name,Role,Subscription Tier,Dark Mode,Created At\n`;
-      csvContent += `"${user.id}","${user.email || ''}","${user.firstName || ''}","${user.lastName || ''}","${user.role}","${user.subscriptionTier}","${user.darkMode}","${user.createdAt}"\n\n`;
+      csvContent += `ID,Email,First Name,Last Name,Role,Subscription Status,Dark Mode,Created At\n`;
+      csvContent += `"${user.id}","${user.email || ''}","${user.firstName || ''}","${user.lastName || ''}","${user.role}","${user.subscriptionStatus}","${user.darkMode}","${user.createdAt}"\n\n`;
       
       csvContent += 'Temperature Logs\n';
       csvContent += 'Fridge Name,Temperature,Person Name,Date,Time,Alert Status\n';
@@ -165,9 +165,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/admin/users/:userId", requireAdmin, async (req, res) => {
     try {
       const { userId } = req.params;
-      const { role, subscriptionTier } = req.body;
+      const { role, subscriptionStatus } = req.body;
       
-      const updatedUser = await storage.updateUser(userId, { role, subscriptionTier });
+      const updatedUser = await storage.updateUser(userId, { role, subscriptionStatus });
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -607,39 +607,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const users = await storage.getAllUsers();
       const totalUsers = users.length;
-      const totalSubscriptions = users.filter(u => u.subscriptionTier !== "free").length;
+      const totalSubscriptions = users.filter(u => u.subscriptionStatus === "paid").length;
       
-      // Calculate monthly revenue (simplified calculation)
-      const monthlyRevenue = users.reduce((total, user) => {
-        switch (user.subscriptionTier) {
-          case "pro": return total + 29;
-          case "enterprise": return total + 99;
-          default: return total;
-        }
-      }, 0);
+      // Calculate monthly revenue (simplified $29/month for paid users)
+      const monthlyRevenue = totalSubscriptions * 29;
 
       // Get active alerts count (temperature readings out of range)
       const activeAlerts = await storage.getActiveAlertsCount();
 
-      // Generate user growth data (last 6 months)
-      const userGrowth = await generateUserGrowthData();
+      // Generate real user growth data (last 6 months)
+      const userGrowth = await generateRealUserGrowthData();
 
       // Generate subscription breakdown
       const subscriptionBreakdown = [
         { 
-          tier: "Free", 
-          count: users.filter(u => u.subscriptionTier === "free").length,
+          tier: "Trial", 
+          count: users.filter(u => u.subscriptionStatus === "trial").length,
           color: "#94a3b8"
         },
         { 
-          tier: "Pro", 
-          count: users.filter(u => u.subscriptionTier === "pro").length,
-          color: "#3b82f6"
-        },
-        { 
-          tier: "Enterprise", 
-          count: users.filter(u => u.subscriptionTier === "enterprise").length,
-          color: "#8b5cf6"
+          tier: "Paid", 
+          count: users.filter(u => u.subscriptionStatus === "paid").length,
+          color: "#22c55e"
         }
       ];
 
@@ -661,9 +650,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/admin/users/:userId", requireAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
-      const { role, subscriptionTier } = req.body;
+      const { role, subscriptionStatus } = req.body;
       
-      const updatedUser = await storage.updateUser(userId, { role, subscriptionTier });
+      const updatedUser = await storage.updateUser(userId, { role, subscriptionStatus });
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -692,17 +681,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Helper function to generate user growth data
-  async function generateUserGrowthData() {
+  // Helper function to generate real user growth data
+  async function generateRealUserGrowthData() {
     const months = [];
     const currentDate = new Date();
     
     for (let i = 5; i >= 0; i--) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - i + 1, 1);
       const monthName = date.toLocaleDateString('en-US', { month: 'short' });
       
-      // Simplified - in real app, query users created in that month
-      const userCount = Math.floor(Math.random() * 20) + 5;
+      // Get actual users created in this month
+      const allUsers = await storage.getAllUsers();
+      const userCount = allUsers.filter(user => {
+        if (!user.createdAt) return false;
+        const createdDate = new Date(user.createdAt);
+        return createdDate >= date && createdDate < nextMonth;
+      }).length;
+      
       months.push({ month: monthName, users: userCount });
     }
     
