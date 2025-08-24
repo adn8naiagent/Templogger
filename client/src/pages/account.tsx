@@ -250,10 +250,12 @@ export default function Account() {
               
               {user?.subscriptionStatus === 'trial' && (
                 <div className="text-center pt-2">
-                  <Button className="w-full" data-testid="button-upgrade-now">
-                    <Star className="h-4 w-4 mr-2" />
-                    Upgrade Now
-                  </Button>
+                  <Link href="/subscribe">
+                    <Button className="w-full" data-testid="button-upgrade-now">
+                      <Star className="h-4 w-4 mr-2" />
+                      Upgrade Now
+                    </Button>
+                  </Link>
                 </div>
               )}
             </div>

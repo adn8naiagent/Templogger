@@ -4,7 +4,7 @@ import { apiRequest } from "@/lib/queryClient";
 export function useAuth() {
   const queryClient = useQueryClient();
   
-  const { data: user, isLoading } = useQuery({
+  const { data: user, isLoading, refetch } = useQuery({
     queryKey: ["/api/auth/user"],
     retry: false,
   });
@@ -30,5 +30,6 @@ export function useAuth() {
     isLoading,
     isAuthenticated: !!user,
     logout,
+    refetch,
   };
 }

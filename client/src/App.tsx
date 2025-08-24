@@ -10,6 +10,8 @@ import Signup from "@/pages/auth/signup";
 import Home from "@/pages/home";
 import Account from "@/pages/account";
 import Settings from "@/pages/settings";
+import Subscribe from "@/pages/subscribe";
+import SubscribeSuccess from "@/pages/subscribe/success";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminUsers from "@/pages/admin/users";
 import AdminSubscriptions from "@/pages/admin/subscriptions";
@@ -31,6 +33,8 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/account" component={Account} />
           <Route path="/settings" component={Settings} />
+          <Route path="/subscribe" component={Subscribe} />
+          <Route path="/subscribe/success" component={SubscribeSuccess} />
           <Route path="/admin/dashboard" component={AdminDashboard} />
           <Route path="/admin/users" component={AdminUsers} />
           <Route path="/admin/subscriptions" component={AdminSubscriptions} />

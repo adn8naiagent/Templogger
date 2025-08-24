@@ -12,6 +12,15 @@ import {
   type User 
 } from "@shared/schema";
 import bcrypt from "bcrypt";
+import Stripe from "stripe";
+
+// Initialize Stripe
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2025-07-30.basil",
+});
 
 // Note: requireAdmin is now imported from ./auth
 
@@ -183,6 +192,144 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Export data error:", error);
       res.status(500).json({ error: "Failed to export user data" });
+    }
+  });
+
+  // Stripe subscription endpoints
+  
+  // Create subscription for trial users
+  app.post('/api/create-subscription', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // Check if user already has a subscription
+      if (user.subscriptionStatus === 'paid') {
+        return res.status(400).json({ error: "User already has a paid subscription" });
+      }
+
+      let stripeCustomerId = user.stripeCustomerId;
+
+      // Create Stripe customer if doesn't exist
+      if (!stripeCustomerId) {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: `${user.firstName} ${user.lastName}`,
+        });
+        
+        stripeCustomerId = customer.id;
+        await storage.updateUser(userId, { stripeCustomerId });
+      }
+
+      // Create a product and price first
+      const product = await stripe.products.create({
+        name: 'TempGuard Pro Monthly',
+        description: 'Professional temperature monitoring for healthcare facilities',
+      });
+
+      const price = await stripe.prices.create({
+        product: product.id,
+        currency: 'usd',
+        unit_amount: 1000, // $10.00 in cents
+        recurring: {
+          interval: 'month',
+        },
+      });
+
+      // Create subscription
+      const subscription = await stripe.subscriptions.create({
+        customer: stripeCustomerId,
+        items: [{
+          price: price.id,
+        }],
+        payment_behavior: 'default_incomplete',
+        expand: ['latest_invoice.payment_intent'],
+      });
+
+      // Update user with subscription info
+      await storage.updateUser(userId, {
+        stripeSubscriptionId: subscription.id,
+      });
+
+      const latestInvoice = subscription.latest_invoice as any;
+      res.json({
+        subscriptionId: subscription.id,
+        clientSecret: latestInvoice?.payment_intent?.client_secret,
+      });
+    } catch (error: any) {
+      console.error("Create subscription error:", error);
+      res.status(500).json({ error: "Failed to create subscription" });
+    }
+  });
+
+  // Handle successful subscription payment
+  app.post('/api/subscription-success', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      const { subscriptionId } = req.body;
+
+      // Verify subscription with Stripe
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+      
+      if (subscription.status === 'active') {
+        // Update user to paid status
+        await storage.updateUser(userId, {
+          subscriptionStatus: 'paid',
+        });
+
+        res.json({ 
+          message: "Subscription activated successfully",
+          status: "active"
+        });
+      } else {
+        res.status(400).json({ 
+          error: "Subscription payment not completed",
+          status: subscription.status
+        });
+      }
+    } catch (error: any) {
+      console.error("Subscription success error:", error);
+      res.status(500).json({ error: "Failed to activate subscription" });
+    }
+  });
+
+  // Get subscription status
+  app.get('/api/subscription-status', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      let stripeStatus = null;
+      if (user.stripeSubscriptionId) {
+        try {
+          const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+          stripeStatus = {
+            id: subscription.id,
+            status: subscription.status,
+            current_period_end: subscription.current_period_end,
+            cancel_at_period_end: subscription.cancel_at_period_end,
+          };
+        } catch (error) {
+          console.error("Error fetching Stripe subscription:", error);
+        }
+      }
+
+      res.json({
+        subscriptionStatus: user.subscriptionStatus,
+        trialEndDate: user.trialEndDate,
+        stripeStatus,
+      });
+    } catch (error: any) {
+      console.error("Get subscription status error:", error);
+      res.status(500).json({ error: "Failed to get subscription status" });
     }
   });
 
