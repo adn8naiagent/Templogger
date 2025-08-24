@@ -54,6 +54,7 @@ export default function Account() {
   const profileForm = useForm<UpdateProfileData>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
+      email: user?.email || "",
       firstName: user?.firstName || "",
       lastName: user?.lastName || "",
     },
@@ -297,6 +298,20 @@ export default function Account() {
 
             <Form {...profileForm}>
               <form onSubmit={profileForm.handleSubmit((data) => updateProfileMutation.mutate(data))} className="space-y-4">
+                <FormField
+                  control={profileForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email Address</FormLabel>
+                      <FormControl>
+                        <Input type="email" {...field} data-testid="input-email" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
                 <div className="grid grid-cols-2 gap-3">
                   <FormField
                     control={profileForm.control}

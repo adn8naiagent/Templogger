@@ -64,6 +64,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.userId;
+      
+      // Check if email is being updated and if it's already taken
+      if (result.data.email) {
+        const existingUser = await storage.getUserByEmail(result.data.email);
+        if (existingUser && existingUser.id !== userId) {
+          return res.status(400).json({ 
+            error: "Email already in use by another account" 
+          });
+        }
+      }
+      
       const updatedUser = await storage.updateUser(userId, result.data);
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
