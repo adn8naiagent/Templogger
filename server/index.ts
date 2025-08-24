@@ -44,22 +44,47 @@ const authLimiter = rateLimit({
 });
 app.use("/auth", authLimiter);
 
-// Session configuration
-app.use(session({
-  store: new PgSession({
-    pool: new Pool({ connectionString: process.env.DATABASE_URL }),
-    tableName: "session",
-    createTableIfMissing: true,
-  }),
-  secret: process.env.SESSION_SECRET || "dev-secret-change-in-production",
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === "production",
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-  },
-}));
+// Session configuration with PostgreSQL store and fallback
+let sessionConfig: session.SessionOptions;
+
+try {
+  // Try to use PostgreSQL session store
+  sessionConfig = {
+    store: new PgSession({
+      pool: new Pool({
+        connectionString: process.env.DATABASE_URL,
+      }),
+      tableName: 'user_sessions',
+      createTableIfMissing: true,
+    }),
+    secret: process.env.SESSION_SECRET || "dev-secret-change-in-production",
+    resave: false,
+    saveUninitialized: false,
+    name: "sessionId",
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax"
+    },
+  };
+} catch (error) {
+  console.warn("Failed to initialize PostgreSQL session store, falling back to memory store:", error);
+  // Fallback to memory store for development
+  sessionConfig = {
+    secret: process.env.SESSION_SECRET || "dev-secret-change-in-production",
+    resave: false,
+    saveUninitialized: false,
+    name: "sessionId",
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax"
+    },
+  };
+}
+
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
@@ -107,6 +132,18 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// Setup session middleware with error handling
+app.use((req, res, next) => {
+  session(sessionConfig)(req, res, (err) => {
+    if (err) {
+      console.error("Session middleware error:", err);
+      // Continue without session in case of error
+    }
+    next();
+  });
+});
+
 
 (async () => {
   const server = await registerRoutes(app);

@@ -7,16 +7,16 @@ export default function Home() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
 
-  // Redirect to home if not authenticated
+  // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
+        title: "Please sign in",
+        description: "You need to sign in to access this page.",
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        window.location.href = "/auth/login";
       }, 500); // Wait for 0.5 second before redirecting
       return;
     }
