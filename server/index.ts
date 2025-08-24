@@ -62,13 +62,15 @@ app.use(session({
     }),
   secret: process.env.SESSION_SECRET || "dev-secret-change-in-production",
   resave: false,
-  saveUninitialized: false,
-  name: "connect.sid", // Explicitly set session cookie name
+  saveUninitialized: true, // Change to true to force cookie creation
+  name: "connect.sid",
   cookie: {
-    secure: false, // Set to false for development, even in HTTPS
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: "lax", // Explicitly set sameSite for cross-origin requests
+    secure: false,
+    httpOnly: false, // Keep false for debugging
+    maxAge: 24 * 60 * 60 * 1000,
+    sameSite: "lax", // Use lax instead of none when secure is false
+    domain: undefined,
+    path: "/",
   },
 }));
 
@@ -98,8 +100,22 @@ app.use((req, res, next) => {
     console.log("Method:", req.method);
     console.log("Cookies received:", req.headers.cookie);
     console.log("Session ID:", req.sessionID);
+    console.log("Host:", req.headers.host);
+    console.log("Origin:", req.headers.origin);
     console.log("=====================");
   }
+  
+  // Also debug response headers
+  const originalSetHeader = res.setHeader;
+  res.setHeader = function(name, value) {
+    if (req.path.startsWith("/api/auth") && name.toLowerCase() === 'set-cookie') {
+      console.log("=== RESPONSE DEBUG ===");
+      console.log("Setting cookie:", value);
+      console.log("======================");
+    }
+    return originalSetHeader.call(this, name, value);
+  };
+  
   next();
 });
 
