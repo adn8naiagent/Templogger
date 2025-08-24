@@ -67,12 +67,20 @@ export async function signUp(req: Request, res: Response) {
       role: "user",
     });
 
-    // Set session
+    // Set session and save it explicitly
     req.session.userId = user.id;
-
-    // Return user without password
-    const { password: _, ...userWithoutPassword } = user;
-    res.status(201).json(userWithoutPassword);
+    
+    // Explicitly save the session before responding
+    req.session.save((err) => {
+      if (err) {
+        console.error("Session save error:", err);
+        return res.status(500).json({ error: "Failed to save session" });
+      }
+      
+      // Return user without password
+      const { password: _, ...userWithoutPassword } = user;
+      res.status(201).json(userWithoutPassword);
+    });
   } catch (error: any) {
     console.error("Sign up error:", error);
     res.status(500).json({ error: "Failed to create account" });
@@ -104,12 +112,20 @@ export async function signIn(req: Request, res: Response) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    // Set session
+    // Set session and save it explicitly
     req.session.userId = user.id;
-
-    // Return user without password
-    const { password: _, ...userWithoutPassword } = user;
-    res.json(userWithoutPassword);
+    
+    // Explicitly save the session before responding
+    req.session.save((err) => {
+      if (err) {
+        console.error("Session save error:", err);
+        return res.status(500).json({ error: "Failed to save session" });
+      }
+      
+      // Return user without password
+      const { password: _, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    });
   } catch (error: any) {
     console.error("Sign in error:", error);
     res.status(500).json({ error: "Failed to sign in" });
