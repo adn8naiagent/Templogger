@@ -303,14 +303,19 @@ export default function TempLogger() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
       {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-50">
-        <div className="max-w-md mx-auto px-4 py-4">
+      <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Thermometer className="h-6 w-6 text-blue-600" />
-              <h1 className="text-lg font-bold text-foreground">FridgeSafe</h1>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-600 rounded-lg">
+                <Thermometer className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-slate-900 dark:text-white">FridgeSafe</h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400 hidden sm:block">Temperature Compliance System</p>
+              </div>
             </div>
             
             <DropdownMenu>
@@ -361,144 +366,189 @@ export default function TempLogger() {
         </div>
       </header>
 
-      <div className="p-4 max-w-md mx-auto" data-testid="temp-logger-container">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" data-testid="temp-logger-container">
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-2">
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-xl font-bold text-foreground">Temperature Monitoring</h2>
-              <p className="text-muted-foreground">Monitor your pharmacy fridges</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">Temperature Monitoring</h2>
+              <p className="text-slate-600 dark:text-slate-300 mt-1">Monitor and track compliance across all pharmacy fridges</p>
             </div>
-            <Button 
-              onClick={handleExport} 
-              variant="outline" 
-              size="sm" 
-              data-testid="button-export"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
+            <div className="flex gap-3">
+              <Button 
+                onClick={handleExport} 
+                variant="outline" 
+                size="default"
+                className="border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
+                data-testid="button-export"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export Data
+              </Button>
+            </div>
           </div>
           
           {alertFridges.length > 0 && (
-            <Alert variant="destructive" className="mt-4" data-testid="alert-banner">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                {alertFridges.length} fridge{alertFridges.length > 1 ? 's' : ''} with temperature alerts!
+            <Alert variant="destructive" className="border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800" data-testid="alert-banner">
+              <AlertTriangle className="h-5 w-5" />
+              <AlertDescription className="text-red-800 dark:text-red-200 font-medium">
+                <span className="font-semibold">{alertFridges.length}</span> fridge{alertFridges.length > 1 ? 's' : ''} require immediate attention!
               </AlertDescription>
             </Alert>
           )}
         </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <Link href="/add-fridge">
-          <Button className="h-16 text-lg" data-testid="button-add-fridge">
-            <div className="flex flex-col items-center gap-1">
-              <Plus className="h-6 w-6" />
-              <span>Add Fridge</span>
-            </div>
-          </Button>
-        </Link>
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          <Link href="/add-fridge">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                    <Plus className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">Add Fridge</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Configure new monitoring</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
 
-        <Button variant="outline" className="h-16 text-lg" onClick={handleExport} data-testid="button-export">
-          <div className="flex flex-col items-center gap-1">
-            <Download className="h-6 w-6" />
-            <span>Export CSV</span>
-          </div>
-        </Button>
-      </div>
+          <Link href="/compliance">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                    <BarChart3 className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">Compliance Dashboard</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">View detailed analytics</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
 
-      {/* Log Temperature Form */}
-      {fridges.length > 0 && (
-        <Card className="mb-6" data-testid="log-temperature-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Thermometer className="h-5 w-5" />
-              Log Temperature
-            </CardTitle>
-            <CardDescription>Record a new temperature reading</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...tempForm}>
-              <form onSubmit={tempForm.handleSubmit((data) => logTempMutation.mutate(data))} className="space-y-4">
-                <FormField
-                  control={tempForm.control}
-                  name="fridgeId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Select Fridge</FormLabel>
-                      <Select onValueChange={(value) => {
-                        field.onChange(value);
-                        setSelectedFridgeId(value);
-                      }} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger data-testid="select-fridge">
-                            <SelectValue placeholder="Choose a fridge" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {fridges.map((fridge: Fridge) => (
-                            <SelectItem key={fridge.id} value={fridge.id} data-testid={`fridge-option-${fridge.name}`}>
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded" style={{ backgroundColor: fridge.color }} />
-                                <span>{fridge.name}</span>
-                                {fridge.location && (
-                                  <span className="text-muted-foreground text-sm">({fridge.location})</span>
+          <Card className="hover:shadow-md transition-shadow cursor-pointer border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800" onClick={handleExport}>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                  <Download className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-900 dark:text-white">Export Data</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Download CSV report</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Log Temperature Form */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {fridges.length > 0 && (
+            <div className="lg:col-span-2">
+              <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm" data-testid="log-temperature-card">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-3 text-xl">
+                    <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                      <Thermometer className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    Log Temperature Reading
+                  </CardTitle>
+                  <CardDescription className="text-slate-600 dark:text-slate-300">Record a new temperature measurement with compliance tracking</CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <Form {...tempForm}>
+                    <form onSubmit={tempForm.handleSubmit((data) => logTempMutation.mutate(data))} className="space-y-6">
+                      <FormField
+                        control={tempForm.control}
+                        name="fridgeId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-200">Select Fridge *</FormLabel>
+                            <Select onValueChange={(value) => {
+                              field.onChange(value);
+                              setSelectedFridgeId(value);
+                            }} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="h-11 border-slate-300 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400" data-testid="select-fridge">
+                                  <SelectValue placeholder="Choose a fridge to monitor" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent className="border-slate-200 dark:border-slate-700">
+                                {fridges.map((fridge: Fridge) => (
+                                  <SelectItem key={fridge.id} value={fridge.id} data-testid={`fridge-option-${fridge.name}`} className="py-3">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-4 h-4 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: fridge.color }} />
+                                      <div>
+                                        <span className="font-medium">{fridge.name}</span>
+                                        {fridge.location && (
+                                          <span className="text-slate-500 dark:text-slate-400 text-sm ml-2">— {fridge.location}</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {selectedFridgeId && (
+                        <>
+                          <FormField
+                            control={tempForm.control}
+                            name="temperature"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-200">Temperature Reading (°C) *</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    {...field} 
+                                    type="number" 
+                                    step="0.1" 
+                                    placeholder="e.g. 4.5" 
+                                    className="h-11 border-slate-300 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400 text-lg"
+                                    data-testid="input-temperature"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                                {field.value && checkTemperatureRange(field.value, selectedFridgeId) && (
+                                  <Alert variant="destructive" className="mt-3 border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800">
+                                    <AlertTriangle className="h-5 w-5" />
+                                    <AlertDescription className="text-red-800 dark:text-red-200 font-medium">
+                                      ⚠️ Temperature is out of safe range! Corrective action required.
+                                    </AlertDescription>
+                                  </Alert>
                                 )}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                              </FormItem>
+                            )}
+                          />
 
-                {selectedFridgeId && (
-                  <>
-                    <FormField
-                      control={tempForm.control}
-                      name="temperature"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Temperature (°C)</FormLabel>
-                          <FormControl>
-                            <Input 
-                              {...field} 
-                              type="number" 
-                              step="0.1" 
-                              placeholder="e.g. 4.5" 
-                              data-testid="input-temperature"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                          {field.value && checkTemperatureRange(field.value, selectedFridgeId) && (
-                            <Alert variant="destructive" className="mt-2">
-                              <AlertTriangle className="h-4 w-4" />
-                              <AlertDescription>
-                                Temperature is out of range! Corrective action required.
-                              </AlertDescription>
-                            </Alert>
-                          )}
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={tempForm.control}
-                      name="personName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Your Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Enter your name" data-testid="input-person-name" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                          <FormField
+                            control={tempForm.control}
+                            name="personName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-200">Staff Member Name *</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    {...field} 
+                                    placeholder="Enter your full name" 
+                                    className="h-11 border-slate-300 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400"
+                                    data-testid="input-person-name" 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
                     {/* Time Window Selection */}
                     {timeWindows.length > 0 && (
@@ -622,148 +672,211 @@ export default function TempLogger() {
                       </>
                     )}
 
-                    <Button 
-                      type="submit" 
-                      className="w-full" 
-                      disabled={logTempMutation.isPending}
-                      data-testid="button-log-temperature"
-                    >
-                      {logTempMutation.isPending ? (
-                        <>
-                          <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2" />
-                          Logging...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle2 className="h-4 w-4 mr-2" />
-                          Log Temperature
+                          <Button 
+                            type="submit" 
+                            className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base shadow-sm" 
+                            disabled={logTempMutation.isPending}
+                            data-testid="button-log-temperature"
+                          >
+                            {logTempMutation.isPending ? (
+                              <>
+                                <div className="animate-spin w-5 h-5 border-2 border-current border-t-transparent rounded-full mr-3" />
+                                Recording Temperature...
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle2 className="h-5 w-5 mr-3" />
+                                Record Temperature Reading
+                              </>
+                            )}
+                          </Button>
                         </>
                       )}
-                    </Button>
-                  </>
-                )}
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-      )}
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
-      {/* Fridge List */}
-      <div className="space-y-3">
-        <h3 className="text-lg font-semibold text-foreground">Your Fridges</h3>
-        
-        {fridgesLoading ? (
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-20 bg-muted rounded-lg animate-pulse" />
-            ))}
-          </div>
-        ) : fridges.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <Refrigerator className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                <p className="text-muted-foreground">No fridges added yet</p>
-                <Link href="/add-fridge">
-                  <Button className="mt-2" data-testid="button-add-first-fridge">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Your First Fridge
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          fridges.map((fridge: Fridge) => (
-            <Card 
-              key={fridge.id} 
-              className={`border-l-4 ${
-                fridge.isAlarm ? 'border-l-red-500 bg-red-50 dark:bg-red-950/20' : 
-                fridge.status === 'warning' ? 'border-l-yellow-500 bg-yellow-50 dark:bg-yellow-950/20' :
-                'border-l-green-500'
-              }`}
-              data-testid={`fridge-card-${fridge.name}`}
-            >
-              <CardContent className="pt-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className="w-3 h-3 rounded" style={{ backgroundColor: fridge.color }} />
-                      <h4 className="font-semibold text-foreground">{fridge.name}</h4>
-                      <Badge 
-                        variant={fridge.status === 'critical' ? 'destructive' : fridge.status === 'warning' ? 'secondary' : 'default'}
-                        className="text-xs"
-                      >
-                        {fridge.complianceScore}% compliance
-                      </Badge>
-                    </div>
-                    
-                    {fridge.location && (
-                      <p className="text-sm text-muted-foreground mb-2 flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {fridge.location}
-                      </p>
-                    )}
-
-                    {fridge.labels && fridge.labels.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {fridge.labels.map((label, index) => {
-                          const labelObj = labels.find((l: Label) => l.name === label);
-                          return (
-                            <Badge key={index} variant="outline" className="text-xs" style={{
-                              borderColor: labelObj?.color,
-                              color: labelObj?.color
-                            }}>
-                              {label}
-                            </Badge>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    <div className="text-sm text-muted-foreground">
-                      Range: {fridge.minTemp}°C to {fridge.maxTemp}°C
-                    </div>
-                  </div>
-                  
-                  <div className="text-right">
-                    {fridge.recentTemp ? (
-                      <>
-                        <div className={`text-xl font-bold ${
-                          fridge.recentTemp.isOutOfRange ? 'text-red-600' : 'text-green-600'
-                        }`}>
-                          {fridge.recentTemp.temperature}°C
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          by {fridge.recentTemp.personName}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {new Date(fridge.recentTemp.timestamp).toLocaleString()}
-                        </div>
-                        {fridge.recentTemp.isOutOfRange && (
-                          <Badge variant="destructive" className="text-xs mt-1">
-                            Out of Range
-                          </Badge>
-                        )}
-                        {!fridge.recentTemp.isOnTime && (
-                          <Badge variant="secondary" className="text-xs mt-1">
-                            Late Entry
-                          </Badge>
-                        )}
-                      </>
-                    ) : (
-                      <div className="text-sm text-muted-foreground">
-                        No recent reading
-                      </div>
-                    )}
-                  </div>
+          {/* Sidebar - Quick Stats */}
+          <div className="lg:col-span-1">
+            <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg text-slate-900 dark:text-white">Quick Overview</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600 dark:text-slate-300">Total Fridges</span>
+                  <Badge variant="outline" className="font-medium">{fridges.length}</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600 dark:text-slate-300">Alerts</span>
+                  <Badge variant={alertFridges.length > 0 ? "destructive" : "default"} className="font-medium">
+                    {alertFridges.length}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600 dark:text-slate-300">Avg. Compliance</span>
+                  <Badge variant="default" className="font-medium">
+                    {fridges.length > 0 ? Math.round(fridges.reduce((acc: number, f: Fridge) => acc + f.complianceScore, 0) / fridges.length) : 0}%
+                  </Badge>
                 </div>
               </CardContent>
             </Card>
-          ))
-        )}
+          </div>
+        </div>
+
+        {/* Fridge List */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Your Fridges</h3>
+            <div className="text-sm text-slate-500 dark:text-slate-400">
+              {fridges.length} fridge{fridges.length !== 1 ? 's' : ''} total
+            </div>
+          </div>
+        
+          {fridgesLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-40 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse" />
+              ))}
+            </div>
+          ) : fridges.length === 0 ? (
+            <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+              <CardContent className="pt-12 pb-12">
+                <div className="text-center">
+                  <div className="mx-auto w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mb-4">
+                    <Refrigerator className="h-8 w-8 text-slate-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No fridges configured</h3>
+                  <p className="text-slate-500 dark:text-slate-400 mb-6">Get started by adding your first fridge for temperature monitoring</p>
+                  <Link href="/add-fridge">
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white" data-testid="button-add-first-fridge">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Your First Fridge
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {fridges.map((fridge: Fridge) => (
+                <Card 
+                  key={fridge.id} 
+                  className={`relative overflow-hidden border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm hover:shadow-md transition-all duration-200 ${
+                    fridge.isAlarm ? 'ring-2 ring-red-200 dark:ring-red-800' : 
+                    fridge.status === 'warning' ? 'ring-2 ring-yellow-200 dark:ring-yellow-800' :
+                    'hover:ring-2 hover:ring-blue-200 dark:hover:ring-blue-800'
+                  }`}
+                  data-testid={`fridge-card-${fridge.name}`}
+                >
+                  {/* Status indicator bar */}
+                  <div className={`absolute top-0 left-0 right-0 h-1 ${
+                    fridge.isAlarm ? 'bg-red-500' : 
+                    fridge.status === 'warning' ? 'bg-yellow-500' :
+                    'bg-green-500'
+                  }`} />
+                  
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      {/* Header */}
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-4 h-4 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: fridge.color }} />
+                          <div>
+                            <h4 className="font-semibold text-slate-900 dark:text-white text-lg">{fridge.name}</h4>
+                            {fridge.location && (
+                              <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-1">
+                                <MapPin className="h-3 w-3" />
+                                {fridge.location}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <Badge 
+                          variant={fridge.status === 'critical' ? 'destructive' : fridge.status === 'warning' ? 'secondary' : 'default'}
+                          className="font-medium"
+                        >
+                          {fridge.complianceScore}%
+                        </Badge>
+                      </div>
+                      
+                      {/* Labels */}
+                      {fridge.labels && fridge.labels.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {fridge.labels.map((label, index) => {
+                            const labelObj = labels.find((l: Label) => l.name === label);
+                            return (
+                              <Badge key={index} variant="outline" className="text-xs" style={{
+                                borderColor: labelObj?.color,
+                                color: labelObj?.color
+                              }}>
+                                {label}
+                              </Badge>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Temperature Range */}
+                      <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                        <Thermometer className="h-4 w-4" />
+                        <span>Range: {fridge.minTemp}°C to {fridge.maxTemp}°C</span>
+                      </div>
+                      
+                      {/* Recent Temperature */}
+                      <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4">
+                        {fridge.recentTemp ? (
+                          <>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Latest Reading</span>
+                              <div className={`text-2xl font-bold ${
+                                fridge.recentTemp.isOutOfRange ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
+                              }`}>
+                                {fridge.recentTemp.temperature}°C
+                              </div>
+                            </div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                              Recorded by {fridge.recentTemp.personName}
+                            </div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                              {new Date(fridge.recentTemp.timestamp).toLocaleString()}
+                            </div>
+                            <div className="flex gap-2">
+                              {fridge.recentTemp.isOutOfRange && (
+                                <Badge variant="destructive" className="text-xs">
+                                  Out of Range
+                                </Badge>
+                              )}
+                              {!fridge.recentTemp.isOnTime && (
+                                <Badge variant="secondary" className="text-xs">
+                                  Late Entry
+                                </Badge>
+                              )}
+                              {!fridge.recentTemp.isOutOfRange && fridge.recentTemp.isOnTime && (
+                                <Badge className="bg-green-600 text-xs">
+                                  Normal
+                                </Badge>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-center py-4">
+                            <Clock className="h-6 w-6 text-slate-400 mx-auto mb-2" />
+                            <div className="text-sm text-slate-500 dark:text-slate-400">No recent reading</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 }

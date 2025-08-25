@@ -186,48 +186,75 @@ export default function ComplianceDashboard() {
   const overdueChecklists = dueChecklists.filter(checklist => checklist.overdue);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
       {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
+      <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <Link href="/" className="flex items-center gap-2">
-                <Thermometer className="h-6 w-6 text-blue-600" />
-                <h1 className="text-xl font-bold text-foreground">FridgeSafe</h1>
+              <Link href="/" className="flex items-center gap-3">
+                <div className="p-2 bg-blue-600 rounded-lg">
+                  <Thermometer className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-slate-900 dark:text-white">FridgeSafe</h1>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 hidden sm:block">Compliance Dashboard</p>
+                </div>
               </Link>
-              <Badge variant="secondary">Compliance Dashboard</Badge>
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Button
                 variant="outline"
-                size="sm"
+                size="default"
                 onClick={() => setAutoRefresh(!autoRefresh)}
+                className="border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
                 data-testid="button-auto-refresh"
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${autoRefresh ? 'animate-spin' : ''}`} />
-                Auto Refresh {autoRefresh ? 'On' : 'Off'}
+                <span className="hidden sm:inline">Auto Refresh</span> {autoRefresh ? 'On' : 'Off'}
               </Button>
               
-              <Button variant="outline" size="sm" onClick={exportComplianceReport} data-testid="button-export">
+              <Button 
+                variant="outline" 
+                size="default" 
+                onClick={exportComplianceReport} 
+                className="border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
+                data-testid="button-export"
+              >
                 <Download className="h-4 w-4 mr-2" />
-                Export Report
+                <span className="hidden sm:inline">Export</span> Report
               </Button>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="default" className="border border-slate-300 dark:border-slate-600">
                     <Users className="h-4 w-4 mr-2" />
-                    {(user as any)?.firstName || 'User'}
+                    <span className="hidden sm:inline">{(user as any)?.firstName || (user as any)?.username || 'User'}</span>
+                    <span className="sm:hidden">Menu</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <Link href="/account">
-                    <DropdownMenuItem>Account</DropdownMenuItem>
-                  </Link>
+                <DropdownMenuContent align="end" className="w-48">
+                  <div className="px-2 py-1.5 text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      {(user as any)?.role === 'admin' && <Shield className="h-3 w-3 text-yellow-500" />}
+                      {(user as any)?.role === 'manager' && <Shield className="h-3 w-3 text-blue-500" />}
+                      {(user as any)?.role === 'staff' && <Users className="h-3 w-3 text-green-500" />}
+                      <span className="capitalize">{(user as any)?.role}</span>
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
                   <Link href="/">
-                    <DropdownMenuItem>Temperature Logger</DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Thermometer className="h-4 w-4 mr-2" />
+                      Temperature Logger
+                    </DropdownMenuItem>
+                  </Link>
+                  <Link href="/account">
+                    <DropdownMenuItem>
+                      <Users className="h-4 w-4 mr-2" />
+                      Account Settings
+                    </DropdownMenuItem>
                   </Link>
                   <DropdownMenuSeparator />
                   {(user as any)?.role === 'admin' && (
@@ -238,6 +265,10 @@ export default function ComplianceDashboard() {
                       </DropdownMenuItem>
                     </Link>
                   )}
+                  <DropdownMenuItem onClick={() => window.location.href = "/api/logout"}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -245,24 +276,26 @@ export default function ComplianceDashboard() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto p-6 space-y-6" data-testid="compliance-dashboard">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8" data-testid="compliance-dashboard">
         {/* Critical Alerts */}
         {(unresolvedCount.count > 0 || overdueChecklists.length > 0) && (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {unresolvedCount.count > 0 && (
-              <Alert variant="destructive" data-testid="unresolved-events-alert">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>{unresolvedCount.count} unresolved temperature events</strong> require immediate attention.
+              <Alert variant="destructive" className="border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800 shadow-sm" data-testid="unresolved-events-alert">
+                <AlertTriangle className="h-5 w-5" />
+                <AlertDescription className="text-red-800 dark:text-red-200">
+                  <div className="font-semibold">⚠️ Critical Temperature Events</div>
+                  <p className="mt-1"><span className="font-medium">{unresolvedCount.count}</span> unresolved temperature events require immediate attention.</p>
                 </AlertDescription>
               </Alert>
             )}
             
             {overdueChecklists.length > 0 && (
-              <Alert variant="destructive" data-testid="overdue-checklists-alert">
-                <ClipboardCheck className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>{overdueChecklists.length} overdue checklists</strong> need to be completed.
+              <Alert variant="destructive" className="border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800 shadow-sm" data-testid="overdue-checklists-alert">
+                <ClipboardCheck className="h-5 w-5" />
+                <AlertDescription className="text-red-800 dark:text-red-200">
+                  <div className="font-semibold">📋 Overdue Checklists</div>
+                  <p className="mt-1"><span className="font-medium">{overdueChecklists.length}</span> checklist{overdueChecklists.length > 1 ? 's' : ''} need to be completed.</p>
                 </AlertDescription>
               </Alert>
             )}
@@ -270,58 +303,69 @@ export default function ComplianceDashboard() {
         )}
 
         {/* Key Metrics Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card data-testid="metric-overall-compliance">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Overall Compliance</CardTitle>
-              <Target className="h-4 w-4 text-muted-foreground" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm" data-testid="metric-overall-compliance">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-200">Overall Compliance</CardTitle>
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                <Target className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
                 {overview?.overallComplianceRate?.toFixed(1) || 0}%
               </div>
-              <div className="flex items-center gap-2 mt-2">
-                <Progress value={overview?.overallComplianceRate || 0} className="flex-1" />
-                {getComplianceBadge(overview?.overallComplianceRate || 0)}
+              <div className="space-y-2">
+                <Progress value={overview?.overallComplianceRate || 0} className="h-2" />
+                <div className="flex justify-between items-center">
+                  {getComplianceBadge(overview?.overallComplianceRate || 0)}
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Target: 95%</span>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card data-testid="metric-active-fridges">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Monitored Fridges</CardTitle>
-              <Building2 className="h-4 w-4 text-muted-foreground" />
+          <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm" data-testid="metric-active-fridges">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-200">Monitored Fridges</CardTitle>
+              <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                <Building2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{overview?.totalFridges || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                {overview?.compliantFridges || 0} compliant
+              <div className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{overview?.totalFridges || 0}</div>
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                <span className="font-medium text-green-600 dark:text-green-400">{overview?.compliantFridges || 0}</span> compliant
               </p>
             </CardContent>
           </Card>
 
-          <Card data-testid="metric-temperature-alerts">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Temperature Alerts</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+          <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm" data-testid="metric-temperature-alerts">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-200">Temperature Alerts</CardTitle>
+              <div className="p-2 bg-red-100 dark:bg-red-900/20 rounded-lg">
+                <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{overview?.outOfRangeEvents || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                {unresolvedCount.count} unresolved
+              <div className="text-3xl font-bold text-red-600 dark:text-red-400 mb-2">{overview?.outOfRangeEvents || 0}</div>
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                <span className="font-medium text-red-600 dark:text-red-400">{unresolvedCount.count}</span> unresolved
               </p>
             </CardContent>
           </Card>
 
-          <Card data-testid="metric-daily-activity">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Today's Activity</CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
+          <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm" data-testid="metric-daily-activity">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-200">Today's Activity</CardTitle>
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                <Activity className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{overview?.recentActivity?.temperatureLogsToday || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                temperature readings
+              <div className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{overview?.recentActivity?.temperatureLogsToday || 0}</div>
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                temperature readings today
               </p>
             </CardContent>
           </Card>
