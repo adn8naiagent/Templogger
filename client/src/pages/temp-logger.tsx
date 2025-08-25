@@ -837,7 +837,7 @@ export default function TempLogger() {
                       {/* Header */}
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-4 h-4 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: fridge.color }} />
+                          <div className="w-4 h-4 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: fridge.color || '#3b82f6' }} />
                           <div>
                             <h4 className="font-semibold text-slate-900 dark:text-white text-lg">{fridge.name}</h4>
                             {fridge.location && (
