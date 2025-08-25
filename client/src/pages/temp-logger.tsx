@@ -94,7 +94,7 @@ export default function TempLogger() {
   const [showCorrectiveActions, setShowCorrectiveActions] = useState(false);
 
   // Fetch fridges with recent temperatures
-  const { data: fridges = [], isLoading: fridgesLoading } = useQuery({
+  const { data: fridges = [], isLoading: fridgesLoading } = useQuery<Fridge[]>({
     queryKey: ["/api/fridges/recent-temps"],
     retry: (failureCount, error) => {
       if (isUnauthorizedError(error as Error)) {
@@ -113,12 +113,12 @@ export default function TempLogger() {
   });
 
   // Fetch labels
-  const { data: labels = [] } = useQuery({
+  const { data: labels = [] } = useQuery<Label[]>({
     queryKey: ["/api/labels"],
   });
 
   // Fetch time windows for selected fridge
-  const { data: timeWindows = [] } = useQuery({
+  const { data: timeWindows = [] } = useQuery<TimeWindow[]>({
     queryKey: ["/api/fridges", selectedFridgeId, "time-windows"],
     queryFn: async () => {
       if (!selectedFridgeId) return [];
