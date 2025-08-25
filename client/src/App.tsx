@@ -16,6 +16,7 @@ import AdminDashboard from "@/pages/admin/dashboard";
 import AdminUsers from "@/pages/admin/users";
 import AdminSubscriptions from "@/pages/admin/subscriptions";
 import ComplianceDashboard from "@/pages/compliance-dashboard";
+import AddFridge from "@/pages/add-fridge";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -32,6 +33,7 @@ function Router() {
       ) : (
         <>
           <Route path="/" component={Home} />
+          <Route path="/add-fridge" component={AddFridge} />
           <Route path="/compliance" component={ComplianceDashboard} />
           <Route path="/account" component={Account} />
           <Route path="/settings" component={Settings} />
