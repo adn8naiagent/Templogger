@@ -140,6 +140,14 @@ export default function ComplianceDashboard() {
         return <Badge variant="secondary"><AlertTriangle className="h-3 w-3 mr-1" />Warning</Badge>;
       case 'critical':
         return <Badge variant="destructive"><AlertCircle className="h-3 w-3 mr-1" />Critical</Badge>;
+      case 'alert':
+        return <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />Alert</Badge>;
+      case 'late':
+        return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Late</Badge>;
+      case 'missing':
+        return <Badge variant="outline"><AlertCircle className="h-3 w-3 mr-1" />Missing</Badge>;
+      case 'inactive':
+        return <Badge variant="secondary" className="bg-gray-500"><Building2 className="h-3 w-3 mr-1" />Inactive</Badge>;
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
@@ -215,6 +223,19 @@ export default function ComplianceDashboard() {
                 <span className="hidden sm:inline">Auto Refresh</span> {autoRefresh ? 'On' : 'Off'}
               </Button>
               
+              <Button 
+                variant="outline" 
+                size="default" 
+                asChild
+                className="border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
+                data-testid="button-view-fridges"
+              >
+                <Link href="/fridges">
+                  <Eye className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">View</span> Fridges
+                </Link>
+              </Button>
+
               <Button 
                 variant="outline" 
                 size="default" 

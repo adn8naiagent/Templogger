@@ -52,6 +52,7 @@ export const fridges = pgTable("fridges", {
   labels: text("labels").array(),
   minTemp: decimal("min_temp", { precision: 4, scale: 1 }).notNull(),
   maxTemp: decimal("max_temp", { precision: 4, scale: 1 }).notNull(),
+  isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

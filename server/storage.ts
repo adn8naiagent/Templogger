@@ -131,6 +131,12 @@ export interface IStorage {
   createMissedCheck(missedCheckData: InsertMissedCheck): Promise<MissedCheck>;
   overrideMissedCheck(id: string, userId: string, overrideReason: string): Promise<MissedCheck | undefined>;
   getMissedChecksForDate(userId: string, date: Date): Promise<(MissedCheck & { fridgeName: string })[]>;
+
+  // New fridge management methods
+  getAllFridgesWithLogs(userId: string): Promise<any[]>;
+  getFridgeWithLogs(userId: string, fridgeId: string): Promise<any>;
+  deactivateFridge(userId: string, fridgeId: string): Promise<any>;
+  reactivateFridge(userId: string, fridgeId: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -219,10 +225,18 @@ export class DatabaseStorage implements IStorage {
 
   async deleteFridge(id: string, userId: string): Promise<boolean> {
     try {
-      await this.db.delete(fridges)
+      // Delete all related data first (cascading delete)
+      await this.db.delete(temperatureLogs).where(eq(temperatureLogs.fridgeId, id));
+      await this.db.delete(timeWindows).where(eq(timeWindows.fridgeId, id));
+      await this.db.delete(missedChecks).where(eq(missedChecks.fridgeId, id));
+      
+      // Delete the fridge
+      const result = await this.db.delete(fridges)
         .where(and(eq(fridges.id, id), eq(fridges.userId, userId)));
-      return true;
+      
+      return result.rowCount! > 0;
     } catch (error) {
+      console.error("Error deleting fridge:", error);
       return false;
     }
   }
@@ -621,9 +635,11 @@ export class DatabaseStorage implements IStorage {
         const recentLog = await this.getRecentTemperatureLog(fridge.id, userId);
         const fridgeTimeWindows = await this.getTimeWindows(fridge.id, userId);
         
-        // Calculate compliance status
+        // Calculate compliance status, considering active status
         let complianceStatus = 'compliant';
-        if (recentLog?.isAlert) {
+        if (!fridge.isActive) {
+          complianceStatus = 'inactive';
+        } else if (recentLog?.isAlert) {
           complianceStatus = 'alert';
         } else if (recentLog && !recentLog.isOnTime) {
           complianceStatus = 'late';
@@ -794,6 +810,127 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(desc(missedChecks.missedDate));
+  }
+
+  // New fridge management methods implementation
+  async getAllFridgesWithLogs(userId: string): Promise<any[]> {
+    try {
+      return await this.db
+        .select({
+          id: fridges.id,
+          name: fridges.name,
+          location: fridges.location,
+          notes: fridges.notes,
+          color: fridges.color,
+          labels: fridges.labels,
+          minTemp: fridges.minTemp,
+          maxTemp: fridges.maxTemp,
+          isActive: fridges.isActive,
+          createdAt: fridges.createdAt,
+          updatedAt: fridges.updatedAt,
+          lastTemperature: sql<number>`
+            (SELECT temperature FROM ${temperatureLogs} 
+             WHERE fridge_id = ${fridges.id} 
+             ORDER BY created_at DESC LIMIT 1)`,
+          lastReading: sql<string>`
+            (SELECT created_at FROM ${temperatureLogs} 
+             WHERE fridge_id = ${fridges.id} 
+             ORDER BY created_at DESC LIMIT 1)`,
+          logsCount: sql<number>`
+            (SELECT COUNT(*) FROM ${temperatureLogs} 
+             WHERE fridge_id = ${fridges.id})`,
+          recentAlert: sql<boolean>`
+            (SELECT is_alert FROM ${temperatureLogs} 
+             WHERE fridge_id = ${fridges.id} 
+             ORDER BY created_at DESC LIMIT 1)`
+        })
+        .from(fridges)
+        .where(eq(fridges.userId, userId))
+        .orderBy(desc(fridges.isActive), fridges.name);
+    } catch (error) {
+      console.error("Error getting all fridges with logs:", error);
+      throw error;
+    }
+  }
+
+  async getFridgeWithLogs(userId: string, fridgeId: string): Promise<any> {
+    try {
+      const [fridge] = await this.db
+        .select()
+        .from(fridges)
+        .where(and(eq(fridges.id, fridgeId), eq(fridges.userId, userId)));
+
+      if (!fridge) {
+        return null;
+      }
+
+      const logs = await this.db
+        .select({
+          id: temperatureLogs.id,
+          temperature: temperatureLogs.temperature,
+          personName: temperatureLogs.personName,
+          isAlert: temperatureLogs.isAlert,
+          isOnTime: temperatureLogs.isOnTime,
+          lateReason: temperatureLogs.lateReason,
+          correctiveAction: temperatureLogs.correctiveAction,
+          correctiveNotes: temperatureLogs.correctiveNotes,
+          createdAt: temperatureLogs.createdAt,
+          fridgeName: fridges.name
+        })
+        .from(temperatureLogs)
+        .innerJoin(fridges, eq(temperatureLogs.fridgeId, fridges.id))
+        .where(eq(temperatureLogs.fridgeId, fridgeId))
+        .orderBy(desc(temperatureLogs.createdAt));
+
+      const lastLog = logs[0];
+      
+      return {
+        ...fridge,
+        logs,
+        lastTemperature: lastLog?.temperature || null,
+        lastReading: lastLog?.createdAt || null,
+        recentAlert: lastLog?.isAlert || false
+      };
+    } catch (error) {
+      console.error("Error getting fridge with logs:", error);
+      throw error;
+    }
+  }
+
+  async deactivateFridge(userId: string, fridgeId: string): Promise<any> {
+    try {
+      const [updated] = await this.db
+        .update(fridges)
+        .set({
+          isActive: false,
+          updatedAt: new Date()
+        })
+        .where(and(eq(fridges.id, fridgeId), eq(fridges.userId, userId)))
+        .returning();
+
+      return updated;
+    } catch (error) {
+      console.error("Error deactivating fridge:", error);
+      throw error;
+    }
+  }
+
+  async reactivateFridge(userId: string, fridgeId: string): Promise<any> {
+    try {
+      const [updated] = await this.db
+        .update(fridges)
+        .set({
+          isActive: true,
+          updatedAt: new Date()
+        })
+        .where(and(eq(fridges.id, fridgeId), eq(fridges.userId, userId)))
+        .returning();
+
+      return updated;
+    } catch (error) {
+      console.error("Error reactivating fridge:", error);
+      throw error;
+    }
   }
 }
 

@@ -507,6 +507,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all fridges for view fridges page
+  app.get("/api/fridges/all", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const fridges = await storage.getAllFridgesWithLogs(userId);
+      res.json(fridges);
+    } catch (error: any) {
+      console.error("Error fetching all fridges:", error);
+      res.status(500).json({ error: "Failed to fetch fridges" });
+    }
+  });
+
+  // Get single fridge with detailed logs
+  app.get("/api/fridge/:id", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const fridge = await storage.getFridgeWithLogs(userId, req.params.id);
+      if (!fridge) {
+        return res.status(404).json({ error: "Fridge not found" });
+      }
+      res.json(fridge);
+    } catch (error: any) {
+      console.error("Error fetching fridge:", error);
+      res.status(500).json({ error: "Failed to fetch fridge" });
+    }
+  });
+
+  // Update fridge
+  app.patch("/api/fridge/:id", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const fridge = await storage.updateFridge(userId, req.params.id, req.body);
+      if (!fridge) {
+        return res.status(404).json({ error: "Fridge not found" });
+      }
+      res.json(fridge);
+    } catch (error: any) {
+      console.error("Error updating fridge:", error);
+      res.status(500).json({ error: "Failed to update fridge" });
+    }
+  });
+
+  // Soft delete (deactivate) fridge
+  app.patch("/api/fridge/:id/deactivate", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const fridge = await storage.deactivateFridge(userId, req.params.id);
+      if (!fridge) {
+        return res.status(404).json({ error: "Fridge not found" });
+      }
+      res.json(fridge);
+    } catch (error: any) {
+      console.error("Error deactivating fridge:", error);
+      res.status(500).json({ error: "Failed to deactivate fridge" });
+    }
+  });
+
+  // Reactivate fridge
+  app.patch("/api/fridge/:id/activate", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const fridge = await storage.reactivateFridge(userId, req.params.id);
+      if (!fridge) {
+        return res.status(404).json({ error: "Fridge not found" });
+      }
+      res.json(fridge);
+    } catch (error: any) {
+      console.error("Error reactivating fridge:", error);
+      res.status(500).json({ error: "Failed to reactivate fridge" });
+    }
+  });
+
+  // Hard delete fridge
+  app.delete("/api/fridge/:id", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const success = await storage.deleteFridge(userId, req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Fridge not found" });
+      }
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error deleting fridge:", error);
+      res.status(500).json({ error: "Failed to delete fridge" });
+    }
+  });
+
   // Label management endpoints
   
   // Get user's labels

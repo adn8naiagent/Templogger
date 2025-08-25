@@ -16,7 +16,11 @@ import AdminDashboard from "@/pages/admin/dashboard";
 import AdminUsers from "@/pages/admin/users";
 import AdminSubscriptions from "@/pages/admin/subscriptions";
 import ComplianceDashboard from "@/pages/compliance-dashboard";
+import TempLogger from "@/pages/temp-logger";
 import AddFridge from "@/pages/add-fridge";
+import ViewFridges from "@/pages/view-fridges";
+import FridgeDetail from "@/pages/fridge-detail";
+import EditFridge from "@/pages/edit-fridge";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -33,7 +37,12 @@ function Router() {
       ) : (
         <>
           <Route path="/" component={Home} />
+          <Route path="/dashboard" component={ComplianceDashboard} />
+          <Route path="/temp-logger" component={TempLogger} />
           <Route path="/add-fridge" component={AddFridge} />
+          <Route path="/fridges" component={ViewFridges} />
+          <Route path="/fridge/:id" component={FridgeDetail} />
+          <Route path="/fridge/:id/edit" component={EditFridge} />
           <Route path="/compliance" component={ComplianceDashboard} />
           <Route path="/account" component={Account} />
           <Route path="/settings" component={Settings} />
