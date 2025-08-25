@@ -16,8 +16,14 @@ import {
   PowerOff, 
   Plus, 
   X, 
-  Clock 
+  Clock,
+  Palette
 } from 'lucide-react';
+import { HexColorPicker } from "react-colorful";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from '@/components/ui/badge';
 import { 
   Select, 
@@ -422,7 +428,7 @@ export default function EditFridge() {
 
               <div>
                 <Label>Color</Label>
-                <div className="flex gap-2 mt-2">
+                <div className="flex gap-3 mt-2">
                   {predefinedColors.map((presetColor) => (
                     <button
                       key={presetColor}
@@ -435,6 +441,23 @@ export default function EditFridge() {
                       data-testid={`color-${presetColor}`}
                     />
                   ))}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center bg-white hover:bg-gray-50"
+                        data-testid="custom-color-picker"
+                      >
+                        <Palette className="h-4 w-4 text-gray-600" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-3">
+                      <HexColorPicker color={color} onChange={setColor} />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="mt-2 text-sm text-gray-500">
+                  Selected: <span className="font-mono">{color}</span>
                 </div>
               </div>
 
@@ -466,6 +489,148 @@ export default function EditFridge() {
                   />
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Temperature Check Scheduling */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Temperature Check Scheduling
+              </CardTitle>
+              <CardDescription>
+                Configure when and how often temperature checks should be performed for this fridge.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <div className="text-base font-medium">Enable Scheduled Checks</div>
+                  <div className="text-sm text-muted-foreground">
+                    Set up automatic reminders for temperature monitoring
+                  </div>
+                </div>
+                <Switch
+                  checked={enableScheduledChecks}
+                  onCheckedChange={setEnableScheduledChecks}
+                  data-testid="enable-scheduled-checks"
+                />
+              </div>
+
+              {enableScheduledChecks && (
+                <div className="space-y-6 border-t pt-6">
+                  <div>
+                    <Label className="text-base font-medium">Check Frequency</Label>
+                    <RadioGroup
+                      value={checkFrequency}
+                      onValueChange={(value) => setCheckFrequency(value as 'once' | 'twice' | 'multiple')}
+                      className="mt-3"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="once" id="once" />
+                        <Label htmlFor="once">Once per day</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="twice" id="twice" />
+                        <Label htmlFor="twice">Twice per day (AM & PM)</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="multiple" id="multiple" />
+                        <Label htmlFor="multiple">Multiple specific times</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  {checkFrequency === 'multiple' && (
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <Label className="text-base font-medium">Temperature Check Times</Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={addTimeWindow}
+                          data-testid="add-time-window"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Check Time
+                        </Button>
+                      </div>
+                      
+                      {timeWindows.map((window, index) => (
+                        <Card key={index} className="p-4">
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <Input
+                                value={window.label}
+                                onChange={(e) => updateTimeWindow(index, 'label', e.target.value)}
+                                placeholder="Check label"
+                                className="flex-1 mr-4"
+                                data-testid={`time-window-label-${index}`}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => removeTimeWindow(index)}
+                                data-testid={`remove-time-window-${index}`}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label htmlFor={`start-${index}`}>Start Time</Label>
+                                <Input
+                                  id={`start-${index}`}
+                                  type="time"
+                                  value={window.startTime || ''}
+                                  onChange={(e) => updateTimeWindow(index, 'startTime', e.target.value)}
+                                  data-testid={`start-time-${index}`}
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor={`end-${index}`}>End Time</Label>
+                                <Input
+                                  id={`end-${index}`}
+                                  type="time"
+                                  value={window.endTime || ''}
+                                  onChange={(e) => updateTimeWindow(index, 'endTime', e.target.value)}
+                                  data-testid={`end-time-${index}`}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+
+                  <div>
+                    <Label className="text-base font-medium">Excluded Days</Label>
+                    <div className="mt-3 space-y-2">
+                      {dayNames.map((day, index) => (
+                        <div key={day} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`day-${index}`}
+                            checked={isDayExcluded(index)}
+                            onCheckedChange={() => toggleExcludedDay(index)}
+                            data-testid={`exclude-${day.toLowerCase()}`}
+                          />
+                          <Label htmlFor={`day-${index}`} className="text-sm">
+                            Skip {day}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Select days when temperature checks should be skipped
+                    </p>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
