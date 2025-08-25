@@ -369,6 +369,7 @@ export const logTemperatureSchema = z.object({
     return !isNaN(num) && num >= -50 && num <= 50;
   }, "Temperature must be between -50°C and 50°C"),
   personName: z.string().min(1, "Person name is required"),
+  notes: z.string().optional(),
   isOnTime: z.boolean().default(true),
   lateReason: z.string().optional(),
   correctiveAction: z.string().optional(),

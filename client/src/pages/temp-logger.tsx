@@ -36,7 +36,8 @@ import {
   FileText,
   Palette,
   Tag,
-  BarChart3
+  BarChart3,
+  Eye
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -165,6 +166,7 @@ export default function TempLogger() {
       fridgeId: "",
       temperature: "",
       personName: "",
+      notes: "",
       timeWindowId: "",
       isOnTime: true,
       lateReason: "",
@@ -570,6 +572,34 @@ export default function TempLogger() {
                               </FormItem>
                             )}
                           />
+
+                          <FormField
+                            control={tempForm.control}
+                            name="notes"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-200">Notes (Optional)</FormLabel>
+                                <FormControl>
+                                  <Textarea 
+                                    {...field} 
+                                    placeholder="Add any additional observations or comments..." 
+                                    rows={3}
+                                    className="border-slate-300 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400"
+                                    data-testid="input-notes" 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Timestamp Info */}
+                          <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
+                            <Clock className="h-4 w-4" />
+                            <AlertDescription className="text-blue-800 dark:text-blue-200 text-sm">
+                              <strong>Automatic Timestamp:</strong> The current date and time will be automatically recorded with this temperature reading.
+                            </AlertDescription>
+                          </Alert>
 
                     {/* Time Window Selection */}
                     {timeWindows.length > 0 && (
