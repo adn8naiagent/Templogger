@@ -192,12 +192,14 @@ export default function TempLogger() {
       return response.json();
     },
     onSuccess: (result) => {
+      const temp = result.log?.temperature || result.temperature;
+      const isOutOfRange = result.isOutOfRange || result.log?.isOutOfRange;
       toast({
-        title: result.isOutOfRange ? "Temperature Alert!" : "Temperature Logged",
-        description: result.isOutOfRange 
-          ? `Temperature ${result.temperature}°C is out of range. Corrective action required.`
-          : `Temperature ${result.temperature}°C recorded successfully.`,
-        variant: result.isOutOfRange ? "destructive" : "default",
+        title: isOutOfRange ? "Temperature Alert!" : "Temperature Logged",
+        description: isOutOfRange 
+          ? `Temperature ${temp}°C is out of range. Corrective action required.`
+          : `Temperature ${temp}°C recorded successfully.`,
+        variant: isOutOfRange ? "destructive" : "default",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/fridges/recent-temps"] });
       tempForm.reset();
@@ -323,7 +325,7 @@ export default function TempLogger() {
                 <Button variant="ghost" size="sm" data-testid="user-menu">
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    <span className="text-sm">{user?.username}</span>
+                    <span className="text-sm">{user?.email}</span>
                   </div>
                 </Button>
               </DropdownMenuTrigger>

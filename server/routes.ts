@@ -319,7 +319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           stripeStatus = {
             id: subscription.id,
             status: subscription.status,
-            currentPeriodEnd: subscription.current_period_end,
+            currentPeriodEnd: (subscription as any).current_period_end,
             cancelAtPeriodEnd: subscription.cancel_at_period_end,
           };
         } catch (error) {

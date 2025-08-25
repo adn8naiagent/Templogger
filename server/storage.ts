@@ -417,13 +417,14 @@ export class DatabaseStorage implements IStorage {
     lateChecks: number;
   }> {
     const targetDate = date || new Date();
+    const targetDateStr = targetDate.toISOString().split('T')[0]; // Convert to YYYY-MM-DD format
     const userFridges = await this.getFridges(userId);
     
     const todayLogs = await this.db.select().from(temperatureLogs)
       .innerJoin(fridges, eq(temperatureLogs.fridgeId, fridges.id))
       .where(and(
         eq(fridges.userId, userId),
-        sql`DATE(${temperatureLogs.createdAt}) = DATE(${targetDate})`
+        sql`DATE(${temperatureLogs.createdAt}) = ${targetDateStr}`
       ));
 
     const lateChecks = todayLogs.filter(log => !log.temperature_logs.isOnTime).length;

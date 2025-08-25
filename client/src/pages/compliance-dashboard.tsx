@@ -212,6 +212,19 @@ export default function ComplianceDashboard() {
             </div>
             
             <div className="flex flex-wrap items-center gap-3">
+              <Button 
+                variant="default" 
+                size="default" 
+                asChild
+                className="bg-blue-600 hover:bg-blue-700 text-white border-0"
+                data-testid="button-view-fridges"
+              >
+                <Link href="/fridges">
+                  <Eye className="h-4 w-4 mr-2" />
+                  View Fridges
+                </Link>
+              </Button>
+
               <Button
                 variant="outline"
                 size="default"
@@ -221,19 +234,6 @@ export default function ComplianceDashboard() {
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${autoRefresh ? 'animate-spin' : ''}`} />
                 <span className="hidden sm:inline">Auto Refresh</span> {autoRefresh ? 'On' : 'Off'}
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                size="default" 
-                asChild
-                className="border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
-                data-testid="button-view-fridges"
-              >
-                <Link href="/fridges">
-                  <Eye className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">View</span> Fridges
-                </Link>
               </Button>
 
               <Button 
