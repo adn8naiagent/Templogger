@@ -142,11 +142,20 @@ export default function AddFridge() {
   };
 
   const toggleExcludedDay = (dayIndex: number) => {
+    // Convert Monday-first index to Sunday-first index for backend compatibility
+    const sundayFirstIndex = dayIndex === 6 ? 0 : dayIndex + 1;
+    
     setExcludedDays(prev => 
-      prev.includes(dayIndex) 
-        ? prev.filter(d => d !== dayIndex)
-        : [...prev, dayIndex]
+      prev.includes(sundayFirstIndex) 
+        ? prev.filter(d => d !== sundayFirstIndex)
+        : [...prev, sundayFirstIndex]
     );
+  };
+
+  const isDayExcluded = (dayIndex: number) => {
+    // Convert Monday-first index to Sunday-first index for checking
+    const sundayFirstIndex = dayIndex === 6 ? 0 : dayIndex + 1;
+    return excludedDays.includes(sundayFirstIndex);
   };
 
   const removeTimeWindow = (index: number) => {
