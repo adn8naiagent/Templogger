@@ -427,38 +427,28 @@ export default function EditFridge() {
               </div>
 
               <div>
-                <Label>Color</Label>
-                <div className="flex gap-3 mt-2">
-                  {predefinedColors.map((presetColor) => (
-                    <button
-                      key={presetColor}
-                      type="button"
-                      className={`w-8 h-8 rounded-full border-2 ${
-                        color === presetColor ? 'border-gray-400' : 'border-gray-200'
-                      }`}
-                      style={{ backgroundColor: presetColor }}
-                      onClick={() => setColor(presetColor)}
-                      data-testid={`color-${presetColor}`}
-                    />
-                  ))}
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button
-                        type="button"
-                        className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center bg-white hover:bg-gray-50"
-                        data-testid="custom-color-picker"
-                      >
-                        <Palette className="h-4 w-4 text-gray-600" />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-3">
-                      <HexColorPicker color={color} onChange={setColor} />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div className="mt-2 text-sm text-gray-500">
-                  Selected: <span className="font-mono">{color}</span>
-                </div>
+                <Label className="flex items-center gap-2">
+                  <Palette className="h-4 w-4" />
+                  Color Theme
+                </Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start mt-2"
+                      data-testid="button-color-picker"
+                    >
+                      <div 
+                        className="w-4 h-4 rounded mr-2 border" 
+                        style={{ backgroundColor: color }}
+                      />
+                      {color}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-3">
+                    <HexColorPicker color={color} onChange={setColor} />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
