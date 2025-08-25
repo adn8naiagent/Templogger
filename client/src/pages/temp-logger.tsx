@@ -4,10 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { HexColorPicker } from "react-colorful";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -32,7 +36,11 @@ import {
   LogOut,
   Shield,
   Crown,
-  Star
+  Star,
+  MapPin,
+  FileText,
+  Palette,
+  Tag
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -44,6 +52,10 @@ import { apiRequest } from "@/lib/queryClient";
 interface Fridge {
   id: string;
   name: string;
+  location?: string;
+  notes?: string;
+  color: string;
+  labels: string[];
   minTemp: string;
   maxTemp: string;
   createdAt: string;
@@ -54,6 +66,13 @@ interface Fridge {
     isAlert: boolean;
     createdAt: string;
   };
+}
+
+interface Label {
+  id: string;
+  name: string;
+  color: string;
+  createdAt: string;
 }
 
 export default function TempLogger() {
@@ -86,11 +105,25 @@ export default function TempLogger() {
     },
   });
 
+  // Fetch labels
+  const { data: labels = [] } = useQuery({
+    queryKey: ["/api/labels"],
+    queryFn: async () => {
+      const response = await fetch("/api/labels");
+      if (!response.ok) throw new Error("Failed to fetch labels");
+      return response.json();
+    },
+  });
+
   // Create fridge form
   const fridgeForm = useForm<CreateFridgeData>({
     resolver: zodResolver(createFridgeSchema),
     defaultValues: {
       name: "",
+      location: "",
+      notes: "",
+      color: "#3b82f6",
+      labels: [],
       minTemp: "2.0",
       maxTemp: "8.0",
     },
@@ -350,6 +383,119 @@ export default function TempLogger() {
                   )}
                 />
 
+                <FormField
+                  control={fridgeForm.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        Location (Optional)
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Pharmacy Main Floor" data-testid="input-fridge-location" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={fridgeForm.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        Notes (Optional)
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea {...field} placeholder="Additional information about this fridge..." rows={2} data-testid="input-fridge-notes" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={fridgeForm.control}
+                  name="color"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Palette className="h-4 w-4" />
+                        Color
+                      </FormLabel>
+                      <FormControl>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className="w-full justify-start"
+                              data-testid="button-color-picker"
+                            >
+                              <div 
+                                className="w-4 h-4 rounded mr-2 border" 
+                                style={{ backgroundColor: field.value }}
+                              />
+                              {field.value}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-3">
+                            <HexColorPicker color={field.value} onChange={field.onChange} />
+                          </PopoverContent>
+                        </Popover>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={fridgeForm.control}
+                  name="labels"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Tag className="h-4 w-4" />
+                        Labels (Optional)
+                      </FormLabel>
+                      <FormControl>
+                        <div className="space-y-2 max-h-32 overflow-y-auto border rounded-md p-2">
+                          {labels.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">No labels available</p>
+                          ) : (
+                            labels.map((label: Label) => (
+                              <div key={label.id} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={label.id}
+                                  checked={field.value.includes(label.name)}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      field.onChange([...field.value, label.name]);
+                                    } else {
+                                      field.onChange(field.value.filter((l: string) => l !== label.name));
+                                    }
+                                  }}
+                                  data-testid={`checkbox-label-${label.name}`}
+                                />
+                                <label htmlFor={label.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                                  <div 
+                                    className="w-3 h-3 rounded" 
+                                    style={{ backgroundColor: label.color }}
+                                  />
+                                  {label.name}
+                                </label>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <div className="grid grid-cols-2 gap-3">
                   <FormField
                     control={fridgeForm.control}
@@ -521,17 +667,69 @@ export default function TempLogger() {
             const hasRecentLog = fridge.recentLog;
             
             return (
-              <Card key={fridge.id} className={isAlert ? "border-red-200 bg-red-50" : ""} data-testid={`fridge-card-${fridge.id}`}>
+              <Card 
+                key={fridge.id} 
+                className={`${isAlert ? "border-red-200 bg-red-50" : ""} border-l-4`} 
+                style={{ borderLeftColor: fridge.color || "#3b82f6" }}
+                data-testid={`fridge-card-${fridge.id}`}
+              >
                 <CardContent className="pt-4">
                   <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="font-semibold text-lg">{fridge.name}</h3>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: fridge.color || "#3b82f6" }}
+                        />
+                        <h3 className="font-semibold text-lg">{fridge.name}</h3>
+                      </div>
+                      
+                      {fridge.location && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1 mb-1">
+                          <MapPin className="h-3 w-3" />
+                          {fridge.location}
+                        </p>
+                      )}
+                      
                       <p className="text-sm text-muted-foreground">
                         Range: {fridge.minTemp}°C - {fridge.maxTemp}°C
                       </p>
+                      
+                      {fridge.labels && fridge.labels.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {fridge.labels.map((labelName, idx) => {
+                            const label = labels.find((l: Label) => l.name === labelName);
+                            return (
+                              <Badge 
+                                key={idx}
+                                variant="outline" 
+                                className="text-xs"
+                                style={{ 
+                                  borderColor: label?.color || "#6b7280",
+                                  color: label?.color || "#6b7280"
+                                }}
+                              >
+                                <div 
+                                  className="w-2 h-2 rounded-full mr-1" 
+                                  style={{ backgroundColor: label?.color || "#6b7280" }}
+                                />
+                                {labelName}
+                              </Badge>
+                            );
+                          })}
+                        </div>
+                      )}
+                      
+                      {fridge.notes && (
+                        <p className="text-sm text-muted-foreground mt-2 p-2 bg-gray-100 rounded flex items-start gap-1">
+                          <FileText className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                          {fridge.notes}
+                        </p>
+                      )}
                     </div>
+                    
                     {isAlert && (
-                      <Badge variant="destructive" data-testid="alert-badge">
+                      <Badge variant="destructive" data-testid="alert-badge" className="ml-2">
                         <AlertTriangle className="h-3 w-3 mr-1" />
                         Alert
                       </Badge>

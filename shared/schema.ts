@@ -46,10 +46,22 @@ export const fridges = pgTable("fridges", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
   name: text("name").notNull(),
+  location: text("location"),
+  notes: text("notes"),
+  color: text("color").default("#3b82f6"),
+  labels: text("labels").array(),
   minTemp: decimal("min_temp", { precision: 4, scale: 1 }).notNull(),
   maxTemp: decimal("max_temp", { precision: 4, scale: 1 }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const labels = pgTable("labels", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  color: text("color").default("#6b7280"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const temperatureLogs = pgTable("temperature_logs", {
@@ -89,8 +101,18 @@ export const insertSubscriptionSchema = createInsertSchema(subscriptions).pick({
 export const insertFridgeSchema = createInsertSchema(fridges).pick({
   userId: true,
   name: true,
+  location: true,
+  notes: true,
+  color: true,
+  labels: true,
   minTemp: true,
   maxTemp: true,
+});
+
+export const insertLabelSchema = createInsertSchema(labels).pick({
+  userId: true,
+  name: true,
+  color: true,
 });
 
 export const insertTemperatureLogSchema = createInsertSchema(temperatureLogs).pick({
@@ -150,6 +172,10 @@ export const resetPasswordSchema = z.object({
 // Fridge management schemas
 export const createFridgeSchema = z.object({
   name: z.string().min(1, "Fridge name is required"),
+  location: z.string().optional(),
+  notes: z.string().optional(),
+  color: z.string().regex(/^#[0-9A-F]{6}$/i, "Invalid color format").default("#3b82f6"),
+  labels: z.array(z.string()).default([]),
   minTemp: z.string().refine((val) => {
     const num = parseFloat(val);
     return !isNaN(num) && num >= -50 && num <= 50;
@@ -165,6 +191,11 @@ export const createFridgeSchema = z.object({
 }, {
   message: "Minimum temperature must be less than maximum temperature",
   path: ["maxTemp"],
+});
+
+export const createLabelSchema = z.object({
+  name: z.string().min(1, "Label name is required"),
+  color: z.string().regex(/^#[0-9A-F]{6}$/i, "Invalid color format").default("#6b7280"),
 });
 
 export const logTemperatureSchema = z.object({

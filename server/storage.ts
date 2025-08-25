@@ -6,10 +6,14 @@ import {
   type InsertFridge,
   type TemperatureLog,
   type InsertTemperatureLog,
+  labels,
   users,
   fridges,
   temperatureLogs
 } from "@shared/schema";
+
+type Label = typeof labels.$inferSelect;
+type InsertLabel = typeof labels.$inferInsert;
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { eq, and, desc } from "drizzle-orm";
@@ -33,6 +37,13 @@ export interface IStorage {
   createFridge(fridgeData: InsertFridge): Promise<Fridge>;
   updateFridge(id: string, userId: string, updates: Partial<Fridge>): Promise<Fridge | undefined>;
   deleteFridge(id: string, userId: string): Promise<boolean>;
+  
+  // Label methods
+  getLabels(userId: string): Promise<Label[]>;
+  getLabel(id: string, userId: string): Promise<Label | undefined>;
+  createLabel(labelData: InsertLabel): Promise<Label>;
+  updateLabel(id: string, userId: string, updates: Partial<Label>): Promise<Label | undefined>;
+  deleteLabel(id: string, userId: string): Promise<boolean>;
   
   // Temperature log methods
   getTemperatureLogs(fridgeId: string, userId: string): Promise<TemperatureLog[]>;
@@ -132,6 +143,39 @@ export class DatabaseStorage implements IStorage {
     try {
       await this.db.delete(fridges)
         .where(and(eq(fridges.id, id), eq(fridges.userId, userId)));
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  // Label methods
+  async getLabels(userId: string): Promise<Label[]> {
+    return await this.db.select().from(labels).where(eq(labels.userId, userId)).orderBy(labels.createdAt);
+  }
+
+  async getLabel(id: string, userId: string): Promise<Label | undefined> {
+    const result = await this.db.select().from(labels)
+      .where(and(eq(labels.id, id), eq(labels.userId, userId)))
+      .limit(1);
+    return result[0];
+  }
+
+  async createLabel(labelData: InsertLabel): Promise<Label> {
+    const result = await this.db.insert(labels).values(labelData).returning();
+    return result[0];
+  }
+
+  async updateLabel(id: string, userId: string, updates: Partial<Label>): Promise<Label | undefined> {
+    const result = await this.db.update(labels).set(updates)
+      .where(and(eq(labels.id, id), eq(labels.userId, userId))).returning();
+    return result[0];
+  }
+
+  async deleteLabel(id: string, userId: string): Promise<boolean> {
+    try {
+      await this.db.delete(labels)
+        .where(and(eq(labels.id, id), eq(labels.userId, userId)));
       return true;
     } catch (error) {
       return false;

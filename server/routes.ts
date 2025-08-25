@@ -7,6 +7,7 @@ import {
   updateProfileSchema, 
   changePasswordSchema,
   createFridgeSchema,
+  createLabelSchema,
   logTemperatureSchema,
   userRoles,
   type User 
@@ -396,12 +397,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new fridge
-  app.post("/api/fridges", requireAuth, [
-    body("name").trim().isLength({ min: 1 }),
-    body("minTemp").isFloat(),
-    body("maxTemp").isFloat(),
-    handleValidationErrors
-  ], async (req: any, res: Response) => {
+  app.post("/api/fridges", requireAuth, async (req: any, res: Response) => {
     try {
       const result = createFridgeSchema.safeParse(req.body);
       if (!result.success) {
@@ -411,12 +407,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { name, minTemp, maxTemp } = result.data;
+      const { name, location, notes, color, labels, minTemp, maxTemp } = result.data;
       const userId = req.userId;
       
       const newFridge = await storage.createFridge({
         userId,
         name,
+        location,
+        notes,
+        color,
+        labels,
         minTemp,
         maxTemp,
       });
@@ -515,6 +515,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Get recent temps error:", error);
       res.status(500).json({ error: "Failed to get recent temperatures" });
+    }
+  });
+
+  // Label management endpoints
+  
+  // Get user's labels
+  app.get("/api/labels", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const labels = await storage.getLabels(userId);
+      res.json(labels);
+    } catch (error: any) {
+      console.error("Get labels error:", error);
+      res.status(500).json({ error: "Failed to get labels" });
+    }
+  });
+
+  // Create new label
+  app.post("/api/labels", requireAuth, async (req: any, res: Response) => {
+    try {
+      const result = createLabelSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Invalid input data", 
+          details: result.error.errors 
+        });
+      }
+
+      const userId = req.userId;
+      const newLabel = await storage.createLabel({
+        ...result.data,
+        userId
+      });
+
+      res.status(201).json(newLabel);
+    } catch (error: any) {
+      console.error("Create label error:", error);
+      res.status(500).json({ error: "Failed to create label" });
+    }
+  });
+
+  // Update label
+  app.put("/api/labels/:labelId", requireAuth, async (req: any, res: Response) => {
+    try {
+      const { labelId } = req.params;
+      const userId = req.userId;
+      const result = createLabelSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Invalid input data", 
+          details: result.error.errors 
+        });
+      }
+
+      const updatedLabel = await storage.updateLabel(labelId, userId, result.data);
+      if (!updatedLabel) {
+        return res.status(404).json({ error: "Label not found" });
+      }
+
+      res.json(updatedLabel);
+    } catch (error: any) {
+      console.error("Update label error:", error);
+      res.status(500).json({ error: "Failed to update label" });
+    }
+  });
+
+  // Delete label
+  app.delete("/api/labels/:labelId", requireAuth, async (req: any, res: Response) => {
+    try {
+      const { labelId } = req.params;
+      const userId = req.userId;
+      
+      const deleted = await storage.deleteLabel(labelId, userId);
+      if (!deleted) {
+        return res.status(404).json({ error: "Label not found" });
+      }
+
+      res.json({ message: "Label deleted successfully" });
+    } catch (error: any) {
+      console.error("Delete label error:", error);
+      res.status(500).json({ error: "Failed to delete label" });
     }
   });
 
