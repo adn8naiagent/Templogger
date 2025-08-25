@@ -495,7 +495,7 @@ export default function AddFridge() {
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value="multiple" id="multiple" data-testid="radio-multiple-times" />
                           <label htmlFor="multiple" className="text-sm font-medium cursor-pointer">
-                            Set time for multiple checks a day
+                            Set times for multiple checks a day
                           </label>
                         </div>
                       </RadioGroup>
