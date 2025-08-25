@@ -52,7 +52,7 @@ export default function AddFridge() {
   
   // Temperature check scheduling state
   const [enableScheduledChecks, setEnableScheduledChecks] = useState(false);
-  const [checkFrequency, setCheckFrequency] = useState<'once' | 'multiple'>('once');
+  const [checkFrequency, setCheckFrequency] = useState<'once' | 'twice' | 'multiple'>('once');
   const [timeWindows, setTimeWindows] = useState<TimeWindow[]>([]);
   const [excludedDays, setExcludedDays] = useState<number[]>([]);
 
@@ -222,6 +222,42 @@ export default function AddFridge() {
       toast({
         title: "Fridge created!",
         description: "New fridge with daily temperature check has been added successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/fridges/recent-temps"] });
+      setLocation("/");
+      return;
+    } else if (enableScheduledChecks && checkFrequency === 'twice') {
+      // Create fridge first, then add AM and PM checks
+      const fridgeData = { ...data };
+      const response = await apiRequest("POST", "/api/fridges", fridgeData);
+      const newFridge = await response.json();
+      
+      // Add AM and PM time windows
+      try {
+        await apiRequest("POST", "/api/time-windows", {
+          fridgeId: newFridge.id,
+          label: "Morning Check",
+          checkType: "specific",
+          startTime: "06:00",
+          endTime: "12:00",
+          excludedDays: excludedDays,
+        });
+        
+        await apiRequest("POST", "/api/time-windows", {
+          fridgeId: newFridge.id,
+          label: "Evening Check",
+          checkType: "specific",
+          startTime: "12:00",
+          endTime: "23:59",
+          excludedDays: excludedDays,
+        });
+      } catch (error) {
+        console.error("Error creating AM/PM checks:", error);
+      }
+      
+      toast({
+        title: "Fridge created!",
+        description: "New fridge with AM/PM temperature checks has been added successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/fridges/recent-temps"] });
       setLocation("/");
@@ -441,13 +477,19 @@ export default function AddFridge() {
                     <div className="space-y-4 pt-2 border-t">
                       <RadioGroup
                         value={checkFrequency}
-                        onValueChange={(value: 'once' | 'multiple') => setCheckFrequency(value)}
+                        onValueChange={(value: 'once' | 'twice' | 'multiple') => setCheckFrequency(value)}
                         className="space-y-3"
                       >
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value="once" id="once" data-testid="radio-once-daily" />
                           <label htmlFor="once" className="text-sm font-medium cursor-pointer">
                             Check once per day
+                          </label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="twice" id="twice" data-testid="radio-twice-daily" />
+                          <label htmlFor="twice" className="text-sm font-medium cursor-pointer">
+                            Check twice a day (AM/PM)
                           </label>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -533,6 +575,39 @@ export default function AddFridge() {
                               ))}
                             </div>
                           )}
+                        </div>
+                      )}
+
+                      {checkFrequency === 'twice' && (
+                        <div className="space-y-3">
+                          <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded border border-green-200 dark:border-green-800">
+                            <p className="text-sm text-green-800 dark:text-green-200">
+                              <Clock className="h-4 w-4 inline mr-1" />
+                              Two temperature checks will be required each day: one in the morning (AM) and one in the evening (PM)
+                            </p>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium">Exclude Days (Optional)</p>
+                            <p className="text-xs text-muted-foreground">
+                              Select days when temperature checks are not required (e.g., when store is closed)
+                            </p>
+                            <div className="grid grid-cols-2 gap-2">
+                              {dayNames.map((day, index) => (
+                                <div key={index} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={`exclude-day-twice-${index}`}
+                                    checked={excludedDays.includes(index)}
+                                    onCheckedChange={() => toggleExcludedDay(index)}
+                                    data-testid={`checkbox-exclude-twice-${day.toLowerCase()}`}
+                                  />
+                                  <label htmlFor={`exclude-day-twice-${index}`} className="text-sm cursor-pointer">
+                                    {day}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       )}
 
