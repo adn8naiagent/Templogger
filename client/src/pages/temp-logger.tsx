@@ -135,7 +135,7 @@ export default function TempLogger() {
   const getCurrentTimeWindow = () => {
     const now = new Date();
     const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
-    
+
     return timeWindows.find((window: TimeWindow) => {
       if (!window.isActive) return false;
       return currentTime >= window.startTime && currentTime <= window.endTime;
@@ -149,11 +149,11 @@ export default function TempLogger() {
     if (timeWindows.length > 0 && selectedFridgeId) {
       const now = new Date();
       const currentTime = now.toTimeString().slice(0, 5);
-      
+
       const missedWindow = timeWindows.find((window: TimeWindow) => 
         window.isActive && currentTime > window.endTime
       );
-      
+
       if (missedWindow) {
         setIsLateEntry(true);
         setSelectedTimeWindowId(missedWindow.id);
@@ -181,11 +181,11 @@ export default function TempLogger() {
   const checkTemperatureRange = (temperature: string, fridgeId: string) => {
     const selectedFridge = fridges.find((f: Fridge) => f.id === fridgeId);
     if (!selectedFridge || !temperature) return false;
-    
+
     const temp = parseFloat(temperature);
     const minTemp = parseFloat(selectedFridge.minTemp);
     const maxTemp = parseFloat(selectedFridge.maxTemp);
-    
+
     return temp < minTemp || temp > maxTemp;
   };
 
@@ -255,7 +255,7 @@ export default function TempLogger() {
   // Watch for temperature changes to show corrective actions
   const currentTemp = tempForm.watch("temperature");
   const currentFridgeId = tempForm.watch("fridgeId");
-  
+
   useEffect(() => {
     if (currentTemp && currentFridgeId) {
       const isOutOfRange = checkTemperatureRange(currentTemp, currentFridgeId);
@@ -273,11 +273,11 @@ export default function TempLogger() {
       // Check for missed time windows
       const now = new Date();
       const currentTime = now.toTimeString().slice(0, 5);
-      
+
       const missedWindow = timeWindows.find((window: TimeWindow) => 
         window.isActive && currentTime > window.endTime
       );
-      
+
       if (missedWindow) {
         tempForm.setValue("timeWindowId", missedWindow.id);
         tempForm.setValue("isOnTime", false);
@@ -323,7 +323,7 @@ export default function TempLogger() {
                 <p className="text-sm text-slate-500 dark:text-slate-400 hidden sm:block">Temperature Compliance System</p>
               </div>
             </div>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" data-testid="user-menu">
@@ -393,7 +393,7 @@ export default function TempLogger() {
               </Button>
             </div>
           </div>
-          
+
           {alertFridges.length > 0 && (
             <Alert variant="destructive" className="border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800" data-testid="alert-banner">
               <AlertTriangle className="h-5 w-5" />
@@ -788,7 +788,7 @@ export default function TempLogger() {
               {fridges.length} fridge{fridges.length !== 1 ? 's' : ''} total
             </div>
           </div>
-        
+
           {fridgesLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
@@ -831,7 +831,7 @@ export default function TempLogger() {
                     fridge.status === 'warning' ? 'bg-yellow-500' :
                     'bg-green-500'
                   }`} />
-                  
+
                   <CardContent className="p-6">
                     <div className="space-y-4">
                       {/* Header */}
@@ -855,7 +855,7 @@ export default function TempLogger() {
                           {fridge.complianceScore}%
                         </Badge>
                       </div>
-                      
+
                       {/* Labels */}
                       {fridge.labels && fridge.labels.length > 0 && (
                         <div className="flex flex-wrap gap-2">
@@ -878,7 +878,7 @@ export default function TempLogger() {
                         <Thermometer className="h-4 w-4" />
                         <span>Range: {fridge.minTemp}°C to {fridge.maxTemp}°C</span>
                       </div>
-                      
+
                       {/* Recent Temperature */}
                       <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4">
                         {fridge.recentLog ? (
@@ -924,6 +924,15 @@ export default function TempLogger() {
                       </div>
                     </div>
                   </CardContent>
+                  {/* View Details Button */}
+                  <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-600">
+                    <Button variant="outline" size="sm" className="w-full" asChild data-testid={`button-view-details-${fridge.id}`}>
+                      <Link href={`/fridge/${fridge.id}`}>
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Details
+                      </Link>
+                    </Button>
+                  </div>
                 </Card>
               ))}
             </div>
