@@ -1167,6 +1167,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Export compliance report as CSV
+  app.get("/api/export/compliance-report", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      
+      // Get comprehensive compliance data
+      const logs = await storage.getAllTemperatureLogsForUser(userId);
+      const overview = await storage.getComplianceOverview(userId);
+      
+      // Set CSV headers
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="compliance-report.csv"');
+      
+      // Create CSV content for compliance report
+      const headers = [
+        'Report Type',
+        'Fridge Name', 
+        'Date', 
+        'Time',
+        'Temperature (°C)', 
+        'Temperature Status',
+        'Person Name', 
+        'Check Status',
+        'On Time',
+        'Late Reason',
+        'Corrective Action',
+        'Alert Level'
+      ];
+      const csvRows = [headers.join(',')];
+      
+      // Add summary row
+      csvRows.push([
+        'SUMMARY',
+        'All Fridges',
+        new Date().toLocaleDateString(),
+        new Date().toLocaleTimeString(),
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        overview?.missedChecks > 0 ? 'HIGH' : 'NORMAL'
+      ].map(field => `"${field}"`).join(','));
+      
+      // Add overview statistics
+      csvRows.push([
+        'STATISTICS',
+        'Total Fridges',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        overview?.totalFridges?.toString() || '0'
+      ].map(field => `"${field}"`).join(','));
+      
+      csvRows.push([
+        'STATISTICS',
+        'Compliant Fridges',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        overview?.compliantFridges?.toString() || '0'
+      ].map(field => `"${field}"`).join(','));
+      
+      csvRows.push([
+        'STATISTICS',
+        'Missed Checks',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        overview?.missedChecks?.toString() || '0'
+      ].map(field => `"${field}"`).join(','));
+      
+      csvRows.push([
+        'STATISTICS',
+        'Late Checks',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        overview?.lateChecks?.toString() || '0'
+      ].map(field => `"${field}"`).join(','));
+      
+      // Add detailed temperature log rows
+      logs.forEach(log => {
+        const date = new Date(log.createdAt!);
+        const dateStr = date.toLocaleDateString();
+        const timeStr = date.toLocaleTimeString();
+        const tempStatus = log.isAlert ? 'OUT_OF_RANGE' : 'IN_RANGE';
+        const checkStatus = 'COMPLETED';
+        const onTime = log.isOnTime ? 'YES' : 'NO';
+        const alertLevel = log.isAlert ? 'HIGH' : 'NORMAL';
+        
+        const row = [
+          'TEMPERATURE_LOG',
+          log.fridgeName,
+          dateStr,
+          timeStr,
+          log.temperature.toString(),
+          tempStatus,
+          log.personName,
+          checkStatus,
+          onTime,
+          log.lateReason || '-',
+          log.correctiveAction || '-',
+          alertLevel
+        ];
+        csvRows.push(row.map(field => `"${field}"`).join(','));
+      });
+      
+      const csvContent = csvRows.join('\n');
+      res.send(csvContent);
+    } catch (error: any) {
+      console.error("Export compliance report error:", error);
+      res.status(500).json({ error: "Failed to export compliance report" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
