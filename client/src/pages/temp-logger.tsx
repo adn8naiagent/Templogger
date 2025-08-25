@@ -401,7 +401,23 @@ export default function TempLogger() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <Link href="/fridges">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-orange-100 dark:bg-orange-900/20 rounded-lg">
+                    <Eye className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">View Fridges</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Manage all fridges</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
           <Link href="/add-fridge">
             <Card className="hover:shadow-md transition-shadow cursor-pointer border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
               <CardContent className="p-6">
