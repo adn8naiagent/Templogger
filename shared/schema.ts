@@ -68,9 +68,11 @@ export const labels = pgTable("labels", {
 export const timeWindows = pgTable("time_windows", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
-  label: text("label").notNull(), // e.g. "Morning", "Afternoon"
-  startTime: text("start_time").notNull(), // HH:MM format
-  endTime: text("end_time").notNull(), // HH:MM format
+  label: text("label").notNull(), // e.g. "Morning", "Afternoon", "Daily Check"
+  checkType: text("check_type").notNull().default("specific"), // "specific" or "daily"
+  startTime: text("start_time"), // HH:MM format - nullable for daily checks
+  endTime: text("end_time"), // HH:MM format - nullable for daily checks
+  excludedDays: text("excluded_days").array().default([]), // Array of day numbers (0=Sunday, 1=Monday, etc.)
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -97,11 +99,28 @@ export const complianceRecords = pgTable("compliance_records", {
   date: timestamp("date").notNull(),
   level: text("level").notNull(), // "window", "fridge-day", "overall"
   status: text("status").notNull(), // "compliant", "missed", "partial", "late"
+  temperatureCompliance: decimal("temperature_compliance", { precision: 5, scale: 2 }).default("100.00"),
+  checkingCompliance: decimal("checking_compliance", { precision: 5, scale: 2 }).default("100.00"),
   requiredChecks: decimal("required_checks", { precision: 3, scale: 0 }).notNull().default("0"),
   completedChecks: decimal("completed_checks", { precision: 3, scale: 0 }).notNull().default("0"),
   onTimeChecks: decimal("on_time_checks", { precision: 3, scale: 0 }).notNull().default("0"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Missed checks tracking with manual override capability
+export const missedChecks = pgTable("missed_checks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
+  timeWindowId: varchar("time_window_id").references(() => timeWindows.id),
+  missedDate: timestamp("missed_date").notNull(),
+  checkType: text("check_type").notNull(), // "specific" or "daily"
+  reason: text("reason"), // Auto-generated or user provided
+  isOverridden: boolean("is_overridden").notNull().default(false),
+  overrideReason: text("override_reason"), // User explanation for override
+  overriddenBy: varchar("overridden_by").references(() => users.id),
+  overriddenAt: timestamp("overridden_at"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Custom checklists for admin-created tasks
@@ -212,8 +231,10 @@ export const insertTemperatureLogSchema = createInsertSchema(temperatureLogs).pi
 export const insertTimeWindowSchema = createInsertSchema(timeWindows).pick({
   fridgeId: true,
   label: true,
+  checkType: true,
   startTime: true,
   endTime: true,
+  excludedDays: true,
   isActive: true,
 });
 
@@ -357,10 +378,18 @@ export const logTemperatureSchema = z.object({
 export const createTimeWindowSchema = z.object({
   fridgeId: z.string().min(1, "Please select a fridge"),
   label: z.string().min(1, "Label is required"),
-  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)"),
-  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)"),
-}).refine((data) => data.startTime < data.endTime, {
-  message: "End time must be after start time",
+  checkType: z.enum(["specific", "daily"]).default("specific"),
+  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)").optional(),
+  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)").optional(),
+  excludedDays: z.array(z.number().min(0).max(6)).default([]), // 0=Sunday, 6=Saturday
+}).refine((data) => {
+  // For specific checks, require start and end times
+  if (data.checkType === "specific") {
+    return data.startTime && data.endTime && data.startTime < data.endTime;
+  }
+  return true;
+}, {
+  message: "Start and end times are required for specific checks, and end time must be after start time",
   path: ["endTime"],
 });
 

@@ -39,8 +39,10 @@ interface Label {
 interface TimeWindow {
   id?: string;
   label: string;
-  startTime: string;
-  endTime: string;
+  checkType: 'specific' | 'daily';
+  startTime?: string;
+  endTime?: string;
+  excludedDays: number[];
 }
 
 export default function AddFridge() {
@@ -52,9 +54,13 @@ export default function AddFridge() {
   const [enableScheduledChecks, setEnableScheduledChecks] = useState(false);
   const [checkFrequency, setCheckFrequency] = useState<'once' | 'multiple'>('once');
   const [timeWindows, setTimeWindows] = useState<TimeWindow[]>([]);
+  const [excludedDays, setExcludedDays] = useState<number[]>([]);
+
+  // Day names for display
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   // Fetch labels
-  const { data: labels = [] } = useQuery({
+  const { data: labels = [] } = useQuery<Label[]>({
     queryKey: ["/api/labels"],
   });
 
@@ -86,8 +92,10 @@ export default function AddFridge() {
             await apiRequest("POST", "/api/time-windows", {
               fridgeId: newFridge.id,
               label: window.label,
+              checkType: window.checkType,
               startTime: window.startTime,
               endTime: window.endTime,
+              excludedDays: window.excludedDays,
             });
           }
         } catch (error) {
@@ -125,17 +133,27 @@ export default function AddFridge() {
   const addTimeWindow = () => {
     const newWindow: TimeWindow = {
       label: `Check ${timeWindows.length + 1}`,
+      checkType: 'specific',
       startTime: "09:00",
       endTime: "09:30",
+      excludedDays: [],
     };
     setTimeWindows([...timeWindows, newWindow]);
+  };
+
+  const toggleExcludedDay = (dayIndex: number) => {
+    setExcludedDays(prev => 
+      prev.includes(dayIndex) 
+        ? prev.filter(d => d !== dayIndex)
+        : [...prev, dayIndex]
+    );
   };
 
   const removeTimeWindow = (index: number) => {
     setTimeWindows(timeWindows.filter((_, i) => i !== index));
   };
 
-  const updateTimeWindow = (index: number, field: keyof TimeWindow, value: string) => {
+  const updateTimeWindow = (index: number, field: keyof TimeWindow, value: string | number[]) => {
     const updated = [...timeWindows];
     updated[index] = { ...updated[index], [field]: value };
     setTimeWindows(updated);
@@ -156,8 +174,8 @@ export default function AddFridge() {
     if (enableScheduledChecks && checkFrequency === 'once') {
       const dailyCheck = {
         label: "Daily Check",
-        startTime: "09:00",
-        endTime: "09:30",
+        checkType: "daily",
+        excludedDays: excludedDays,
       };
       
       // Create fridge first, then add the daily check
@@ -170,8 +188,8 @@ export default function AddFridge() {
         await apiRequest("POST", "/api/time-windows", {
           fridgeId: newFridge.id,
           label: dailyCheck.label,
-          startTime: dailyCheck.startTime,
-          endTime: dailyCheck.endTime,
+          checkType: dailyCheck.checkType,
+          excludedDays: dailyCheck.excludedDays,
         });
       } catch (error) {
         console.error("Error creating daily check:", error);
@@ -490,11 +508,35 @@ export default function AddFridge() {
                       )}
 
                       {checkFrequency === 'once' && (
-                        <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded border border-blue-200 dark:border-blue-800">
-                          <p className="text-sm text-blue-800 dark:text-blue-200">
-                            <Clock className="h-4 w-4 inline mr-1" />
-                            A daily temperature check will be set from 9:00 AM to 9:30 AM
-                          </p>
+                        <div className="space-y-3">
+                          <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded border border-blue-200 dark:border-blue-800">
+                            <p className="text-sm text-blue-800 dark:text-blue-200">
+                              <Clock className="h-4 w-4 inline mr-1" />
+                              A daily temperature check will be required each day (any time during the day)
+                            </p>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium">Exclude Days (Optional)</p>
+                            <p className="text-xs text-muted-foreground">
+                              Select days when temperature checks are not required (e.g., when store is closed)
+                            </p>
+                            <div className="grid grid-cols-2 gap-2">
+                              {dayNames.map((day, index) => (
+                                <div key={index} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={`exclude-day-${index}`}
+                                    checked={excludedDays.includes(index)}
+                                    onCheckedChange={() => toggleExcludedDay(index)}
+                                    data-testid={`checkbox-exclude-${day.toLowerCase()}`}
+                                  />
+                                  <label htmlFor={`exclude-day-${index}`} className="text-sm cursor-pointer">
+                                    {day}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>

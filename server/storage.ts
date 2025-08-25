@@ -27,8 +27,12 @@ import {
   checklists,
   checklistItems,
   checklistCompletions,
-  outOfRangeEvents
+  outOfRangeEvents,
+  missedChecks
 } from "@shared/schema";
+
+type MissedCheck = typeof missedChecks.$inferSelect;
+type InsertMissedCheck = typeof missedChecks.$inferInsert;
 
 type Label = typeof labels.$inferSelect;
 type InsertLabel = typeof labels.$inferInsert;
@@ -121,6 +125,12 @@ export interface IStorage {
   
   // Admin methods
   getActiveAlertsCount(): Promise<number>;
+  
+  // Missed checks methods
+  getMissedChecks(fridgeId: string, userId: string): Promise<MissedCheck[]>;
+  createMissedCheck(missedCheckData: InsertMissedCheck): Promise<MissedCheck>;
+  overrideMissedCheck(id: string, userId: string, overrideReason: string): Promise<MissedCheck | undefined>;
+  getMissedChecksForDate(userId: string, date: Date): Promise<(MissedCheck & { fridgeName: string })[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -345,7 +355,12 @@ export class DatabaseStorage implements IStorage {
         eq(timeWindows.isActive, true)
       ));
     
-    return result.find(tw => tw.startTime <= currentTime && tw.endTime >= currentTime);
+    return result.find(tw => 
+      tw.startTime && 
+      tw.endTime && 
+      tw.startTime <= currentTime && 
+      tw.endTime >= currentTime
+    );
   }
 
   // Compliance Record methods
@@ -699,6 +714,86 @@ export class DatabaseStorage implements IStorage {
     ).length;
 
     return alertCount;
+  }
+
+  // Missed checks methods implementation
+  async getMissedChecks(fridgeId: string, userId: string): Promise<MissedCheck[]> {
+    // Verify fridge ownership
+    const fridge = await this.getFridge(fridgeId, userId);
+    if (!fridge) return [];
+    
+    return await this.db
+      .select()
+      .from(missedChecks)
+      .where(eq(missedChecks.fridgeId, fridgeId))
+      .orderBy(desc(missedChecks.missedDate));
+  }
+
+  async createMissedCheck(missedCheckData: InsertMissedCheck): Promise<MissedCheck> {
+    const result = await this.db.insert(missedChecks).values(missedCheckData).returning();
+    return result[0];
+  }
+
+  async overrideMissedCheck(id: string, userId: string, overrideReason: string): Promise<MissedCheck | undefined> {
+    // Verify the missed check belongs to a fridge owned by the user
+    const result = await this.db
+      .select({
+        missedCheck: missedChecks,
+        fridge: fridges
+      })
+      .from(missedChecks)
+      .leftJoin(fridges, eq(missedChecks.fridgeId, fridges.id))
+      .where(and(eq(missedChecks.id, id), eq(fridges.userId, userId)))
+      .limit(1);
+
+    if (!result[0]) return undefined;
+
+    const updated = await this.db
+      .update(missedChecks)
+      .set({
+        isOverridden: true,
+        overrideReason,
+        overriddenBy: userId,
+        overriddenAt: new Date(),
+      })
+      .where(eq(missedChecks.id, id))
+      .returning();
+
+    return updated[0];
+  }
+
+  async getMissedChecksForDate(userId: string, date: Date): Promise<(MissedCheck & { fridgeName: string })[]> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    return await this.db
+      .select({
+        id: missedChecks.id,
+        fridgeId: missedChecks.fridgeId,
+        timeWindowId: missedChecks.timeWindowId,
+        missedDate: missedChecks.missedDate,
+        checkType: missedChecks.checkType,
+        reason: missedChecks.reason,
+        isOverridden: missedChecks.isOverridden,
+        overrideReason: missedChecks.overrideReason,
+        overriddenBy: missedChecks.overriddenBy,
+        overriddenAt: missedChecks.overriddenAt,
+        createdAt: missedChecks.createdAt,
+        fridgeName: fridges.name
+      })
+      .from(missedChecks)
+      .innerJoin(fridges, eq(missedChecks.fridgeId, fridges.id))
+      .where(
+        and(
+          eq(fridges.userId, userId),
+          sql`${missedChecks.missedDate} >= ${startOfDay}`,
+          sql`${missedChecks.missedDate} <= ${endOfDay}`
+        )
+      )
+      .orderBy(desc(missedChecks.missedDate));
   }
 }
 
