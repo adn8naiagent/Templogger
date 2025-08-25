@@ -483,7 +483,10 @@ export default function TempLogger() {
                                 {fridges.map((fridge: Fridge) => (
                                   <SelectItem key={fridge.id} value={fridge.id} data-testid={`fridge-option-${fridge.name}`} className="py-3">
                                     <div className="flex items-center gap-3">
-                                      <div className="w-4 h-4 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: fridge.color }} />
+                                      <div 
+                                        className="w-4 h-4 rounded-full border-2 border-white shadow-sm flex-shrink-0" 
+                                        style={{ backgroundColor: fridge.color || '#3b82f6' }} 
+                                      />
                                       <div>
                                         <span className="font-medium">{fridge.name}</span>
                                         {fridge.location && (
