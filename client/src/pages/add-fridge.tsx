@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { HexColorPicker } from "react-colorful";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { 
@@ -17,7 +19,10 @@ import {
   MapPin,
   FileText,
   Palette,
-  Tag
+  Tag,
+  Clock,
+  Plus,
+  Trash2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -31,10 +36,22 @@ interface Label {
   createdAt: string;
 }
 
+interface TimeWindow {
+  id?: string;
+  label: string;
+  startTime: string;
+  endTime: string;
+}
+
 export default function AddFridge() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Temperature check scheduling state
+  const [enableScheduledChecks, setEnableScheduledChecks] = useState(false);
+  const [checkFrequency, setCheckFrequency] = useState<'once' | 'multiple'>('once');
+  const [timeWindows, setTimeWindows] = useState<TimeWindow[]>([]);
 
   // Fetch labels
   const { data: labels = [] } = useQuery({
@@ -61,10 +78,33 @@ export default function AddFridge() {
       const response = await apiRequest("POST", "/api/fridges", data);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async (newFridge) => {
+      // Create time windows if scheduled checks are enabled
+      if (enableScheduledChecks && timeWindows.length > 0) {
+        try {
+          for (const window of timeWindows) {
+            await apiRequest("POST", "/api/time-windows", {
+              fridgeId: newFridge.id,
+              label: window.label,
+              startTime: window.startTime,
+              endTime: window.endTime,
+            });
+          }
+        } catch (error) {
+          console.error("Error creating time windows:", error);
+          toast({
+            title: "Warning",
+            description: "Fridge created but some check times couldn't be saved.",
+            variant: "destructive",
+          });
+        }
+      }
+      
       toast({
         title: "Fridge created!",
-        description: "New fridge has been added successfully.",
+        description: enableScheduledChecks ? 
+          "New fridge with scheduled temperature checks has been added successfully." :
+          "New fridge has been added successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/fridges/recent-temps"] });
       setLocation("/");
@@ -82,7 +122,70 @@ export default function AddFridge() {
     setLocation("/");
   };
 
-  const onSubmit = (data: CreateFridgeData) => {
+  const addTimeWindow = () => {
+    const newWindow: TimeWindow = {
+      label: `Check ${timeWindows.length + 1}`,
+      startTime: "09:00",
+      endTime: "09:30",
+    };
+    setTimeWindows([...timeWindows, newWindow]);
+  };
+
+  const removeTimeWindow = (index: number) => {
+    setTimeWindows(timeWindows.filter((_, i) => i !== index));
+  };
+
+  const updateTimeWindow = (index: number, field: keyof TimeWindow, value: string) => {
+    const updated = [...timeWindows];
+    updated[index] = { ...updated[index], [field]: value };
+    setTimeWindows(updated);
+  };
+
+  const onSubmit = async (data: CreateFridgeData) => {
+    // Validate time windows if scheduled checks are enabled
+    if (enableScheduledChecks && checkFrequency === 'multiple' && timeWindows.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please add at least one temperature check time.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Set default once-per-day check if selected and create the fridge with time windows
+    if (enableScheduledChecks && checkFrequency === 'once') {
+      const dailyCheck = {
+        label: "Daily Check",
+        startTime: "09:00",
+        endTime: "09:30",
+      };
+      
+      // Create fridge first, then add the daily check
+      const fridgeData = { ...data };
+      const response = await apiRequest("POST", "/api/fridges", fridgeData);
+      const newFridge = await response.json();
+      
+      // Add the daily time window
+      try {
+        await apiRequest("POST", "/api/time-windows", {
+          fridgeId: newFridge.id,
+          label: dailyCheck.label,
+          startTime: dailyCheck.startTime,
+          endTime: dailyCheck.endTime,
+        });
+      } catch (error) {
+        console.error("Error creating daily check:", error);
+      }
+      
+      toast({
+        title: "Fridge created!",
+        description: "New fridge with daily temperature check has been added successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/fridges/recent-temps"] });
+      setLocation("/");
+      return;
+    }
+    
     createFridgeMutation.mutate(data);
   };
 
@@ -271,6 +374,131 @@ export default function AddFridge() {
                       </FormItem>
                     )}
                   />
+                </div>
+
+                {/* Temperature Check Scheduling */}
+                <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-medium flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        Scheduled Temperature Checks
+                      </h4>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Set up automatic reminders for temperature monitoring
+                      </p>
+                    </div>
+                    <Switch
+                      checked={enableScheduledChecks}
+                      onCheckedChange={setEnableScheduledChecks}
+                      data-testid="switch-scheduled-checks"
+                    />
+                  </div>
+
+                  {enableScheduledChecks && (
+                    <div className="space-y-4 pt-2 border-t">
+                      <RadioGroup
+                        value={checkFrequency}
+                        onValueChange={(value: 'once' | 'multiple') => setCheckFrequency(value)}
+                        className="space-y-3"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="once" id="once" data-testid="radio-once-daily" />
+                          <label htmlFor="once" className="text-sm font-medium cursor-pointer">
+                            Check once per day
+                          </label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="multiple" id="multiple" data-testid="radio-multiple-times" />
+                          <label htmlFor="multiple" className="text-sm font-medium cursor-pointer">
+                            Set time for multiple checks a day
+                          </label>
+                        </div>
+                      </RadioGroup>
+
+                      {checkFrequency === 'multiple' && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm text-muted-foreground">
+                              Set specific times for temperature checks
+                            </p>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={addTimeWindow}
+                              data-testid="button-add-time"
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Add Time
+                            </Button>
+                          </div>
+
+                          {timeWindows.length === 0 ? (
+                            <div className="text-center py-4 text-sm text-muted-foreground border border-dashed rounded">
+                              No check times added yet. Click "Add Time" to set your first check.
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              {timeWindows.map((window, index) => (
+                                <div key={index} className="flex items-center gap-2 p-3 border rounded bg-background">
+                                  <div className="flex-1">
+                                    <Input
+                                      type="text"
+                                      placeholder="Check label"
+                                      value={window.label}
+                                      onChange={(e) => updateTimeWindow(index, 'label', e.target.value)}
+                                      className="mb-2"
+                                      data-testid={`input-check-label-${index}`}
+                                    />
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div>
+                                        <label className="text-xs text-muted-foreground">Start Time</label>
+                                        <Input
+                                          type="time"
+                                          value={window.startTime}
+                                          onChange={(e) => updateTimeWindow(index, 'startTime', e.target.value)}
+                                          data-testid={`input-start-time-${index}`}
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="text-xs text-muted-foreground">End Time</label>
+                                        <Input
+                                          type="time"
+                                          value={window.endTime}
+                                          onChange={(e) => updateTimeWindow(index, 'endTime', e.target.value)}
+                                          data-testid={`input-end-time-${index}`}
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeTimeWindow(index)}
+                                    className="text-destructive hover:text-destructive"
+                                    data-testid={`button-remove-time-${index}`}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {checkFrequency === 'once' && (
+                        <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded border border-blue-200 dark:border-blue-800">
+                          <p className="text-sm text-blue-800 dark:text-blue-200">
+                            <Clock className="h-4 w-4 inline mr-1" />
+                            A daily temperature check will be set from 9:00 AM to 9:30 AM
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Action Buttons */}
