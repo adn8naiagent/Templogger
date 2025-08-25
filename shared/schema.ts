@@ -161,6 +161,8 @@ export const insertUserSchema = createInsertSchema(users).pick({
   lastName: true,
   profileImageUrl: true,
   role: true,
+  trialStartDate: true,
+  trialEndDate: true,
 });
 
 export const upsertUserSchema = createInsertSchema(users).pick({

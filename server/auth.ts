@@ -87,12 +87,15 @@ export async function signUp(req: Request, res: Response) {
 
     // Hash password and create user
     const hashedPassword = await hashPassword(password);
+    const now = new Date();
     const user = await storage.createUser({
       email,
       password: hashedPassword,
       firstName,
       lastName,
       role: "user",
+      trialStartDate: now,
+      trialEndDate: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
     });
 
     // Create auth token for new user
