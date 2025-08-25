@@ -64,7 +64,7 @@ const SubscribeForm = () => {
           Complete Your Upgrade
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Enter your payment details to upgrade to TempGuard Pro
+          Enter your payment details to upgrade to FridgeSafe Pro
         </p>
       </CardHeader>
       <CardContent>
@@ -151,7 +151,7 @@ export default function Subscribe() {
           </Link>
         </div>
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Upgrade to TempGuard Pro</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Upgrade to FridgeSafe Pro</h1>
           <p className="text-muted-foreground">
             Get unlimited access to all features for just $10/month
           </p>

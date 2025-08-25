@@ -227,7 +227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create a product and price first
       const product = await stripe.products.create({
-        name: 'TempGuard Pro Monthly',
+        name: 'FridgeSafe Pro Monthly',
         description: 'Professional temperature monitoring for healthcare facilities',
       });
 

@@ -38,7 +38,7 @@ export default function SubscribeSuccess() {
           </div>
           <CardTitle className="flex items-center justify-center gap-2 text-xl">
             <Crown className="h-5 w-5 text-yellow-500" />
-            Welcome to TempGuard Pro!
+            Welcome to FridgeSafe Pro!
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">

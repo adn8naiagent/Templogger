@@ -224,7 +224,7 @@ export default function TempLogger() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Thermometer className="h-6 w-6 text-blue-600" />
-              <h1 className="text-lg font-bold text-foreground">TempGuard Pro</h1>
+              <h1 className="text-lg font-bold text-foreground">FridgeSafe</h1>
               {user?.subscriptionTier && getSubscriptionBadge(user.subscriptionTier)}
             </div>
             

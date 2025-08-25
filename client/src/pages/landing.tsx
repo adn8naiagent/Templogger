@@ -20,7 +20,7 @@ export default function Landing() {
           <div className="flex items-center gap-2">
             <Thermometer className="h-8 w-8 text-blue-600" />
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              TempGuard Pro
+              FridgeSafe
             </h1>
           </div>
           <div className="flex gap-2">
@@ -284,7 +284,7 @@ export default function Landing() {
             Ready to Ensure Medication Safety?
           </h3>
           <p className="text-gray-600 dark:text-gray-300 mb-8">
-            Join thousands of healthcare professionals who trust TempGuard Pro 
+            Join thousands of healthcare professionals who trust FridgeSafe 
             for their temperature monitoring needs.
           </p>
           <Link href="/auth/signup">
@@ -300,7 +300,7 @@ export default function Landing() {
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Thermometer className="h-6 w-6 text-blue-400" />
-            <span className="text-lg font-semibold">TempGuard Pro</span>
+            <span className="text-lg font-semibold">FridgeSafe</span>
           </div>
           <p className="text-gray-400">
             Professional temperature monitoring for healthcare facilities
