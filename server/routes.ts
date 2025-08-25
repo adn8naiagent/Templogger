@@ -12,7 +12,7 @@ import {
   createTimeWindowSchema,
   createChecklistSchema,
   completeChecklistSchema,
-  createOutOfRangeEventSchema,
+  insertOutOfRangeEventSchema,
   userRoles,
   type User 
 } from "@shared/schema";

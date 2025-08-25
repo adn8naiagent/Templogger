@@ -234,7 +234,7 @@ export class DatabaseStorage implements IStorage {
       const result = await this.db.delete(fridges)
         .where(and(eq(fridges.id, id), eq(fridges.userId, userId)));
       
-      return result.rowCount! > 0;
+      return result.length > 0;
     } catch (error) {
       console.error("Error deleting fridge:", error);
       return false;
