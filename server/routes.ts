@@ -9,6 +9,10 @@ import {
   createFridgeSchema,
   createLabelSchema,
   logTemperatureSchema,
+  createTimeWindowSchema,
+  createChecklistSchema,
+  completeChecklistSchema,
+  createOutOfRangeEventSchema,
   userRoles,
   type User 
 } from "@shared/schema";
@@ -315,8 +319,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           stripeStatus = {
             id: subscription.id,
             status: subscription.status,
-            current_period_end: subscription.current_period_end,
-            cancel_at_period_end: subscription.cancel_at_period_end,
+            currentPeriodEnd: subscription.current_period_end,
+            cancelAtPeriodEnd: subscription.cancel_at_period_end,
           };
         } catch (error) {
           console.error("Error fetching Stripe subscription:", error);
@@ -431,13 +435,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Log temperature
-  app.post("/api/temperature-logs", requireAuth, [
-    body("fridgeId").notEmpty(),
-    body("temperature").isFloat(),
-    body("personName").trim().isLength({ min: 1 }),
-    handleValidationErrors
-  ], async (req: any, res: Response) => {
+  // Enhanced temperature logging with compliance tracking
+  app.post("/api/temperature-logs", requireAuth, async (req: any, res: Response) => {
     try {
       const result = logTemperatureSchema.safeParse(req.body);
       if (!result.success) {
@@ -447,38 +446,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { fridgeId, temperature, personName } = result.data;
       const userId = req.userId;
+      const { fridgeId, timeWindowId, temperature, personName, isOnTime = true, lateReason, correctiveAction, correctiveNotes } = result.data;
       
-      // Verify fridge belongs to user
+      // Verify fridge ownership
       const fridge = await storage.getFridge(fridgeId, userId);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
 
-      // Check if temperature is outside range
-      const tempNum = parseFloat(temperature);
+      // Check if temperature is out of range and create alert
+      const temp = parseFloat(temperature);
       const minTemp = parseFloat(fridge.minTemp);
       const maxTemp = parseFloat(fridge.maxTemp);
-      const isAlert = tempNum < minTemp || tempNum > maxTemp;
-      
-      const newLog = await storage.createTemperatureLog({
+      const isAlert = temp < minTemp || temp > maxTemp;
+
+      const logData = {
         fridgeId,
+        timeWindowId: timeWindowId || null,
         temperature,
         personName,
         isAlert,
-      });
+        isOnTime,
+        lateReason: lateReason || null,
+        correctiveAction: correctiveAction || null,
+        correctiveNotes: correctiveNotes || null,
+      };
 
-      res.status(201).json({ 
-        message: "Temperature logged successfully", 
-        log: newLog,
-        alert: isAlert ? {
-          message: `Temperature ${tempNum}°C is outside range ${minTemp}°C - ${maxTemp}°C`,
-          severity: "warning"
-        } : null
-      });
+      const result_log = await storage.createTemperatureLogWithCompliance(logData);
+
+      res.json(result_log);
     } catch (error: any) {
-      console.error("Log temperature error:", error);
+      console.error("Create temperature log error:", error);
       res.status(500).json({ error: "Failed to log temperature" });
     }
   });
@@ -496,25 +495,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get recent temperature for all fridges
+  // Enhanced fridges with compliance data
   app.get("/api/fridges/recent-temps", requireAuth, async (req: any, res: Response) => {
     try {
       const userId = req.userId;
-      const fridges = await storage.getFridges(userId);
-      const fridgesWithRecentTemps = await Promise.all(
-        fridges.map(async (fridge) => {
-          const recentLog = await storage.getRecentTemperatureLog(fridge.id, userId);
-          return {
-            ...fridge,
-            recentLog
-          };
-        })
-      );
-      
-      res.json(fridgesWithRecentTemps);
+      const fridgesWithData = await storage.getFridgesWithRecentTemps(userId);
+      res.json(fridgesWithData);
     } catch (error: any) {
-      console.error("Get recent temps error:", error);
-      res.status(500).json({ error: "Failed to get recent temperatures" });
+      console.error("Get fridges with compliance data error:", error);
+      res.status(500).json({ error: "Failed to get fridges with compliance data" });
     }
   });
 
@@ -996,6 +985,185 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "error", 
         message: error.message 
       });
+    }
+  });
+
+  // =========================
+  // TIME WINDOW ENDPOINTS
+  // =========================
+
+  // Get time windows for a fridge
+  app.get("/api/fridges/:fridgeId/time-windows", requireAuth, async (req: any, res: Response) => {
+    try {
+      const { fridgeId } = req.params;
+      const userId = req.userId;
+      
+      const timeWindows = await storage.getTimeWindows(fridgeId, userId);
+      res.json(timeWindows);
+    } catch (error: any) {
+      console.error("Get time windows error:", error);
+      res.status(500).json({ error: "Failed to get time windows" });
+    }
+  });
+
+  // Create time window
+  app.post("/api/time-windows", requireAuth, async (req: any, res: Response) => {
+    try {
+      const result = createTimeWindowSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Invalid input data", 
+          details: result.error.errors 
+        });
+      }
+
+      const userId = req.userId;
+      const { fridgeId, label, startTime, endTime } = result.data;
+      
+      // Verify fridge ownership
+      const fridge = await storage.getFridge(fridgeId, userId);
+      if (!fridge) {
+        return res.status(404).json({ error: "Fridge not found" });
+      }
+
+      const timeWindow = await storage.createTimeWindow({
+        fridgeId,
+        label,
+        startTime,
+        endTime,
+        isActive: true,
+      });
+
+      res.json(timeWindow);
+    } catch (error: any) {
+      console.error("Create time window error:", error);
+      res.status(500).json({ error: "Failed to create time window" });
+    }
+  });
+
+  // =========================
+  // COMPLIANCE ENDPOINTS
+  // =========================
+
+  // Get compliance overview
+  app.get("/api/compliance/overview", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const date = req.query.date ? new Date(req.query.date as string) : undefined;
+      
+      const overview = await storage.getComplianceOverview(userId, date);
+      res.json(overview);
+    } catch (error: any) {
+      console.error("Get compliance overview error:", error);
+      res.status(500).json({ error: "Failed to get compliance overview" });
+    }
+  });
+
+  // =========================
+  // CHECKLIST ENDPOINTS  
+  // =========================
+
+  // Get checklists
+  app.get("/api/checklists", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const { fridgeId } = req.query;
+      
+      const checklists = await storage.getChecklists(userId, fridgeId as string);
+      res.json(checklists);
+    } catch (error: any) {
+      console.error("Get checklists error:", error);
+      res.status(500).json({ error: "Failed to get checklists" });
+    }
+  });
+
+  // Get due checklists
+  app.get("/api/checklists/due", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const dueChecklists = await storage.getDueChecklists(userId);
+      res.json(dueChecklists);
+    } catch (error: any) {
+      console.error("Get due checklists error:", error);
+      res.status(500).json({ error: "Failed to get due checklists" });
+    }
+  });
+
+  // Create checklist (Admin/Manager only)
+  app.post("/api/checklists", requireAuth, async (req: any, res: Response) => {
+    try {
+      const result = createChecklistSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Invalid input data", 
+          details: result.error.errors 
+        });
+      }
+
+      const userId = req.userId;
+      const user = await storage.getUser(userId);
+      
+      // Check if user has permission to create checklists
+      if (!user || (user.role !== 'admin' && user.role !== 'manager')) {
+        return res.status(403).json({ error: "Insufficient permissions to create checklists" });
+      }
+
+      const { title, description, frequency, fridgeId, items } = result.data;
+      
+      const checklistData = {
+        title,
+        description: description || null,
+        frequency,
+        fridgeId: fridgeId || null,
+        createdBy: userId,
+        isActive: true,
+      };
+
+      const itemsData = items.map((item, index) => ({
+        title: item.title,
+        description: item.description || null,
+        isRequired: item.isRequired,
+        sortOrder: index.toString(),
+        checklistId: '', // Will be set in storage method
+      }));
+
+      const checklist = await storage.createChecklist(checklistData, itemsData);
+      res.json(checklist);
+    } catch (error: any) {
+      console.error("Create checklist error:", error);
+      res.status(500).json({ error: "Failed to create checklist" });
+    }
+  });
+
+  // Complete checklist
+  app.post("/api/checklists/:id/complete", requireAuth, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.userId;
+      
+      const result = completeChecklistSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Invalid input data", 
+          details: result.error.errors 
+        });
+      }
+
+      const { fridgeId, completedItems, notes } = result.data;
+      
+      const completionData = {
+        checklistId: id,
+        fridgeId: fridgeId || null,
+        completedBy: userId,
+        completedItems,
+        notes: notes || null,
+      };
+
+      const completion = await storage.createChecklistCompletion(completionData);
+      res.json(completion);
+    } catch (error: any) {
+      console.error("Complete checklist error:", error);
+      res.status(500).json({ error: "Failed to complete checklist" });
     }
   });
 

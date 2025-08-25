@@ -64,12 +64,92 @@ export const labels = pgTable("labels", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Time windows for fridge monitoring schedules
+export const timeWindows = pgTable("time_windows", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
+  label: text("label").notNull(), // e.g. "Morning", "Afternoon"
+  startTime: text("start_time").notNull(), // HH:MM format
+  endTime: text("end_time").notNull(), // HH:MM format
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Enhanced temperature logs with compliance tracking
 export const temperatureLogs = pgTable("temperature_logs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
+  timeWindowId: varchar("time_window_id").references(() => timeWindows.id),
   temperature: decimal("temperature", { precision: 4, scale: 1 }).notNull(),
   personName: text("person_name").notNull(),
   isAlert: boolean("is_alert").notNull().default(false),
+  isOnTime: boolean("is_on_time").notNull().default(true),
+  lateReason: text("late_reason"), // Required if isOnTime is false
+  correctiveAction: text("corrective_action"), // For out-of-range temps
+  correctiveNotes: text("corrective_notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Compliance records for tracking at different levels
+export const complianceRecords = pgTable("compliance_records", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
+  date: timestamp("date").notNull(),
+  level: text("level").notNull(), // "window", "fridge-day", "overall"
+  status: text("status").notNull(), // "compliant", "missed", "partial", "late"
+  requiredChecks: decimal("required_checks", { precision: 3, scale: 0 }).notNull().default("0"),
+  completedChecks: decimal("completed_checks", { precision: 3, scale: 0 }).notNull().default("0"),
+  onTimeChecks: decimal("on_time_checks", { precision: 3, scale: 0 }).notNull().default("0"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Custom checklists for admin-created tasks
+export const checklists = pgTable("checklists", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  description: text("description"),
+  frequency: text("frequency").notNull(), // "daily", "weekly", "monthly"
+  isActive: boolean("is_active").notNull().default(true),
+  fridgeId: varchar("fridge_id").references(() => fridges.id), // Optional - can be global
+  createdBy: varchar("created_by").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Checklist items 
+export const checklistItems = pgTable("checklist_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  checklistId: varchar("checklist_id").notNull().references(() => checklists.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  isRequired: boolean("is_required").notNull().default(true),
+  sortOrder: decimal("sort_order", { precision: 3, scale: 0 }).notNull().default("0"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Checklist completions
+export const checklistCompletions = pgTable("checklist_completions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  checklistId: varchar("checklist_id").notNull().references(() => checklists.id),
+  fridgeId: varchar("fridge_id").references(() => fridges.id),
+  completedBy: varchar("completed_by").notNull().references(() => users.id),
+  completedItems: text("completed_items").array(), // Array of checklist item IDs
+  notes: text("notes"),
+  completedAt: timestamp("completed_at").defaultNow(),
+});
+
+// Out-of-range events tracking
+export const outOfRangeEvents = pgTable("out_of_range_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  temperatureLogId: varchar("temperature_log_id").notNull().references(() => temperatureLogs.id),
+  fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
+  temperature: decimal("temperature", { precision: 4, scale: 1 }).notNull(),
+  expectedMin: decimal("expected_min", { precision: 4, scale: 1 }).notNull(),
+  expectedMax: decimal("expected_max", { precision: 4, scale: 1 }).notNull(),
+  severity: text("severity").notNull(), // "low", "medium", "high", "critical"
+  correctiveAction: text("corrective_action"),
+  notes: text("notes"),
+  resolvedAt: timestamp("resolved_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -117,9 +197,68 @@ export const insertLabelSchema = createInsertSchema(labels).pick({
 
 export const insertTemperatureLogSchema = createInsertSchema(temperatureLogs).pick({
   fridgeId: true,
+  timeWindowId: true,
   temperature: true,
   personName: true,
   isAlert: true,
+  isOnTime: true,
+  lateReason: true,
+  correctiveAction: true,
+  correctiveNotes: true,
+});
+
+export const insertTimeWindowSchema = createInsertSchema(timeWindows).pick({
+  fridgeId: true,
+  label: true,
+  startTime: true,
+  endTime: true,
+  isActive: true,
+});
+
+export const insertComplianceRecordSchema = createInsertSchema(complianceRecords).pick({
+  fridgeId: true,
+  date: true,
+  level: true,
+  status: true,
+  requiredChecks: true,
+  completedChecks: true,
+  onTimeChecks: true,
+});
+
+export const insertChecklistSchema = createInsertSchema(checklists).pick({
+  title: true,
+  description: true,
+  frequency: true,
+  isActive: true,
+  fridgeId: true,
+  createdBy: true,
+});
+
+export const insertChecklistItemSchema = createInsertSchema(checklistItems).pick({
+  checklistId: true,
+  title: true,
+  description: true,
+  isRequired: true,
+  sortOrder: true,
+});
+
+export const insertChecklistCompletionSchema = createInsertSchema(checklistCompletions).pick({
+  checklistId: true,
+  fridgeId: true,
+  completedBy: true,
+  completedItems: true,
+  notes: true,
+});
+
+export const insertOutOfRangeEventSchema = createInsertSchema(outOfRangeEvents).pick({
+  temperatureLogId: true,
+  fridgeId: true,
+  temperature: true,
+  expectedMin: true,
+  expectedMax: true,
+  severity: true,
+  correctiveAction: true,
+  notes: true,
 });
 
 // Sign up schema for frontend forms
@@ -200,11 +339,48 @@ export const createLabelSchema = z.object({
 
 export const logTemperatureSchema = z.object({
   fridgeId: z.string().min(1, "Fridge selection is required"),
+  timeWindowId: z.string().optional(),
   temperature: z.string().refine((val) => {
     const num = parseFloat(val);
     return !isNaN(num) && num >= -50 && num <= 50;
   }, "Temperature must be between -50°C and 50°C"),
   personName: z.string().min(1, "Person name is required"),
+  isOnTime: z.boolean().default(true),
+  lateReason: z.string().optional(),
+  correctiveAction: z.string().optional(),
+  correctiveNotes: z.string().optional(),
+});
+
+// Time window schema
+export const createTimeWindowSchema = z.object({
+  fridgeId: z.string().min(1, "Please select a fridge"),
+  label: z.string().min(1, "Label is required"),
+  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)"),
+  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)"),
+}).refine((data) => data.startTime < data.endTime, {
+  message: "End time must be after start time",
+  path: ["endTime"],
+});
+
+// Checklist schema
+export const createChecklistSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  frequency: z.enum(["daily", "weekly", "monthly"]),
+  fridgeId: z.string().optional(),
+  items: z.array(z.object({
+    title: z.string().min(1, "Item title is required"),
+    description: z.string().optional(),
+    isRequired: z.boolean().default(true),
+  })).min(1, "At least one checklist item is required"),
+});
+
+// Checklist completion schema
+export const completeChecklistSchema = z.object({
+  checklistId: z.string().min(1, "Checklist ID is required"),
+  fridgeId: z.string().optional(),
+  completedItems: z.array(z.string()),
+  notes: z.string().optional(),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -223,6 +399,25 @@ export type InsertTemperatureLog = z.infer<typeof insertTemperatureLogSchema>;
 export type TemperatureLog = typeof temperatureLogs.$inferSelect;
 export type CreateFridgeData = z.infer<typeof createFridgeSchema>;
 export type LogTemperatureData = z.infer<typeof logTemperatureSchema>;
+export type CreateTimeWindowData = z.infer<typeof createTimeWindowSchema>;
+export type CreateChecklistData = z.infer<typeof createChecklistSchema>;
+export type CompleteChecklistData = z.infer<typeof completeChecklistSchema>;
+
+// Table select types
+export type TimeWindow = typeof timeWindows.$inferSelect;
+export type ComplianceRecord = typeof complianceRecords.$inferSelect;
+export type Checklist = typeof checklists.$inferSelect;
+export type ChecklistItem = typeof checklistItems.$inferSelect;
+export type ChecklistCompletion = typeof checklistCompletions.$inferSelect;
+export type OutOfRangeEvent = typeof outOfRangeEvents.$inferSelect;
+
+// Insert types 
+export type InsertTimeWindow = z.infer<typeof insertTimeWindowSchema>;
+export type InsertComplianceRecord = z.infer<typeof insertComplianceRecordSchema>;
+export type InsertChecklist = z.infer<typeof insertChecklistSchema>;
+export type InsertChecklistItem = z.infer<typeof insertChecklistItemSchema>;
+export type InsertChecklistCompletion = z.infer<typeof insertChecklistCompletionSchema>;
+export type InsertOutOfRangeEvent = z.infer<typeof insertOutOfRangeEventSchema>;
 
 // Helper function to calculate trial end date (14 days from start)
 export function calculateTrialEndDate(startDate: Date): Date {
@@ -243,7 +438,8 @@ export const subscriptionStatus = {
 } as const;
 
 export const userRoles = {
-  USER: "user",
+  STAFF: "staff",
+  MANAGER: "manager", 
   ADMIN: "admin"
 } as const;
 

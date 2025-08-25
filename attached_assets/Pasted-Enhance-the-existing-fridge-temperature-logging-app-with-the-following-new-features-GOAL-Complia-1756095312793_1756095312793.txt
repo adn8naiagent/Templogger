@@ -1,0 +1,67 @@
+Enhance the existing fridge temperature logging app with the following new features:
+
+GOAL
+- Compliance = required temperature logs are entered within defined time windows.
+- Out-of-range temps still count as “entered” but must be flagged.
+- Users must be able to define how many checks per day each fridge requires, with time windows for each.
+
+FEATURES TO ADD
+
+1) Fridge Setup & Scheduling
+- For each fridge: allow the user to define number of checks per day and the specific time windows for those checks.
+- Each window should have a label (e.g. “Morning”), a start time, and an end time.
+- Validate that time windows don’t overlap.
+
+2) Manual Temp Entry
+- When logging a temp, the app should automatically detect the current time window.
+- If outside of the correct window, warn and require a reason (“late entry”).
+- If temp is out of range, flag as “Out of Range” and prompt for corrective action (dropdown + note/photo).
+
+3) Compliance Tracking
+- Track compliance at three levels:
+  - Per-window (completed on time = compliant).
+  - Per-fridge per day (all windows completed).
+  - Overall (percentage of compliant fridge-days).
+- Compliance is based only on whether entries were made in the required windows (not whether values were in range).
+
+4) Dashboard (Live Compliance)
+- Show overall compliance % for today, number of fridges compliant vs. total, missed windows, and out-of-range events.
+- Each fridge tile should display: status (On Track / Missed Window / Out of Range), how many checks are complete, and how many remain.
+
+5) Calendar View (Compliance Heatmap)
+- Monthly view with color codes:
+  - Green = fully compliant
+  - Red = missed windows
+  - Amber = partial/late entries
+  - Blue = upcoming/scheduled
+- Clicking a day shows details of logs, who entered them, and any flags.
+
+6) Insights
+- Show weekly and monthly compliance trends.
+- Identify problem windows with highest miss rates.
+- Summarize frequency of out-of-range events.
+- Show staff accountability: who performs most logs, who logs late, etc.
+
+7) Custom Checklists
+- Allow admins to create custom checklists (e.g., “Weekly Clean,” “Open/Close Routine”).
+- Checklist items can be required or optional.
+- Checklists can be tied to a fridge or to a schedule (daily, weekly, monthly).
+- Completed checklists should also show up in compliance insights (separate from temp logging).
+
+8) Data Exports
+- Allow users to export:
+  - Raw temperature logs (with timestamps, fridge, window, user, notes, corrective actions).
+  - Compliance summaries (daily, weekly, monthly).
+  - Out-of-range events.
+  - Checklist completions.
+- Provide “Export last 30 days” and custom date ranges.
+
+9) Notifications (basic version)
+- End-of-day summary email listing missed windows.
+- Optional immediate alert for out-of-range entries.
+- Allow per-fridge toggle for notifications.
+
+10) Roles & Permissions
+- Admin: manage fridges, schedules, users, checklists, exports.
+- Manager: view dashboards, insights, exports.
+- Staff: log temps and complete checklists.

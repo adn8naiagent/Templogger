@@ -40,7 +40,8 @@ import {
   MapPin,
   FileText,
   Palette,
-  Tag
+  Tag,
+  BarChart3
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -65,7 +66,22 @@ interface Fridge {
     personName: string;
     isAlert: boolean;
     createdAt: string;
+    isOnTime?: boolean;
+    lateReason?: string;
   };
+  timeWindows?: TimeWindow[];
+  complianceScore?: number;
+  missedReadings?: number;
+}
+
+interface TimeWindow {
+  id: string;
+  fridgeId: string;
+  label: string;
+  startTime: string;
+  endTime: string;
+  isActive: boolean;
+  createdAt: string;
 }
 
 interface Label {
@@ -80,15 +96,14 @@ export default function TempLogger() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showAddFridge, setShowAddFridge] = useState(false);
+  const [selectedFridgeId, setSelectedFridgeId] = useState("");
+  const [selectedTimeWindowId, setSelectedTimeWindowId] = useState("");
+  const [isLateEntry, setIsLateEntry] = useState(false);
+  const [showCorrectiveActions, setShowCorrectiveActions] = useState(false);
 
   // Fetch fridges with recent temperatures
   const { data: fridges = [], isLoading: fridgesLoading } = useQuery({
     queryKey: ["/api/fridges/recent-temps"],
-    queryFn: async () => {
-      const response = await fetch("/api/fridges/recent-temps");
-      if (!response.ok) throw new Error("Failed to fetch fridges");
-      return response.json();
-    },
     retry: (failureCount, error) => {
       if (isUnauthorizedError(error as Error)) {
         toast({
@@ -97,7 +112,7 @@ export default function TempLogger() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth/login";
         }, 500);
         return false;
       }
@@ -108,12 +123,52 @@ export default function TempLogger() {
   // Fetch labels
   const { data: labels = [] } = useQuery({
     queryKey: ["/api/labels"],
+  });
+
+  // Fetch time windows for selected fridge
+  const { data: timeWindows = [] } = useQuery({
+    queryKey: ["/api/fridges", selectedFridgeId, "time-windows"],
     queryFn: async () => {
-      const response = await fetch("/api/labels");
-      if (!response.ok) throw new Error("Failed to fetch labels");
+      if (!selectedFridgeId) return [];
+      const response = await apiRequest("GET", `/api/fridges/${selectedFridgeId}/time-windows`);
       return response.json();
     },
+    enabled: !!selectedFridgeId,
   });
+
+  // Check if current time is within a time window and detect late entries
+  const getCurrentTimeWindow = () => {
+    const now = new Date();
+    const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
+    
+    return timeWindows.find((window: TimeWindow) => {
+      if (!window.isActive) return false;
+      return currentTime >= window.startTime && currentTime <= window.endTime;
+    });
+  };
+
+  const currentTimeWindow = getCurrentTimeWindow();
+  
+  // Detect if this would be a late entry
+  useEffect(() => {
+    if (currentTimeWindow) {
+      setSelectedTimeWindowId(currentTimeWindow.id);
+      setIsLateEntry(false);
+    } else if (timeWindows.length > 0) {
+      // Check if we missed any time windows today
+      const now = new Date();
+      const currentTime = now.toTimeString().slice(0, 5);
+      
+      const missedWindow = timeWindows.find((window: TimeWindow) => 
+        window.isActive && currentTime > window.endTime
+      );
+      
+      if (missedWindow) {
+        setIsLateEntry(true);
+        setSelectedTimeWindowId(missedWindow.id);
+      }
+    }
+  }, [timeWindows, currentTimeWindow]);
 
   // Create fridge form
   const fridgeForm = useForm<CreateFridgeData>({
@@ -136,6 +191,11 @@ export default function TempLogger() {
       fridgeId: "",
       temperature: "",
       personName: "",
+      timeWindowId: "",
+      isOnTime: true,
+      lateReason: "",
+      correctiveAction: "",
+      correctiveNotes: "",
     },
   });
 
@@ -171,30 +231,38 @@ export default function TempLogger() {
     },
   });
 
+  // Check if temperature would be out of range
+  const checkTemperatureRange = (temperature: string, fridgeId: string) => {
+    const selectedFridge = fridges.find((f: Fridge) => f.id === fridgeId);
+    if (!selectedFridge || !temperature) return false;
+    
+    const temp = parseFloat(temperature);
+    const minTemp = parseFloat(selectedFridge.minTemp);
+    const maxTemp = parseFloat(selectedFridge.maxTemp);
+    
+    return temp < minTemp || temp > maxTemp;
+  };
+
   // Log temperature mutation
   const logTempMutation = useMutation({
     mutationFn: async (data: LogTemperatureData) => {
-      const response = await fetch("/api/temperature-logs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to log temperature");
-      }
+      const response = await apiRequest("POST", "/api/temperature-logs", data);
       return response.json();
     },
     onSuccess: (result) => {
       toast({
         title: "Temperature logged!",
         description: result.alert 
-          ? `⚠️ ${result.alert.message}` 
+          ? `⚠️ Alert: Temperature out of range!` 
           : "Temperature recorded successfully.",
         variant: result.alert ? "destructive" : "default",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/fridges/recent-temps"] });
       tempForm.reset();
+      setSelectedFridgeId("");
+      setSelectedTimeWindowId("");
+      setIsLateEntry(false);
+      setShowCorrectiveActions(false);
     },
     onError: (error: any) => {
       toast({
@@ -258,22 +326,22 @@ export default function TempLogger() {
             <div className="flex items-center gap-2">
               <Thermometer className="h-6 w-6 text-blue-600" />
               <h1 className="text-lg font-bold text-foreground">FridgeSafe</h1>
-              {user?.subscriptionTier && getSubscriptionBadge(user.subscriptionTier)}
+              {(user as any)?.subscriptionStatus && getSubscriptionBadge((user as any).subscriptionStatus)}
             </div>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="relative" data-testid="button-user-menu">
                   <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                    {user?.profileImageUrl ? (
+                    {(user as any)?.profileImageUrl ? (
                       <img 
-                        src={user.profileImageUrl} 
+                        src={(user as any).profileImageUrl} 
                         alt="Profile" 
                         className="w-8 h-8 rounded-full object-cover"
                       />
                     ) : (
                       <span className="text-sm font-bold text-blue-600">
-                        {user?.firstName?.charAt(0) || 'U'}
+                        {(user as any)?.firstName?.charAt(0) || 'U'}
                       </span>
                     )}
                   </div>
@@ -281,10 +349,16 @@ export default function TempLogger() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <div className="px-2 py-2">
-                  <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
-                  <p className="text-xs text-muted-foreground">{user?.email}</p>
+                  <p className="text-sm font-medium">{(user as any)?.firstName} {(user as any)?.lastName}</p>
+                  <p className="text-xs text-muted-foreground">{(user as any)?.email}</p>
                 </div>
                 <DropdownMenuSeparator />
+                <Link href="/compliance">
+                  <DropdownMenuItem data-testid="menu-compliance">
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Compliance Dashboard
+                  </DropdownMenuItem>
+                </Link>
                 <Link href="/account">
                   <DropdownMenuItem data-testid="menu-account">
                     <User className="h-4 w-4 mr-2" />
@@ -297,7 +371,7 @@ export default function TempLogger() {
                     Settings
                   </DropdownMenuItem>
                 </Link>
-                {user?.role === 'admin' && (
+                {(user as any)?.role === 'admin' && (
                   <Link href="/admin">
                     <DropdownMenuItem data-testid="menu-admin">
                       <Shield className="h-4 w-4 mr-2" />
@@ -566,7 +640,10 @@ export default function TempLogger() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Select Fridge</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={(value) => {
+                        field.onChange(value);
+                        setSelectedFridgeId(value);
+                      }} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-fridge">
                             <SelectValue placeholder="Choose a fridge" />
@@ -575,7 +652,19 @@ export default function TempLogger() {
                         <SelectContent>
                           {fridges.map((fridge: Fridge) => (
                             <SelectItem key={fridge.id} value={fridge.id}>
-                              {fridge.name} ({fridge.minTemp}°C - {fridge.maxTemp}°C)
+                              <div className="flex items-center justify-between w-full">
+                                <span>{fridge.name}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-muted-foreground">
+                                    {fridge.minTemp}°C - {fridge.maxTemp}°C
+                                  </span>
+                                  {fridge.complianceScore && (
+                                    <Badge variant={fridge.complianceScore >= 95 ? "default" : fridge.complianceScore >= 80 ? "secondary" : "destructive"}>
+                                      {fridge.complianceScore}%
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -584,6 +673,89 @@ export default function TempLogger() {
                     </FormItem>
                   )}
                 />
+
+                {/* Time Window Selection */}
+                {timeWindows.length > 0 && (
+                  <FormField
+                    control={tempForm.control}
+                    name="timeWindowId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          Time Window
+                          {currentTimeWindow && (
+                            <Badge variant="default" className="ml-2">
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              On Time
+                            </Badge>
+                          )}
+                          {isLateEntry && (
+                            <Badge variant="destructive" className="ml-2">
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              Late Entry
+                            </Badge>
+                          )}
+                        </FormLabel>
+                        <Select onValueChange={(value) => {
+                          field.onChange(value);
+                          setSelectedTimeWindowId(value);
+                        }} value={selectedTimeWindowId}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-time-window">
+                              <SelectValue placeholder="Select time window (optional)" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="">No specific time window</SelectItem>
+                            {timeWindows.map((window: TimeWindow) => (
+                              <SelectItem key={window.id} value={window.id}>
+                                <div className="flex items-center justify-between w-full">
+                                  <span>{window.label}</span>
+                                  <span className="text-xs text-muted-foreground ml-2">
+                                    {window.startTime} - {window.endTime}
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {/* Late Entry Warning and Reason */}
+                {isLateEntry && (
+                  <Alert variant="destructive" data-testid="late-entry-warning">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      This entry is being logged outside the scheduled time window. Please provide a reason for the late entry.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {isLateEntry && (
+                  <FormField
+                    control={tempForm.control}
+                    name="lateReason"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Reason for Late Entry *</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            {...field} 
+                            placeholder="Explain why this temperature reading is being logged late..."
+                            rows={2}
+                            data-testid="input-late-reason"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <div className="grid grid-cols-2 gap-3">
                   <FormField
@@ -620,6 +792,73 @@ export default function TempLogger() {
                     )}
                   />
                 </div>
+
+                {/* Temperature Range Alert and Corrective Actions */}
+                {tempForm.watch("temperature") && tempForm.watch("fridgeId") && 
+                 checkTemperatureRange(tempForm.watch("temperature"), tempForm.watch("fridgeId")) && (
+                  <>
+                    <Alert variant="destructive" data-testid="temperature-alert">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>
+                        <strong>Temperature Alert!</strong> This reading is outside the safe range. 
+                        Corrective actions are required.
+                      </AlertDescription>
+                    </Alert>
+
+                    <div className="space-y-4 p-4 bg-destructive/5 border border-destructive/20 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <AlertTriangle className="h-4 w-4 text-destructive" />
+                        <span className="font-medium">Corrective Actions Required</span>
+                      </div>
+
+                      <FormField
+                        control={tempForm.control}
+                        name="correctiveAction"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Corrective Action Taken *</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-corrective-action">
+                                  <SelectValue placeholder="Select action taken" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="temperature_adjusted">Temperature Adjusted</SelectItem>
+                                <SelectItem value="equipment_checked">Equipment Checked</SelectItem>
+                                <SelectItem value="door_sealed">Door Properly Sealed</SelectItem>
+                                <SelectItem value="maintenance_called">Maintenance Called</SelectItem>
+                                <SelectItem value="items_relocated">Items Relocated</SelectItem>
+                                <SelectItem value="supervisor_notified">Supervisor Notified</SelectItem>
+                                <SelectItem value="other">Other (specify in notes)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={tempForm.control}
+                        name="correctiveNotes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Additional Notes</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                {...field} 
+                                placeholder="Describe the specific actions taken and any observations..."
+                                rows={3}
+                                data-testid="input-corrective-notes"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </>
+                )}
 
                 <Button 
                   type="submit" 

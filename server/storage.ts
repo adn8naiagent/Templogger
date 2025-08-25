@@ -6,17 +6,35 @@ import {
   type InsertFridge,
   type TemperatureLog,
   type InsertTemperatureLog,
+  type TimeWindow,
+  type InsertTimeWindow,
+  type ComplianceRecord,
+  type InsertComplianceRecord,
+  type Checklist,
+  type InsertChecklist,
+  type ChecklistItem,
+  type InsertChecklistItem,
+  type ChecklistCompletion,
+  type InsertChecklistCompletion,
+  type OutOfRangeEvent,
+  type InsertOutOfRangeEvent,
   labels,
   users,
   fridges,
-  temperatureLogs
+  temperatureLogs,
+  timeWindows,
+  complianceRecords,
+  checklists,
+  checklistItems,
+  checklistCompletions,
+  outOfRangeEvents
 } from "@shared/schema";
 
 type Label = typeof labels.$inferSelect;
 type InsertLabel = typeof labels.$inferInsert;
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 
 // modify the interface with any CRUD methods
 // you might need
@@ -50,6 +68,56 @@ export interface IStorage {
   getRecentTemperatureLog(fridgeId: string, userId: string): Promise<TemperatureLog | undefined>;
   createTemperatureLog(logData: InsertTemperatureLog): Promise<TemperatureLog>;
   getAllTemperatureLogsForUser(userId: string): Promise<(TemperatureLog & { fridgeName: string })[]>;
+  
+  // Time Window methods
+  getTimeWindows(fridgeId: string, userId: string): Promise<TimeWindow[]>;
+  getTimeWindow(id: string, userId: string): Promise<TimeWindow | undefined>;
+  createTimeWindow(timeWindowData: InsertTimeWindow): Promise<TimeWindow>;
+  updateTimeWindow(id: string, userId: string, updates: Partial<TimeWindow>): Promise<TimeWindow | undefined>;
+  deleteTimeWindow(id: string, userId: string): Promise<boolean>;
+  getCurrentTimeWindow(fridgeId: string): Promise<TimeWindow | undefined>;
+  
+  // Compliance Record methods
+  getComplianceRecords(fridgeId: string, startDate: Date, endDate: Date): Promise<ComplianceRecord[]>;
+  getComplianceRecord(id: string): Promise<ComplianceRecord | undefined>;
+  createComplianceRecord(recordData: InsertComplianceRecord): Promise<ComplianceRecord>;
+  updateComplianceRecord(id: string, updates: Partial<ComplianceRecord>): Promise<ComplianceRecord | undefined>;
+  getComplianceOverview(userId: string, date?: Date): Promise<{
+    totalFridges: number;
+    compliantFridges: number;
+    missedChecks: number;
+    lateChecks: number;
+  }>;
+  
+  // Checklist methods
+  getChecklists(userId: string, fridgeId?: string): Promise<(Checklist & { items: ChecklistItem[] })[]>;
+  getChecklist(id: string, userId: string): Promise<(Checklist & { items: ChecklistItem[] }) | undefined>;
+  createChecklist(checklistData: InsertChecklist, items: InsertChecklistItem[]): Promise<Checklist>;
+  updateChecklist(id: string, userId: string, updates: Partial<Checklist>): Promise<Checklist | undefined>;
+  deleteChecklist(id: string, userId: string): Promise<boolean>;
+  
+  // Checklist completion methods
+  getChecklistCompletions(checklistId: string, fridgeId?: string): Promise<ChecklistCompletion[]>;
+  createChecklistCompletion(completionData: InsertChecklistCompletion): Promise<ChecklistCompletion>;
+  getDueChecklists(userId: string): Promise<Checklist[]>;
+  
+  // Out-of-range event methods
+  getOutOfRangeEvents(fridgeId: string, resolved?: boolean): Promise<OutOfRangeEvent[]>;
+  createOutOfRangeEvent(eventData: InsertOutOfRangeEvent): Promise<OutOfRangeEvent>;
+  resolveOutOfRangeEvent(id: string, notes?: string): Promise<OutOfRangeEvent | undefined>;
+  getUnresolvedEventsCount(userId: string): Promise<number>;
+  
+  // Enhanced temperature log methods with compliance
+  getFridgesWithRecentTemps(userId: string): Promise<(Fridge & { 
+    recentLog?: TemperatureLog; 
+    timeWindows: TimeWindow[];
+    complianceStatus: string;
+  })[]>;
+  createTemperatureLogWithCompliance(logData: InsertTemperatureLog): Promise<{
+    log: TemperatureLog;
+    alert?: { message: string; severity: string };
+    outOfRangeEvent?: OutOfRangeEvent;
+  }>;
   
   // Admin methods
   getActiveAlertsCount(): Promise<number>;
@@ -207,9 +275,14 @@ export class DatabaseStorage implements IStorage {
     const result = await this.db.select({
       id: temperatureLogs.id,
       fridgeId: temperatureLogs.fridgeId,
+      timeWindowId: temperatureLogs.timeWindowId,
       temperature: temperatureLogs.temperature,
       personName: temperatureLogs.personName,
       isAlert: temperatureLogs.isAlert,
+      isOnTime: temperatureLogs.isOnTime,
+      lateReason: temperatureLogs.lateReason,
+      correctiveAction: temperatureLogs.correctiveAction,
+      correctiveNotes: temperatureLogs.correctiveNotes,
       createdAt: temperatureLogs.createdAt,
       fridgeName: fridges.name,
     }).from(temperatureLogs)
@@ -218,6 +291,394 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(temperatureLogs.createdAt));
     
     return result;
+  }
+
+  // Time Window methods
+  async getTimeWindows(fridgeId: string, userId: string): Promise<TimeWindow[]> {
+    const result = await this.db.select().from(timeWindows)
+      .innerJoin(fridges, eq(timeWindows.fridgeId, fridges.id))
+      .where(and(eq(timeWindows.fridgeId, fridgeId), eq(fridges.userId, userId)))
+      .orderBy(timeWindows.startTime);
+    return result.map(r => r.time_windows);
+  }
+
+  async getTimeWindow(id: string, userId: string): Promise<TimeWindow | undefined> {
+    const result = await this.db.select().from(timeWindows)
+      .innerJoin(fridges, eq(timeWindows.fridgeId, fridges.id))
+      .where(and(eq(timeWindows.id, id), eq(fridges.userId, userId)))
+      .limit(1);
+    return result[0]?.time_windows;
+  }
+
+  async createTimeWindow(timeWindowData: InsertTimeWindow): Promise<TimeWindow> {
+    const result = await this.db.insert(timeWindows).values(timeWindowData).returning();
+    return result[0];
+  }
+
+  async updateTimeWindow(id: string, userId: string, updates: Partial<TimeWindow>): Promise<TimeWindow | undefined> {
+    const timeWindow = await this.getTimeWindow(id, userId);
+    if (!timeWindow) return undefined;
+    
+    const result = await this.db.update(timeWindows).set(updates).where(eq(timeWindows.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteTimeWindow(id: string, userId: string): Promise<boolean> {
+    const timeWindow = await this.getTimeWindow(id, userId);
+    if (!timeWindow) return false;
+    
+    try {
+      await this.db.delete(timeWindows).where(eq(timeWindows.id, id));
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async getCurrentTimeWindow(fridgeId: string): Promise<TimeWindow | undefined> {
+    const now = new Date();
+    const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
+    
+    const result = await this.db.select().from(timeWindows)
+      .where(and(
+        eq(timeWindows.fridgeId, fridgeId),
+        eq(timeWindows.isActive, true)
+      ));
+    
+    return result.find(tw => tw.startTime <= currentTime && tw.endTime >= currentTime);
+  }
+
+  // Compliance Record methods
+  async getComplianceRecords(fridgeId: string, startDate: Date, endDate: Date): Promise<ComplianceRecord[]> {
+    return await this.db.select().from(complianceRecords)
+      .where(and(
+        eq(complianceRecords.fridgeId, fridgeId),
+        and(
+          sql`${complianceRecords.date} >= ${startDate}`,
+          sql`${complianceRecords.date} <= ${endDate}`
+        )
+      ))
+      .orderBy(desc(complianceRecords.date));
+  }
+
+  async getComplianceRecord(id: string): Promise<ComplianceRecord | undefined> {
+    const result = await this.db.select().from(complianceRecords)
+      .where(eq(complianceRecords.id, id))
+      .limit(1);
+    return result[0];
+  }
+
+  async createComplianceRecord(recordData: InsertComplianceRecord): Promise<ComplianceRecord> {
+    const result = await this.db.insert(complianceRecords).values(recordData).returning();
+    return result[0];
+  }
+
+  async updateComplianceRecord(id: string, updates: Partial<ComplianceRecord>): Promise<ComplianceRecord | undefined> {
+    const result = await this.db.update(complianceRecords)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(complianceRecords.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async getComplianceOverview(userId: string, date?: Date): Promise<{
+    totalFridges: number;
+    compliantFridges: number;
+    missedChecks: number;
+    lateChecks: number;
+  }> {
+    const targetDate = date || new Date();
+    const userFridges = await this.getFridges(userId);
+    
+    const todayLogs = await this.db.select().from(temperatureLogs)
+      .innerJoin(fridges, eq(temperatureLogs.fridgeId, fridges.id))
+      .where(and(
+        eq(fridges.userId, userId),
+        sql`DATE(${temperatureLogs.createdAt}) = DATE(${targetDate})`
+      ));
+
+    const lateChecks = todayLogs.filter(log => !log.temperature_logs.isOnTime).length;
+    const compliantFridges = userFridges.filter(fridge => 
+      todayLogs.some(log => log.temperature_logs.fridgeId === fridge.id)
+    ).length;
+
+    return {
+      totalFridges: userFridges.length,
+      compliantFridges,
+      missedChecks: userFridges.length - compliantFridges,
+      lateChecks,
+    };
+  }
+
+  // Checklist methods
+  async getChecklists(userId: string, fridgeId?: string): Promise<(Checklist & { items: ChecklistItem[] })[]> {
+    const whereConditions = [eq(checklists.createdBy, userId)];
+    if (fridgeId) {
+      whereConditions.push(eq(checklists.fridgeId, fridgeId));
+    }
+
+    const checklistsResult = await this.db.select().from(checklists)
+      .where(and(...whereConditions))
+      .orderBy(checklists.createdAt);
+
+    const checklistsWithItems = await Promise.all(
+      checklistsResult.map(async (checklist) => {
+        const items = await this.db.select().from(checklistItems)
+          .where(eq(checklistItems.checklistId, checklist.id))
+          .orderBy(checklistItems.sortOrder);
+        return { ...checklist, items };
+      })
+    );
+
+    return checklistsWithItems;
+  }
+
+  async getChecklist(id: string, userId: string): Promise<(Checklist & { items: ChecklistItem[] }) | undefined> {
+    const result = await this.db.select().from(checklists)
+      .where(and(eq(checklists.id, id), eq(checklists.createdBy, userId)))
+      .limit(1);
+    
+    if (!result[0]) return undefined;
+
+    const items = await this.db.select().from(checklistItems)
+      .where(eq(checklistItems.checklistId, id))
+      .orderBy(checklistItems.sortOrder);
+
+    return { ...result[0], items };
+  }
+
+  async createChecklist(checklistData: InsertChecklist, items: InsertChecklistItem[]): Promise<Checklist> {
+    const checklistResult = await this.db.insert(checklists).values(checklistData).returning();
+    const checklist = checklistResult[0];
+
+    // Insert checklist items
+    if (items.length > 0) {
+      const itemsWithChecklistId = items.map((item, index) => ({
+        ...item,
+        checklistId: checklist.id,
+        sortOrder: index.toString(),
+      }));
+      await this.db.insert(checklistItems).values(itemsWithChecklistId);
+    }
+
+    return checklist;
+  }
+
+  async updateChecklist(id: string, userId: string, updates: Partial<Checklist>): Promise<Checklist | undefined> {
+    const existing = await this.getChecklist(id, userId);
+    if (!existing) return undefined;
+
+    const result = await this.db.update(checklists)
+      .set(updates)
+      .where(eq(checklists.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteChecklist(id: string, userId: string): Promise<boolean> {
+    const existing = await this.getChecklist(id, userId);
+    if (!existing) return false;
+
+    try {
+      // Delete checklist items first
+      await this.db.delete(checklistItems).where(eq(checklistItems.checklistId, id));
+      // Delete checklist
+      await this.db.delete(checklists).where(eq(checklists.id, id));
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  // Checklist completion methods
+  async getChecklistCompletions(checklistId: string, fridgeId?: string): Promise<ChecklistCompletion[]> {
+    const whereConditions = [eq(checklistCompletions.checklistId, checklistId)];
+    if (fridgeId) {
+      whereConditions.push(eq(checklistCompletions.fridgeId, fridgeId));
+    }
+
+    return await this.db.select().from(checklistCompletions)
+      .where(and(...whereConditions))
+      .orderBy(desc(checklistCompletions.completedAt));
+  }
+
+  async createChecklistCompletion(completionData: InsertChecklistCompletion): Promise<ChecklistCompletion> {
+    const result = await this.db.insert(checklistCompletions).values(completionData).returning();
+    return result[0];
+  }
+
+  async getDueChecklists(userId: string): Promise<Checklist[]> {
+    // Get all active checklists for user
+    const userChecklists = await this.db.select().from(checklists)
+      .where(and(eq(checklists.createdBy, userId), eq(checklists.isActive, true)));
+
+    // Filter based on frequency and last completion
+    const dueChecklists = [];
+    const today = new Date();
+
+    for (const checklist of userChecklists) {
+      const lastCompletion = await this.db.select().from(checklistCompletions)
+        .where(eq(checklistCompletions.checklistId, checklist.id))
+        .orderBy(desc(checklistCompletions.completedAt))
+        .limit(1);
+
+      let isDue = false;
+      if (lastCompletion.length === 0) {
+        isDue = true; // Never completed
+      } else {
+        const lastCompletedDate = new Date(lastCompletion[0].completedAt!);
+        const daysDiff = Math.floor((today.getTime() - lastCompletedDate.getTime()) / (1000 * 3600 * 24));
+
+        switch (checklist.frequency) {
+          case 'daily':
+            isDue = daysDiff >= 1;
+            break;
+          case 'weekly':
+            isDue = daysDiff >= 7;
+            break;
+          case 'monthly':
+            isDue = daysDiff >= 30;
+            break;
+        }
+      }
+
+      if (isDue) {
+        dueChecklists.push(checklist);
+      }
+    }
+
+    return dueChecklists;
+  }
+
+  // Out-of-range event methods
+  async getOutOfRangeEvents(fridgeId: string, resolved?: boolean): Promise<OutOfRangeEvent[]> {
+    const whereConditions = [eq(outOfRangeEvents.fridgeId, fridgeId)];
+    
+    if (resolved !== undefined) {
+      if (resolved) {
+        whereConditions.push(sql`${outOfRangeEvents.resolvedAt} IS NOT NULL`);
+      } else {
+        whereConditions.push(sql`${outOfRangeEvents.resolvedAt} IS NULL`);
+      }
+    }
+
+    return await this.db.select().from(outOfRangeEvents)
+      .where(and(...whereConditions))
+      .orderBy(desc(outOfRangeEvents.createdAt));
+  }
+
+  async createOutOfRangeEvent(eventData: InsertOutOfRangeEvent): Promise<OutOfRangeEvent> {
+    const result = await this.db.insert(outOfRangeEvents).values(eventData).returning();
+    return result[0];
+  }
+
+  async resolveOutOfRangeEvent(id: string, notes?: string): Promise<OutOfRangeEvent | undefined> {
+    const result = await this.db.update(outOfRangeEvents)
+      .set({ 
+        resolvedAt: new Date(),
+        notes: notes || outOfRangeEvents.notes
+      })
+      .where(eq(outOfRangeEvents.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async getUnresolvedEventsCount(userId: string): Promise<number> {
+    const result = await this.db.select().from(outOfRangeEvents)
+      .innerJoin(fridges, eq(outOfRangeEvents.fridgeId, fridges.id))
+      .where(and(
+        eq(fridges.userId, userId),
+        sql`${outOfRangeEvents.resolvedAt} IS NULL`
+      ));
+    return result.length;
+  }
+
+  // Enhanced temperature log methods with compliance
+  async getFridgesWithRecentTemps(userId: string): Promise<(Fridge & { 
+    recentLog?: TemperatureLog; 
+    timeWindows: TimeWindow[];
+    complianceStatus: string;
+  })[]> {
+    const userFridges = await this.getFridges(userId);
+    
+    const fridgesWithData = await Promise.all(
+      userFridges.map(async (fridge) => {
+        const recentLog = await this.getRecentTemperatureLog(fridge.id, userId);
+        const fridgeTimeWindows = await this.getTimeWindows(fridge.id, userId);
+        
+        // Calculate compliance status
+        let complianceStatus = 'compliant';
+        if (recentLog?.isAlert) {
+          complianceStatus = 'alert';
+        } else if (recentLog && !recentLog.isOnTime) {
+          complianceStatus = 'late';
+        } else if (!recentLog) {
+          complianceStatus = 'missing';
+        }
+
+        return {
+          ...fridge,
+          recentLog,
+          timeWindows: fridgeTimeWindows,
+          complianceStatus,
+        };
+      })
+    );
+
+    return fridgesWithData;
+  }
+
+  async createTemperatureLogWithCompliance(logData: InsertTemperatureLog): Promise<{
+    log: TemperatureLog;
+    alert?: { message: string; severity: string };
+    outOfRangeEvent?: OutOfRangeEvent;
+  }> {
+    // Create temperature log
+    const log = await this.createTemperatureLog(logData);
+    
+    // Get fridge to check temperature ranges
+    const fridge = await this.db.select().from(fridges)
+      .where(eq(fridges.id, logData.fridgeId))
+      .limit(1);
+    
+    if (!fridge[0]) {
+      return { log };
+    }
+
+    const fridgeData = fridge[0];
+    const temp = parseFloat(log.temperature);
+    const minTemp = parseFloat(fridgeData.minTemp);
+    const maxTemp = parseFloat(fridgeData.maxTemp);
+
+    let alert;
+    let outOfRangeEvent;
+
+    // Check if temperature is out of range
+    if (temp < minTemp || temp > maxTemp) {
+      const severity = temp < minTemp - 2 || temp > maxTemp + 2 ? 'critical' : 
+                      temp < minTemp - 1 || temp > maxTemp + 1 ? 'high' : 'medium';
+      
+      alert = {
+        message: `Temperature ${temp}°C is outside acceptable range (${minTemp}°C - ${maxTemp}°C)`,
+        severity
+      };
+
+      // Create out-of-range event
+      const eventData: InsertOutOfRangeEvent = {
+        temperatureLogId: log.id,
+        fridgeId: log.fridgeId,
+        temperature: log.temperature,
+        expectedMin: fridgeData.minTemp,
+        expectedMax: fridgeData.maxTemp,
+        severity,
+        correctiveAction: logData.correctiveAction || null,
+        notes: logData.correctiveNotes || null,
+      };
+
+      outOfRangeEvent = await this.createOutOfRangeEvent(eventData);
+    }
+
+    return { log, alert, outOfRangeEvent };
   }
 
   async getActiveAlertsCount(): Promise<number> {
