@@ -54,18 +54,20 @@ interface Fridge {
   maxTemp: string;
   color: string;
   labels: string[];
-  recentTemp?: {
+  recentLog?: {
     temperature: string;
     personName: string;
-    timestamp: string;
-    isOutOfRange: boolean;
+    createdAt: string;
+    isAlert: boolean;
     isOnTime: boolean;
     correctiveAction?: string;
+    notes?: string;
   };
   isAlarm: boolean;
   lastTempTime?: string;
   complianceScore: number;
   status: 'good' | 'warning' | 'critical';
+  complianceStatus: string;
 }
 
 interface TimeWindow {
@@ -222,16 +224,16 @@ export default function TempLogger() {
   // Export CSV functionality
   const handleExport = () => {
     const csvData = fridges.map((fridge: Fridge) => {
-      const recent = fridge.recentTemp;
+      const recent = fridge.recentLog;
       return {
         Fridge: fridge.name,
         Location: fridge.location || 'N/A',
         Temperature: recent?.temperature ? `${recent.temperature}°C` : 'No recent reading',
         'Recorded By': recent?.personName || 'N/A',
-        Timestamp: recent?.timestamp || 'N/A',
-        'Within Range': recent ? (recent.isOutOfRange ? 'No' : 'Yes') : 'N/A',
+        Timestamp: recent?.createdAt || 'N/A',
+        'Within Range': recent ? (recent.isAlert ? 'No' : 'Yes') : 'N/A',
         'On Time': recent ? (recent.isOnTime ? 'Yes' : 'No') : 'N/A',
-        'Compliance Score': `${fridge.complianceScore}%`
+        'Compliance Score': `${fridge.complianceScore || 0}%`
       };
     });
 
@@ -879,34 +881,34 @@ export default function TempLogger() {
                       
                       {/* Recent Temperature */}
                       <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4">
-                        {fridge.recentTemp ? (
+                        {fridge.recentLog ? (
                           <>
                             <div className="flex items-center justify-between mb-2">
                               <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Latest Reading</span>
                               <div className={`text-2xl font-bold ${
-                                fridge.recentTemp.isOutOfRange ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
+                                fridge.recentLog.isAlert ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
                               }`}>
-                                {fridge.recentTemp.temperature}°C
+                                {fridge.recentLog.temperature}°C
                               </div>
                             </div>
                             <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                              Recorded by {fridge.recentTemp.personName}
+                              Recorded by {fridge.recentLog.personName}
                             </div>
                             <div className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-                              {new Date(fridge.recentTemp.timestamp).toLocaleString()}
+                              {new Date(fridge.recentLog.createdAt).toLocaleString()}
                             </div>
                             <div className="flex gap-2">
-                              {fridge.recentTemp.isOutOfRange && (
+                              {fridge.recentLog.isAlert && (
                                 <Badge variant="destructive" className="text-xs">
                                   Out of Range
                                 </Badge>
                               )}
-                              {!fridge.recentTemp.isOnTime && (
+                              {!fridge.recentLog.isOnTime && (
                                 <Badge variant="secondary" className="text-xs">
                                   Late Entry
                                 </Badge>
                               )}
-                              {!fridge.recentTemp.isOutOfRange && fridge.recentTemp.isOnTime && (
+                              {!fridge.recentLog.isAlert && fridge.recentLog.isOnTime && (
                                 <Badge className="bg-green-600 text-xs">
                                   Normal
                                 </Badge>

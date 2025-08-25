@@ -648,11 +648,26 @@ export class DatabaseStorage implements IStorage {
           complianceStatus = 'missing';
         }
 
+        // Calculate compliance score based on recent activity
+        let complianceScore = 100;
+        if (!fridge.isActive) {
+          complianceScore = 0;
+        } else if (recentLog?.isAlert) {
+          complianceScore = 60;
+        } else if (recentLog && !recentLog.isOnTime) {
+          complianceScore = 80;
+        } else if (!recentLog) {
+          complianceScore = 50;
+        }
+
         return {
           ...fridge,
           recentLog,
           timeWindows: fridgeTimeWindows,
           complianceStatus,
+          complianceScore,
+          isAlarm: recentLog?.isAlert || false,
+          status: complianceStatus === 'alert' ? 'critical' : complianceStatus === 'late' ? 'warning' : 'good'
         };
       })
     );
