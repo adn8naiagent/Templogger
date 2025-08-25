@@ -586,28 +586,6 @@ export default function AddFridge() {
                               Two temperature checks will be required each day: one in the morning (AM) and one in the evening (PM)
                             </p>
                           </div>
-                          
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium">Exclude Days (Optional)</p>
-                            <p className="text-xs text-muted-foreground">
-                              Select days when temperature checks are not required (e.g., when store is closed)
-                            </p>
-                            <div className="grid grid-cols-2 gap-2">
-                              {dayNames.map((day, index) => (
-                                <div key={index} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={`exclude-day-twice-${index}`}
-                                    checked={excludedDays.includes(index)}
-                                    onCheckedChange={() => toggleExcludedDay(index)}
-                                    data-testid={`checkbox-exclude-twice-${day.toLowerCase()}`}
-                                  />
-                                  <label htmlFor={`exclude-day-twice-${index}`} className="text-sm cursor-pointer">
-                                    {day}
-                                  </label>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
                         </div>
                       )}
 
@@ -619,30 +597,31 @@ export default function AddFridge() {
                               A daily temperature check will be required each day (any time during the day)
                             </p>
                           </div>
-                          
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium">Exclude Days (Optional)</p>
-                            <p className="text-xs text-muted-foreground">
-                              Select days when temperature checks are not required (e.g., when store is closed)
-                            </p>
-                            <div className="grid grid-cols-2 gap-2">
-                              {dayNames.map((day, index) => (
-                                <div key={index} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={`exclude-day-${index}`}
-                                    checked={excludedDays.includes(index)}
-                                    onCheckedChange={() => toggleExcludedDay(index)}
-                                    data-testid={`checkbox-exclude-${day.toLowerCase()}`}
-                                  />
-                                  <label htmlFor={`exclude-day-${index}`} className="text-sm cursor-pointer">
-                                    {day}
-                                  </label>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
                         </div>
                       )}
+
+                      {/* Exclude Days - Available for all scheduling options */}
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Exclude Days (Optional)</p>
+                        <p className="text-xs text-muted-foreground">
+                          Select days when temperature checks are not required (e.g., when store is closed)
+                        </p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {dayNames.map((day, index) => (
+                            <div key={index} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`exclude-day-${index}`}
+                                checked={isDayExcluded(index)}
+                                onCheckedChange={() => toggleExcludedDay(index)}
+                                data-testid={`checkbox-exclude-${day.toLowerCase()}`}
+                              />
+                              <label htmlFor={`exclude-day-${index}`} className="text-sm cursor-pointer">
+                                {day}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
