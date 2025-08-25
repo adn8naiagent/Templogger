@@ -159,6 +159,15 @@ export default function AddFridge() {
     setTimeWindows(updated);
   };
 
+  const validateTimeWindow = (window: TimeWindow): string | null => {
+    if (window.checkType === 'specific' && window.startTime && window.endTime) {
+      if (window.startTime >= window.endTime) {
+        return 'End time must be after start time';
+      }
+    }
+    return null;
+  };
+
   const onSubmit = async (data: CreateFridgeData) => {
     // Validate time windows if scheduled checks are enabled
     if (enableScheduledChecks && checkFrequency === 'multiple' && timeWindows.length === 0) {
@@ -168,6 +177,21 @@ export default function AddFridge() {
         variant: "destructive",
       });
       return;
+    }
+
+    // Validate each time window for proper start/end time ordering
+    if (enableScheduledChecks && checkFrequency === 'multiple') {
+      for (let i = 0; i < timeWindows.length; i++) {
+        const error = validateTimeWindow(timeWindows[i]);
+        if (error) {
+          toast({
+            title: "Validation Error",
+            description: `${timeWindows[i].label}: ${error}`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
     }
     
     // Set default once-per-day check if selected and create the fridge with time windows
@@ -489,6 +513,11 @@ export default function AddFridge() {
                                         />
                                       </div>
                                     </div>
+                                    {validateTimeWindow(window) && (
+                                      <p className="text-xs text-red-500 mt-1">
+                                        {validateTimeWindow(window)}
+                                      </p>
+                                    )}
                                   </div>
                                   <Button
                                     type="button"
