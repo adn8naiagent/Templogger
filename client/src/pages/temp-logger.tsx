@@ -98,7 +98,7 @@ export default function TempLogger() {
   const [showCorrectiveActions, setShowCorrectiveActions] = useState(false);
 
   // Fetch fridges with recent temperatures
-  const { data: fridges = [], isLoading: fridgesLoading } = useQuery<Fridge[]>({
+  const { data: fridges = [], isLoading: fridgesLoading, error, refetch } = useQuery<Fridge[]>({
     queryKey: ["/api/fridges/recent-temps"],
     retry: (failureCount, error) => {
       if (isUnauthorizedError(error as Error)) {
@@ -115,6 +115,11 @@ export default function TempLogger() {
       return failureCount < 3;
     },
   });
+
+  // Debug logging
+  console.log('[temp-logger] Fridges data:', fridges);
+  console.log('[temp-logger] Loading state:', fridgesLoading);
+  console.log('[temp-logger] Error:', error);
 
   // Fetch labels
   const { data: labels = [] } = useQuery<Label[]>({
@@ -407,6 +412,15 @@ export default function TempLogger() {
               <p className="text-slate-600 dark:text-slate-300 mt-1">Monitor and track compliance across all pharmacy fridges</p>
             </div>
             <div className="flex gap-3">
+              <Button 
+                onClick={() => refetch()} 
+                variant="outline" 
+                size="default"
+                className="border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Refresh Fridges
+              </Button>
               <Button 
                 onClick={handleExport} 
                 variant="outline" 

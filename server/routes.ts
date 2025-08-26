@@ -522,7 +522,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/fridges/recent-temps", requireAuth, async (req: any, res: Response) => {
     try {
       const userId = req.userId;
+      console.log(`[API] getFridgesWithRecentTemps called for user: ${userId}`);
       const fridgesWithData = await storage.getFridgesWithRecentTemps(userId);
+      console.log(`[API] Returning ${fridgesWithData.length} fridges`);
       res.json(fridgesWithData);
     } catch (error: any) {
       console.error("Get fridges with compliance data error:", error);

@@ -219,7 +219,9 @@ export class DatabaseStorage implements IStorage {
 
   // Fridge methods
   async getFridges(userId: string): Promise<Fridge[]> {
-    return await this.db.select().from(fridges).where(eq(fridges.userId, userId)).orderBy(fridges.createdAt);
+    const result = await this.db.select().from(fridges).where(eq(fridges.userId, userId)).orderBy(fridges.createdAt);
+    console.log(`[getFridges] User ${userId}: Found ${result.length} fridges`);
+    return result;
   }
 
   async getFridge(id: string, userId: string): Promise<any | undefined> {
@@ -244,7 +246,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createFridge(fridgeData: InsertFridge): Promise<Fridge> {
+    console.log(`[createFridge] Creating fridge for user: ${fridgeData.userId}`);
     const result = await this.db.insert(fridges).values(fridgeData).returning();
+    console.log(`[createFridge] Created fridge with ID: ${result[0].id}`);
     return result[0];
   }
 
