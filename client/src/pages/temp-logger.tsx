@@ -513,9 +513,11 @@ export default function TempLogger() {
                                   <SelectItem key={fridge.id} value={fridge.id} data-testid={`fridge-option-${fridge.name}`} className="py-3">
                                     <div className="flex items-center gap-3">
                                       <div 
-                                        className="w-4 h-4 rounded-full border-2 border-white shadow-sm flex-shrink-0" 
+                                        className="w-6 h-6 rounded-md border flex items-center justify-center flex-shrink-0 shadow-sm" 
                                         style={{ backgroundColor: fridge.color || '#3b82f6' }} 
-                                      />
+                                      >
+                                        <Refrigerator className="w-3 h-3 text-white" />
+                                      </div>
                                       <div>
                                         <span className="font-medium">{fridge.name}</span>
                                         {fridge.location && (
@@ -830,21 +832,32 @@ export default function TempLogger() {
                     fridge.status === 'warning' ? 'ring-2 ring-yellow-200 dark:ring-yellow-800' :
                     'hover:ring-2 hover:ring-blue-200 dark:hover:ring-blue-800'
                   }`}
+                  style={{ borderLeft: `4px solid ${fridge.color || '#3b82f6'}` }}
                   data-testid={`fridge-card-${fridge.name}`}
                 >
-                  {/* Status indicator bar */}
-                  <div className={`absolute top-0 left-0 right-0 h-1 ${
-                    fridge.isAlarm ? 'bg-red-500' : 
-                    fridge.status === 'warning' ? 'bg-yellow-500' :
-                    'bg-green-500'
-                  }`} />
+                  {/* Status and color indicator bar */}
+                  <div className="absolute top-0 left-0 right-0 h-3 flex">
+                    <div className={`flex-1 ${
+                      fridge.isAlarm ? 'bg-red-500' : 
+                      fridge.status === 'warning' ? 'bg-yellow-500' :
+                      'bg-green-500'
+                    }`} />
+                    <div className="w-12" style={{ backgroundColor: fridge.color || '#3b82f6', opacity: 0.8 }} />
+                  </div>
 
                   <CardContent className="p-6">
                     <div className="space-y-4">
                       {/* Header */}
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-4 h-4 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: fridge.color || '#3b82f6' }} />
+                          <div className="relative">
+                            <div 
+                              className="w-8 h-8 rounded-lg border-2 border-white shadow-sm flex items-center justify-center" 
+                              style={{ backgroundColor: fridge.color || '#3b82f6' }}
+                            >
+                              <Refrigerator className="w-4 h-4 text-white" />
+                            </div>
+                          </div>
                           <div>
                             <h4 className="font-semibold text-slate-900 dark:text-white text-lg">{fridge.name}</h4>
                             {fridge.location && (

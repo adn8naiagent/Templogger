@@ -16,7 +16,8 @@ import {
   FileText,
   Power,
   PowerOff,
-  Download
+  Download,
+  Refrigerator
 } from 'lucide-react';
 import type { Fridge, TemperatureLog } from '@shared/schema';
 
@@ -167,11 +168,13 @@ export default function FridgeDetail() {
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Fridges
               </Button>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <div 
-                  className="w-4 h-4 rounded-full" 
+                  className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" 
                   style={{ backgroundColor: fridge.color || '#3b82f6' }}
-                ></div>
+                >
+                  <Refrigerator className="w-4 h-4 text-white" />
+                </div>
                 <h1 className="text-xl font-bold text-foreground">{fridge.name}</h1>
                 {!fridge.isActive && (
                   <Badge variant="secondary" className="gap-1">
@@ -202,7 +205,11 @@ export default function FridgeDetail() {
         {/* Fridge Overview */}
         <Card 
           className="mb-8" 
-          style={{ borderColor: fridge.color || '#3b82f6', borderWidth: '2px' }}
+          style={{ 
+            borderLeft: `4px solid ${fridge.color || '#3b82f6'}`,
+            borderColor: fridge.color || '#3b82f6', 
+            borderWidth: '2px' 
+          }}
         >
           <CardHeader>
             <div className="flex items-center justify-between">

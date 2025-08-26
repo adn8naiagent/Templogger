@@ -14,7 +14,8 @@ import {
   Plus,
   Eye,
   Power,
-  PowerOff
+  PowerOff,
+  Refrigerator
 } from 'lucide-react';
 import type { Fridge } from '@shared/schema';
 
@@ -160,16 +161,24 @@ export default function ViewFridges() {
                   className={`cursor-pointer hover:shadow-lg transition-shadow ${
                     !fridge.isActive ? 'opacity-75' : ''
                   }`}
+                  style={{ 
+                    borderLeft: `5px solid ${fridge.color || '#3b82f6'}`,
+                    background: `linear-gradient(135deg, ${fridge.color || '#3b82f6'}08, transparent 50%)`
+                  }}
                   data-testid={`fridge-card-${fridge.id}`}
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <div 
-                            className="w-3 h-3 rounded-full" 
-                            style={{ backgroundColor: fridge.color || '#3b82f6' }}
-                          ></div>
+                        <CardTitle className="text-lg flex items-center gap-3">
+                          <div className="relative">
+                            <div 
+                              className="w-7 h-7 rounded-lg flex items-center justify-center shadow-sm" 
+                              style={{ backgroundColor: fridge.color || '#3b82f6' }}
+                            >
+                              <Refrigerator className="w-4 h-4 text-white" />
+                            </div>
+                          </div>
                           <span className={!fridge.isActive ? 'text-gray-500' : ''}>{fridge.name}</span>
                         </CardTitle>
                         {fridge.location && (
