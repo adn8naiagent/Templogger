@@ -53,6 +53,9 @@ export const fridges = pgTable("fridges", {
   minTemp: decimal("min_temp", { precision: 4, scale: 1 }).notNull(),
   maxTemp: decimal("max_temp", { precision: 4, scale: 1 }).notNull(),
   isActive: boolean("is_active").notNull().default(true),
+  enableScheduledChecks: boolean("enable_scheduled_checks").notNull().default(false),
+  checkFrequency: text("check_frequency"), // "once", "twice", "multiple"
+  excludedDays: text("excluded_days").array().default([]), // Array of day numbers
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -91,6 +91,10 @@ export default function EditFridge() {
       setColor(fridge.color || '#3b82f6');
       setMinTemp(fridge.minTemp);
       setMaxTemp(fridge.maxTemp);
+      setEnableScheduledChecks(fridge.enableScheduledChecks || false);
+      setCheckFrequency(fridge.checkFrequency || 'once');
+      setExcludedDays(fridge.excludedDays || []);
+      setTimeWindows(fridge.timeWindows || []);
     }
   }, [fridge]);
 

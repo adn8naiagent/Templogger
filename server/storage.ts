@@ -222,11 +222,25 @@ export class DatabaseStorage implements IStorage {
     return await this.db.select().from(fridges).where(eq(fridges.userId, userId)).orderBy(fridges.createdAt);
   }
 
-  async getFridge(id: string, userId: string): Promise<Fridge | undefined> {
+  async getFridge(id: string, userId: string): Promise<any | undefined> {
     const result = await this.db.select().from(fridges)
       .where(and(eq(fridges.id, id), eq(fridges.userId, userId)))
       .limit(1);
-    return result[0];
+    
+    const fridge = result[0];
+    if (!fridge) {
+      return undefined;
+    }
+
+    // Get associated time windows
+    const fridgeTimeWindows = await this.db.select().from(timeWindows)
+      .where(and(eq(timeWindows.fridgeId, id), eq(timeWindows.isActive, true)))
+      .orderBy(timeWindows.createdAt);
+
+    return {
+      ...fridge,
+      timeWindows: fridgeTimeWindows
+    };
   }
 
   async createFridge(fridgeData: InsertFridge): Promise<Fridge> {
@@ -234,11 +248,41 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async updateFridge(id: string, userId: string, updates: Partial<Fridge>): Promise<Fridge | undefined> {
+  async updateFridge(id: string, userId: string, updates: any): Promise<Fridge | undefined> {
+    // Extract time windows from updates
+    const { timeWindows: newTimeWindows, ...fridgeUpdates } = updates;
+    
+    // Update the fridge record
     const result = await this.db.update(fridges).set({
-      ...updates,
+      ...fridgeUpdates,
       updatedAt: new Date()
     }).where(and(eq(fridges.id, id), eq(fridges.userId, userId))).returning();
+    
+    if (!result[0]) {
+      return undefined;
+    }
+
+    // If time windows are provided, update them
+    if (newTimeWindows !== undefined) {
+      // Delete existing time windows for this fridge
+      await this.db.delete(timeWindows).where(eq(timeWindows.fridgeId, id));
+      
+      // Insert new time windows if any
+      if (Array.isArray(newTimeWindows) && newTimeWindows.length > 0) {
+        const timeWindowInserts = newTimeWindows.map((tw: any) => ({
+          fridgeId: id,
+          label: tw.label,
+          checkType: tw.checkType,
+          startTime: tw.startTime,
+          endTime: tw.endTime,
+          excludedDays: tw.excludedDays || [],
+          isActive: true
+        }));
+        
+        await this.db.insert(timeWindows).values(timeWindowInserts);
+      }
+    }
+    
     return result[0];
   }
 
