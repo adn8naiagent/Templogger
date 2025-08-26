@@ -188,7 +188,7 @@ export default function Account() {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-4 mb-4">
-          <Link href="/">
+          <Link to="/">
             <Button variant="ghost" size="sm" data-testid="button-back-home">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Home
@@ -250,7 +250,7 @@ export default function Account() {
               
               {user?.subscriptionStatus === 'trial' && (
                 <div className="text-center pt-2">
-                  <Link href="/subscribe">
+                  <Link to="/subscribe">
                     <Button className="w-full" data-testid="button-upgrade-now">
                       <Star className="h-4 w-4 mr-2" />
                       Upgrade Now

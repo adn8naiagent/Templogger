@@ -344,19 +344,19 @@ export default function TempLogger() {
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/compliance">
+                  <Link to="/compliance">
                     <BarChart3 className="h-4 w-4 mr-2" />
                     Compliance Dashboard
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/account">
+                  <Link to="/account">
                     <User className="h-4 w-4 mr-2" />
                     Account Settings
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/settings">
+                  <Link to="/settings">
                     <Settings className="h-4 w-4 mr-2" />
                     App Settings
                   </Link>
@@ -406,7 +406,7 @@ export default function TempLogger() {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Link href="/fridges">
+          <Link to="/fridges">
             <Card className="hover:shadow-md transition-shadow cursor-pointer border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3">
@@ -422,7 +422,7 @@ export default function TempLogger() {
             </Card>
           </Link>
 
-          <Link href="/add-fridge">
+          <Link to="/add-fridge">
             <Card className="hover:shadow-md transition-shadow cursor-pointer border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3">
@@ -438,7 +438,7 @@ export default function TempLogger() {
             </Card>
           </Link>
 
-          <Link href="/compliance">
+          <Link to="/compliance">
             <Card className="hover:shadow-md transition-shadow cursor-pointer border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3">
@@ -804,7 +804,7 @@ export default function TempLogger() {
                   </div>
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No fridges configured</h3>
                   <p className="text-slate-500 dark:text-slate-400 mb-6">Get started by adding your first fridge for temperature monitoring</p>
-                  <Link href="/add-fridge">
+                  <Link to="/add-fridge">
                     <Button className="bg-blue-600 hover:bg-blue-700 text-white" data-testid="button-add-first-fridge">
                       <Plus className="h-4 w-4 mr-2" />
                       Add Your First Fridge
@@ -927,7 +927,7 @@ export default function TempLogger() {
                   {/* View Details Button */}
                   <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-600">
                     <Button variant="outline" size="sm" className="w-full" asChild data-testid={`button-view-details-${fridge.id}`}>
-                      <Link href={`/fridge/${fridge.id}`}>
+                      <Link to={`/fridge/${fridge.id}`}>
                         <Eye className="h-4 w-4 mr-2" />
                         View Details
                       </Link>

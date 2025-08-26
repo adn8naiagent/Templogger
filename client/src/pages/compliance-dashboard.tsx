@@ -87,7 +87,7 @@ export default function ComplianceDashboard() {
       const response = await apiRequest("GET", "/api/compliance/overview");
       return response.json() as Promise<ComplianceOverview>;
     },
-    refetchInterval: autoRefresh ? 30000 : false, // Refresh every 30 seconds if enabled
+    refetchInterval: autoRefresh ? 300000 : false, // Refresh every 5 minutes if enabled
   });
 
   // Fetch due checklists
@@ -97,7 +97,7 @@ export default function ComplianceDashboard() {
       const response = await apiRequest("GET", "/api/checklists/due");
       return response.json() as Promise<DueChecklist[]>;
     },
-    refetchInterval: autoRefresh ? 60000 : false, // Refresh every minute
+    refetchInterval: autoRefresh ? 300000 : false, // Refresh every 5 minutes
   });
 
   // Fetch unresolved events count
@@ -107,7 +107,7 @@ export default function ComplianceDashboard() {
       const response = await apiRequest("GET", "/api/out-of-range-events/unresolved/count");
       return response.json();
     },
-    refetchInterval: autoRefresh ? 30000 : false,
+    refetchInterval: autoRefresh ? 300000 : false, // Refresh every 5 minutes
   });
 
   // Auto-refresh toggle
@@ -115,7 +115,7 @@ export default function ComplianceDashboard() {
     if (autoRefresh) {
       const interval = setInterval(() => {
         refetchOverview();
-      }, 30000);
+      }, 300000); // 5 minutes
       return () => clearInterval(interval);
     }
   }, [autoRefresh, refetchOverview]);
@@ -200,7 +200,7 @@ export default function ComplianceDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <Link href="/" className="flex items-center gap-3">
+              <Link to="/" className="flex items-center gap-3">
                 <div className="p-2 bg-blue-600 rounded-lg">
                   <Thermometer className="h-6 w-6 text-white" />
                 </div>
@@ -219,7 +219,7 @@ export default function ComplianceDashboard() {
                 className="bg-blue-600 hover:bg-blue-700 text-white border-0"
                 data-testid="button-view-fridges"
               >
-                <Link href="/fridges">
+                <Link to="/fridges">
                   <Eye className="h-4 w-4 mr-2" />
                   View Fridges
                 </Link>
@@ -265,13 +265,13 @@ export default function ComplianceDashboard() {
                     </div>
                   </div>
                   <DropdownMenuSeparator />
-                  <Link href="/">
+                  <Link to="/">
                     <DropdownMenuItem>
                       <Thermometer className="h-4 w-4 mr-2" />
                       Temperature Logger
                     </DropdownMenuItem>
                   </Link>
-                  <Link href="/account">
+                  <Link to="/account">
                     <DropdownMenuItem>
                       <Users className="h-4 w-4 mr-2" />
                       Account Settings
@@ -279,7 +279,7 @@ export default function ComplianceDashboard() {
                   </Link>
                   <DropdownMenuSeparator />
                   {(user as any)?.role === 'admin' && (
-                    <Link href="/admin">
+                    <Link to="/admin">
                       <DropdownMenuItem>
                         <Shield className="h-4 w-4 mr-2" />
                         Admin Dashboard
@@ -434,7 +434,7 @@ export default function ComplianceDashboard() {
                       <div className="flex items-center gap-2">
                         <Progress value={fridge.complianceScore} className="w-24" />
                         <Button variant="outline" size="sm" asChild>
-                          <Link href={`/fridge/${fridge.fridgeId}`}>
+                          <Link to={`/fridge/${fridge.fridgeId}`}>
                             <Eye className="h-4 w-4" />
                           </Link>
                         </Button>
@@ -480,7 +480,7 @@ export default function ComplianceDashboard() {
                         </div>
                       </div>
                       <Button variant="outline" size="sm" asChild>
-                        <Link href={`/checklist/${checklist.id}`}>
+                        <Link to={`/checklist/${checklist.id}`}>
                           Complete
                         </Link>
                       </Button>

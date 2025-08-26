@@ -188,7 +188,7 @@ export default function FridgeDetail() {
                 Export Logs
               </Button>
               <Button variant="outline" asChild data-testid="button-settings">
-                <Link href={`/fridge/${fridge.id}/edit`}>
+                <Link to={`/fridge/${fridge.id}/edit`}>
                   <Settings className="h-4 w-4 mr-2" />
                   Settings
                 </Link>
@@ -211,7 +211,7 @@ export default function FridgeDetail() {
                 <CardDescription>Current status and basic information</CardDescription>
               </div>
               <Button variant="ghost" size="sm" asChild data-testid="button-header-settings">
-                <Link href={`/fridge/${fridge.id}/edit`}>
+                <Link to={`/fridge/${fridge.id}/edit`}>
                   <Settings className="h-4 w-4" />
                 </Link>
               </Button>

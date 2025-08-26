@@ -62,13 +62,13 @@ export default function AdminDashboard() {
             <p className="text-muted-foreground">FridgeSafe Administration</p>
           </div>
           <div className="flex gap-2">
-            <Link href="/admin/users">
+            <Link to="/admin/users">
               <Button variant="outline" data-testid="button-manage-users">
                 <Users className="h-4 w-4 mr-2" />
                 Manage Users
               </Button>
             </Link>
-            <Link href="/">
+            <Link to="/">
               <Button variant="outline" data-testid="button-back-to-app">
                 Back to App
               </Button>
@@ -212,13 +212,13 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Link href="/admin/users">
+              <Link to="/admin/users">
                 <Button className="w-full" variant="outline" data-testid="button-user-management">
                   <Users className="h-4 w-4 mr-2" />
                   User Management
                 </Button>
               </Link>
-              <Link href="/admin/subscriptions">
+              <Link to="/admin/subscriptions">
                 <Button className="w-full" variant="outline" data-testid="button-subscription-management">
                   <CreditCard className="h-4 w-4 mr-2" />
                   Subscription Management

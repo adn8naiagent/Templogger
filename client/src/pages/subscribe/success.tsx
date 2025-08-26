@@ -62,14 +62,14 @@ export default function SubscribeSuccess() {
           </div>
 
           <div className="space-y-3">
-            <Link href="/">
+            <Link to="/">
               <Button className="w-full" data-testid="button-go-dashboard">
                 <ArrowRight className="h-4 w-4 mr-2" />
                 Go to Dashboard
               </Button>
             </Link>
             
-            <Link href="/account">
+            <Link to="/account">
               <Button variant="outline" className="w-full" data-testid="button-view-account">
                 View Account Details
               </Button>

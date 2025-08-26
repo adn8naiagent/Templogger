@@ -115,7 +115,7 @@ export default function ViewFridges() {
             </div>
             
             <Button asChild data-testid="button-add-fridge">
-              <Link href="/add-fridge">
+              <Link to="/add-fridge">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Fridge
               </Link>
@@ -133,7 +133,7 @@ export default function ViewFridges() {
               Get started by adding your first fridge for temperature monitoring.
             </p>
             <Button asChild>
-              <Link href="/add-fridge">
+              <Link to="/add-fridge">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Your First Fridge
               </Link>
@@ -187,7 +187,7 @@ export default function ViewFridges() {
                           asChild
                           data-testid={`button-settings-${fridge.id}`}
                         >
-                          <Link href={`/fridge/${fridge.id}/edit`}>
+                          <Link to={`/fridge/${fridge.id}/edit`}>
                             <Settings className="h-4 w-4" />
                           </Link>
                         </Button>
@@ -241,7 +241,7 @@ export default function ViewFridges() {
                         asChild
                         data-testid={`button-view-${fridge.id}`}
                       >
-                        <Link href={`/fridge/${fridge.id}`}>
+                        <Link to={`/fridge/${fridge.id}`}>
                           <Eye className="h-4 w-4 mr-1" />
                           View Details
                         </Link>

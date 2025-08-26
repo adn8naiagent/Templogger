@@ -64,7 +64,7 @@ export default function Settings() {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-4 mb-4">
-          <Link href="/">
+          <Link to="/">
             <Button variant="ghost" size="sm" data-testid="button-back-home">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Home
@@ -136,14 +136,14 @@ export default function Settings() {
 
             {/* Quick Actions */}
             <div className="space-y-3">
-              <Link href="/account">
+              <Link to="/account">
                 <Button variant="outline" className="w-full justify-start" data-testid="button-account-info">
                   Account Information
                 </Button>
               </Link>
               
               {user?.role === 'admin' && (
-                <Link href="/admin">
+                <Link to="/admin">
                   <Button variant="outline" className="w-full justify-start" data-testid="button-admin-dashboard">
                     Admin Dashboard
                   </Button>

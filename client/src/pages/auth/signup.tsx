@@ -240,7 +240,7 @@ export default function Signup() {
 
               <div className="text-center text-sm text-muted-foreground">
                 Already have an account?{" "}
-                <Link href="/auth/login" className="text-primary hover:underline" data-testid="link-login">
+                <Link to="/auth/login" className="text-primary hover:underline" data-testid="link-login">
                   Sign in
                 </Link>
               </div>

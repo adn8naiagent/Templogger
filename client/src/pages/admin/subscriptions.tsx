@@ -22,6 +22,7 @@ interface AdminUser {
   lastName: string;
   role: string;
   subscriptionStatus: string;
+  subscriptionTier?: string;
   createdAt: string;
 }
 
@@ -47,7 +48,7 @@ export default function AdminSubscriptions() {
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-            <Link href="/">
+            <Link to="/">
               <Button>Return Home</Button>
             </Link>
           </CardContent>
@@ -116,7 +117,7 @@ export default function AdminSubscriptions() {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-4 mb-4">
-          <Link href="/admin/dashboard">
+          <Link to="/admin/dashboard">
             <Button variant="ghost" size="sm" data-testid="button-back-dashboard">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard

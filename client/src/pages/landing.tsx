@@ -24,12 +24,12 @@ export default function Landing() {
             </h1>
           </div>
           <div className="flex gap-2">
-            <Link href="/auth/login">
+            <Link to="/auth/login">
               <Button variant="outline" data-testid="button-login">
                 Sign In
               </Button>
             </Link>
-            <Link href="/auth/signup">
+            <Link to="/auth/signup">
               <Button data-testid="button-signup">
                 Sign Up
               </Button>
@@ -50,7 +50,7 @@ export default function Landing() {
             and comprehensive reporting for regulatory compliance.
           </p>
           <div className="flex gap-4 justify-center">
-            <Link href="/auth/signup">
+            <Link to="/auth/signup">
               <Button size="lg" data-testid="button-get-started">
                 Get Started Free
               </Button>
@@ -287,7 +287,7 @@ export default function Landing() {
             Join thousands of healthcare professionals who trust FridgeSafe 
             for their temperature monitoring needs.
           </p>
-          <Link href="/auth/signup">
+          <Link to="/auth/signup">
             <Button size="lg" data-testid="button-start-monitoring">
               Start Monitoring Now
             </Button>

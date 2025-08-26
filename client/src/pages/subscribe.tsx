@@ -126,7 +126,7 @@ export default function Subscribe() {
         <Card className="w-full max-w-md">
           <CardContent className="text-center p-8">
             <p className="text-muted-foreground mb-4">Unable to initialize payment</p>
-            <Link href="/account">
+            <Link to="/account">
               <Button variant="outline">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Account
@@ -143,7 +143,7 @@ export default function Subscribe() {
       {/* Header */}
       <div className="max-w-4xl mx-auto mb-6">
         <div className="flex items-center gap-4 mb-4">
-          <Link href="/account">
+          <Link to="/account">
             <Button variant="ghost" size="sm" data-testid="button-back-account">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Account

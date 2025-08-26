@@ -164,7 +164,7 @@ export default function Login() {
 
               <div className="text-center text-sm text-muted-foreground">
                 Don't have an account?{" "}
-                <Link href="/auth/signup" className="text-primary hover:underline" data-testid="link-signup">
+                <Link to="/auth/signup" className="text-primary hover:underline" data-testid="link-signup">
                   Sign up
                 </Link>
               </div>
