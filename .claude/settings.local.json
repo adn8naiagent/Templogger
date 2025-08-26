@@ -6,7 +6,8 @@
       "Bash(echo:*)",
       "Bash(env)",
       "Bash(npm run:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

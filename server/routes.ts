@@ -1146,6 +1146,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get unresolved out-of-range events count
+  app.get("/api/out-of-range-events/unresolved/count", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const count = await storage.getUnresolvedEventsCount(userId);
+      res.json({ count });
+    } catch (error: any) {
+      console.error("Get unresolved events count error:", error);
+      res.status(500).json({ error: "Failed to get unresolved events count" });
+    }
+  });
+
   // =========================
   // CHECKLIST ENDPOINTS  
   // =========================
@@ -1297,7 +1309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         '-',
         '-',
         '-',
-        overview?.missedChecks > 0 ? 'HIGH' : 'NORMAL'
+        overview?.missedReadings > 0 ? 'HIGH' : 'NORMAL'
       ].map(field => `"${field}"`).join(','));
       
       // Add overview statistics
@@ -1343,7 +1355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         '-',
         '-',
         '-',
-        overview?.missedChecks?.toString() || '0'
+        overview?.missedReadings?.toString() || '0'
       ].map(field => `"${field}"`).join(','));
       
       csvRows.push([
@@ -1358,7 +1370,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         '-',
         '-',
         '-',
-        overview?.lateChecks?.toString() || '0'
+        overview?.recentActivity?.lateEntries?.toString() || '0'
       ].map(field => `"${field}"`).join(','));
       
       // Add detailed temperature log rows
