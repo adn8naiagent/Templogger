@@ -624,6 +624,7 @@ export default function AddFridge() {
                           ))}
                         </div>
                       </div>
+                    </div>
                   </div>
                 </div>
 
