@@ -296,7 +296,7 @@ export default function CompleteChecklistModal({
                             />
                             <div className="flex-1">
                               <div className="font-medium">{item.label}</div>
-                              <Badge size="sm" variant="destructive" className="mt-1">
+                              <Badge variant="destructive" className="mt-1 text-xs">
                                 Required
                               </Badge>
                               {item.note && (
@@ -363,7 +363,7 @@ export default function CompleteChecklistModal({
                             />
                             <div className="flex-1">
                               <div className="font-medium">{item.label}</div>
-                              <Badge size="sm" variant="secondary" className="mt-1">
+                              <Badge variant="secondary" className="mt-1 text-xs">
                                 Optional
                               </Badge>
                               {item.note && (

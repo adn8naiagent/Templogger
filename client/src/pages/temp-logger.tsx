@@ -37,7 +37,8 @@ import {
   Palette,
   Tag,
   BarChart3,
-  Eye
+  Eye,
+  CheckSquare
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -461,19 +462,21 @@ export default function TempLogger() {
             </Card>
           </Link>
 
-          <Card className="hover:shadow-md transition-shadow cursor-pointer border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800" onClick={handleExport}>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-                  <Download className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+          <Link to="/checklists">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                    <CheckSquare className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">Checklists</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Manage scheduled tasks</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900 dark:text-white">Export Data</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Download CSV report</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
 
         {/* Log Temperature Form */}

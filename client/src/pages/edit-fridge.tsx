@@ -68,8 +68,8 @@ export default function EditFridge() {
   const [color, setColor] = useState('#3b82f6');
   const [minTemp, setMinTemp] = useState('');
   const [maxTemp, setMaxTemp] = useState('');
-  const [enableScheduledChecks, setEnableScheduledChecks] = useState(false);
-  const [checkFrequency, setCheckFrequency] = useState<'once' | 'twice' | 'multiple'>('once');
+  const [enableScheduledChecks, setEnableScheduledChecks] = useState(true);
+  const [checkFrequency, setCheckFrequency] = useState<'once' | 'twice' | 'multiple'>('twice');
   const [excludedDays, setExcludedDays] = useState<number[]>([]);
   const [timeWindows, setTimeWindows] = useState<TimeWindow[]>([]);
   const [isRemoving, setIsRemoving] = useState(false);
@@ -91,8 +91,8 @@ export default function EditFridge() {
       setColor(fridge.color || '#3b82f6');
       setMinTemp(fridge.minTemp);
       setMaxTemp(fridge.maxTemp);
-      setEnableScheduledChecks(fridge.enableScheduledChecks || false);
-      setCheckFrequency(fridge.checkFrequency || 'once');
+      setEnableScheduledChecks(fridge.enableScheduledChecks ?? true);
+      setCheckFrequency(fridge.checkFrequency || 'twice');
       setExcludedDays(fridge.excludedDays || []);
       setTimeWindows(fridge.timeWindows || []);
     }
@@ -498,22 +498,7 @@ export default function EditFridge() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <div className="text-base font-medium">Enable Scheduled Checks</div>
-                  <div className="text-sm text-muted-foreground">
-                    Set up automatic reminders for temperature monitoring
-                  </div>
-                </div>
-                <Switch
-                  checked={enableScheduledChecks}
-                  onCheckedChange={setEnableScheduledChecks}
-                  data-testid="enable-scheduled-checks"
-                />
-              </div>
-
-              {enableScheduledChecks && (
-                <div className="space-y-6 border-t pt-6">
+              <div className="space-y-6">
                   <div>
                     <Label className="text-base font-medium">Check Frequency</Label>
                     <RadioGroup
@@ -623,8 +608,7 @@ export default function EditFridge() {
                       Select days when temperature checks should be skipped
                     </p>
                   </div>
-                </div>
-              )}
+              </div>
             </CardContent>
           </Card>
 

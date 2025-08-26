@@ -51,8 +51,8 @@ export default function AddFridge() {
   const queryClient = useQueryClient();
   
   // Temperature check scheduling state
-  const [enableScheduledChecks, setEnableScheduledChecks] = useState(false);
-  const [checkFrequency, setCheckFrequency] = useState<'once' | 'twice' | 'multiple'>('once');
+  const [enableScheduledChecks, setEnableScheduledChecks] = useState(true);
+  const [checkFrequency, setCheckFrequency] = useState<'once' | 'twice' | 'multiple'>('twice');
   const [timeWindows, setTimeWindows] = useState<TimeWindow[]>([]);
   const [excludedDays, setExcludedDays] = useState<number[]>([]);
 
@@ -74,7 +74,7 @@ export default function AddFridge() {
       color: "#3b82f6",
       labels: [],
       minTemp: "2.0",
-      maxTemp: "4.0",
+      maxTemp: "8.0",
     },
   });
 
@@ -465,24 +465,17 @@ export default function AddFridge() {
 
                 {/* Temperature Check Scheduling */}
                 <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-medium flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        Scheduled Temperature Checks
-                      </h4>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Set up automatic reminders for temperature monitoring
-                      </p>
-                    </div>
-                    <Switch
-                      checked={enableScheduledChecks}
-                      onCheckedChange={setEnableScheduledChecks}
-                      data-testid="switch-scheduled-checks"
-                    />
+                  <div>
+                    <h4 className="text-sm font-medium flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      Scheduled Temperature Checks
+                    </h4>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Configure when and how often temperature checks should be performed
+                    </p>
                   </div>
 
-                  {enableScheduledChecks && (
+                  <div className="space-y-4 pt-2 border-t">
                     <div className="space-y-4 pt-2 border-t">
                       <RadioGroup
                         value={checkFrequency}
@@ -613,7 +606,7 @@ export default function AddFridge() {
                       <div className="space-y-2">
                         <p className="text-sm font-medium">Exclude Days (Optional)</p>
                         <p className="text-xs text-muted-foreground">
-                          Select days when temperature checks are not required (e.g., when store is closed)
+                          Select days when temperature checks are not required
                         </p>
                         <div className="grid grid-cols-2 gap-2">
                           {dayNames.map((day, index) => (
@@ -631,8 +624,7 @@ export default function AddFridge() {
                           ))}
                         </div>
                       </div>
-                    </div>
-                  )}
+                  </div>
                 </div>
 
                 {/* Action Buttons */}
