@@ -38,6 +38,11 @@ export default function FridgeDetail() {
     enabled: !!id,
   });
 
+  const { data: timeWindows = [] } = useQuery({
+    queryKey: [`/api/time-windows/fridge/${id}`],
+    enabled: !!id,
+  });
+
   const handleSort = () => {
     setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
   };
@@ -226,7 +231,7 @@ export default function FridgeDetail() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
               <div>
                 <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Location</h4>
                 <p className="text-lg font-semibold flex items-center gap-1">
@@ -252,6 +257,17 @@ export default function FridgeDetail() {
               <div>
                 <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Logs</h4>
                 <p className="text-lg font-semibold">{fridge.logs.length}</p>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Check Schedule</h4>
+                <p className="text-lg font-semibold flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  {timeWindows.length === 0 ? 'No schedule' : 
+                   timeWindows.length === 1 && timeWindows[0].checkType === 'daily' ? 'Daily checks' :
+                   timeWindows.length === 2 ? 'Twice daily' :
+                   `${timeWindows.length} times daily`}
+                </p>
               </div>
             </div>
             
