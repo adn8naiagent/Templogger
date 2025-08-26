@@ -133,16 +133,14 @@ export default function ScheduleEditor({
     }) => {
       if (!checklist) throw new Error('No checklist selected');
 
-      const response = await apiRequest(`/api/v2/checklists/${checklist.id}/schedule`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest(
+        'POST',
+        `/api/v2/checklists/${checklist.id}/schedule`,
+        data
+      );
 
       if (!response.ok) {
-        if (isUnauthorizedError(response.status)) {
+        if (response.status === 401) {
           logout();
         }
         const error = await response.json();
@@ -457,7 +455,7 @@ export default function ScheduleEditor({
                   </ul>
                 </div>
               </div>
-            </Card>
+            </CardContent>
           </Card>
         </div>
 

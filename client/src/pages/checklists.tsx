@@ -120,15 +120,15 @@ export default function Checklists() {
   } = useQuery({
     queryKey: ['checklists', { activeOnly }],
     queryFn: async () => {
-      const response = await apiRequest(`/api/v2/checklists?active=${activeOnly}`, {
-        method: 'GET',
-      });
+      const response = await apiRequest('GET', `/api/v2/checklists?active=${activeOnly}`);
 
       if (!response.ok) {
-        if (isUnauthorizedError(response.status)) {
+        const errorText = await response.text();
+        const error = new Error(`Failed to fetch checklists: ${response.status} - ${errorText}`);
+        if (response.status === 401) {
           logout();
         }
-        throw new Error(`Failed to fetch checklists: ${response.status}`);
+        throw error;
       }
 
       return response.json();
@@ -139,19 +139,15 @@ export default function Checklists() {
   // Create/Update checklist mutation
   const createChecklistMutation = useMutation({
     mutationFn: async (data: { name: string; description?: string; items: Omit<ChecklistItem, 'id'>[] }) => {
-      const response = await apiRequest('/api/v2/checklists', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest('POST', '/api/v2/checklists', data);
 
       if (!response.ok) {
-        if (isUnauthorizedError(response.status)) {
+        const errorText = await response.text();
+        const error = new Error(`Failed to create checklist: ${response.status} - ${errorText}`);
+        if (response.status === 401) {
           logout();
         }
-        throw new Error(`Failed to create checklist: ${response.status}`);
+        throw error;
       }
 
       return response.json();
@@ -177,15 +173,15 @@ export default function Checklists() {
   // Delete checklist mutation
   const deleteChecklistMutation = useMutation({
     mutationFn: async (checklistId: string) => {
-      const response = await apiRequest(`/api/v2/checklists/${checklistId}`, {
-        method: 'DELETE',
-      });
+      const response = await apiRequest('DELETE', `/api/v2/checklists/${checklistId}`);
 
       if (!response.ok) {
-        if (isUnauthorizedError(response.status)) {
+        const errorText = await response.text();
+        const error = new Error(`Failed to delete checklist: ${response.status} - ${errorText}`);
+        if (response.status === 401) {
           logout();
         }
-        throw new Error(`Failed to delete checklist: ${response.status}`);
+        throw error;
       }
 
       return response.json();
