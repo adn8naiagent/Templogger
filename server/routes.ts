@@ -16,6 +16,15 @@ import {
   userRoles,
   type User 
 } from "@shared/schema";
+import { ChecklistService } from "./checklist-service";
+import { 
+  createChecklistRequestSchema,
+  scheduleChecklistRequestSchema,
+  completeChecklistInstanceRequestSchema,
+  calendarRequestSchema,
+  summariesRequestSchema,
+  generateInstancesRequestSchema
+} from "@shared/checklist-types";
 import bcrypt from "bcrypt";
 import Stripe from "stripe";
 
@@ -42,6 +51,9 @@ function handleValidationErrors(req: Request, res: Response, next: NextFunction)
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize services
+  const checklistService = new ChecklistService(storage);
+  
   // Authentication routes
   app.post('/api/auth/signup', signUp);
   app.post('/api/auth/signin', signIn);
@@ -1263,6 +1275,216 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Complete checklist error:", error);
       res.status(500).json({ error: "Failed to complete checklist" });
+    }
+  });
+
+  // =========================
+  // ENHANCED CHECKLIST ENDPOINTS
+  // =========================
+
+  // Get enhanced checklists with scheduling
+  app.get("/api/v2/checklists", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const { active } = req.query;
+      const activeOnly = active === 'true';
+      
+      const checklists = await checklistService.listChecklists(userId, activeOnly);
+      res.json(checklists);
+    } catch (error: any) {
+      console.error("Get enhanced checklists error:", error);
+      res.status(500).json({ error: error.message || "Failed to get checklists" });
+    }
+  });
+
+  // Create enhanced checklist
+  app.post("/api/v2/checklists", requireAuth, async (req: any, res: Response) => {
+    try {
+      const result = createChecklistRequestSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Invalid input data", 
+          details: result.error.errors 
+        });
+      }
+
+      const userId = req.userId;
+      const checklist = await checklistService.createChecklist(userId, result.data);
+      res.status(201).json(checklist);
+    } catch (error: any) {
+      console.error("Create enhanced checklist error:", error);
+      res.status(error.statusCode || 500).json({ error: error.message || "Failed to create checklist" });
+    }
+  });
+
+  // Update enhanced checklist
+  app.put("/api/v2/checklists/:id", requireAuth, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const result = createChecklistRequestSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Invalid input data", 
+          details: result.error.errors 
+        });
+      }
+
+      const userId = req.userId;
+      const checklist = await checklistService.updateChecklist(userId, id, result.data);
+      res.json(checklist);
+    } catch (error: any) {
+      console.error("Update enhanced checklist error:", error);
+      res.status(error.statusCode || 500).json({ error: error.message || "Failed to update checklist" });
+    }
+  });
+
+  // Schedule checklist
+  app.post("/api/v2/checklists/:id/schedule", requireAuth, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const result = scheduleChecklistRequestSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Invalid schedule data", 
+          details: result.error.errors 
+        });
+      }
+
+      const userId = req.userId;
+      const schedule = await checklistService.createOrReplaceSchedule(userId, id, result.data);
+      res.json(schedule);
+    } catch (error: any) {
+      console.error("Schedule checklist error:", error);
+      res.status(error.statusCode || 500).json({ error: error.message || "Failed to schedule checklist" });
+    }
+  });
+
+  // Get calendar view
+  app.get("/api/v2/calendar", requireAuth, async (req: any, res: Response) => {
+    try {
+      const result = calendarRequestSchema.safeParse(req.query);
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Invalid calendar parameters", 
+          details: result.error.errors 
+        });
+      }
+
+      const userId = req.userId;
+      const { from, to } = result.data;
+      const calendarData = await checklistService.getCalendarInstances(userId, from, to);
+      res.json(calendarData);
+    } catch (error: any) {
+      console.error("Get calendar error:", error);
+      res.status(error.statusCode || 500).json({ error: error.message || "Failed to get calendar data" });
+    }
+  });
+
+  // Generate instances
+  app.post("/api/v2/instances/generate", requireAuth, async (req: any, res: Response) => {
+    try {
+      const result = generateInstancesRequestSchema.safeParse(req.query);
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Invalid generate parameters", 
+          details: result.error.errors 
+        });
+      }
+
+      const userId = req.userId;
+      const { from, to } = result.data;
+      await checklistService.generateInstances(userId, from, to);
+      res.json({ message: "Instances generated successfully" });
+    } catch (error: any) {
+      console.error("Generate instances error:", error);
+      res.status(error.statusCode || 500).json({ error: error.message || "Failed to generate instances" });
+    }
+  });
+
+  // Complete checklist instance
+  app.post("/api/v2/instances/:instanceId/complete", requireAuth, async (req: any, res: Response) => {
+    try {
+      const { instanceId } = req.params;
+      const result = completeChecklistInstanceRequestSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Invalid completion data", 
+          details: result.error.errors 
+        });
+      }
+
+      const userId = req.userId;
+      const instance = await checklistService.completeInstance(userId, instanceId, result.data);
+      res.json(instance);
+    } catch (error: any) {
+      console.error("Complete instance error:", error);
+      res.status(error.statusCode || 500).json({ error: error.message || "Failed to complete instance" });
+    }
+  });
+
+  // Get summaries for dashboard
+  app.get("/api/v2/summaries", requireAuth, async (req: any, res: Response) => {
+    try {
+      const result = summariesRequestSchema.safeParse(req.query);
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Invalid summary parameters", 
+          details: result.error.errors 
+        });
+      }
+
+      const userId = req.userId;
+      const { from, to, checklistId, cadence } = result.data;
+      const summaries = await checklistService.getSummaries(userId, from, to, checklistId, cadence);
+      res.json(summaries);
+    } catch (error: any) {
+      console.error("Get summaries error:", error);
+      res.status(error.statusCode || 500).json({ error: error.message || "Failed to get summaries" });
+    }
+  });
+
+  // Export checklist CSV
+  app.get("/api/v2/export/checklists", requireAuth, async (req: any, res: Response) => {
+    try {
+      const result = summariesRequestSchema.safeParse(req.query);
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Invalid export parameters", 
+          details: result.error.errors 
+        });
+      }
+
+      const userId = req.userId;
+      const { from, to } = result.data;
+      const csvData = await checklistService.exportCSV(userId, from, to);
+      
+      // Set CSV headers
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="checklist-report.csv"');
+      
+      // Create CSV content
+      const headers = ['Date/Week', 'Checklist Name', 'Cadence', 'Required', 'Completed', 'On Time', 'Completed At', 'Completed By'];
+      const csvRows = [headers.join(',')];
+      
+      csvData.forEach(record => {
+        const row = [
+          `"${record.date_or_week}"`,
+          `"${record.checklist_name}"`,
+          record.cadence,
+          record.required,
+          record.completed,
+          record.on_time,
+          `"${record.completed_at}"`,
+          `"${record.completed_by}"`
+        ];
+        csvRows.push(row.join(','));
+      });
+      
+      const csvContent = csvRows.join('\n');
+      res.send(csvContent);
+    } catch (error: any) {
+      console.error("Export checklists error:", error);
+      res.status(error.statusCode || 500).json({ error: error.message || "Failed to export checklists" });
     }
   });
 

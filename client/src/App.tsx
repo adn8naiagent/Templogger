@@ -21,6 +21,7 @@ import AddFridge from "@/pages/add-fridge";
 import ViewFridges from "@/pages/view-fridges";
 import FridgeDetail from "@/pages/fridge-detail";
 import EditFridge from "@/pages/edit-fridge";
+import Checklists from "@/pages/checklists";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -43,6 +44,7 @@ function Router() {
           <Route path="/fridges" component={ViewFridges} />
           <Route path="/fridge/:id" component={FridgeDetail} />
           <Route path="/fridge/:id/edit" component={EditFridge} />
+          <Route path="/checklists" component={Checklists} />
           <Route path="/compliance" component={ComplianceDashboard} />
           <Route path="/account" component={Account} />
           <Route path="/settings" component={Settings} />
