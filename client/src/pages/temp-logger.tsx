@@ -161,6 +161,13 @@ export default function TempLogger() {
     }
   }, [timeWindows, currentTimeWindow]);
 
+  // Helper function for compliance badge coloring
+  const getComplianceBadgeClass = (score: number) => {
+    if (score > 90) return "bg-green-600 text-white";
+    if (score >= 80) return "bg-amber-500 text-white";
+    return "bg-red-600 text-white";
+  };
+
   // Log temperature form
   const tempForm = useForm<LogTemperatureData>({
     resolver: zodResolver(logTemperatureSchema),
@@ -771,7 +778,7 @@ export default function TempLogger() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-600 dark:text-slate-300">Avg. Compliance</span>
-                  <Badge variant="default" className="font-medium">
+                  <Badge className={`font-medium ${getComplianceBadgeClass(fridges.length > 0 ? Math.round(fridges.reduce((acc: number, f: Fridge) => acc + f.complianceScore, 0) / fridges.length) : 0)}`}>
                     {fridges.length > 0 ? Math.round(fridges.reduce((acc: number, f: Fridge) => acc + f.complianceScore, 0) / fridges.length) : 0}%
                   </Badge>
                 </div>
@@ -849,8 +856,7 @@ export default function TempLogger() {
                           </div>
                         </div>
                         <Badge 
-                          variant={fridge.status === 'critical' ? 'destructive' : fridge.status === 'warning' ? 'secondary' : 'default'}
-                          className="font-medium"
+                          className={`font-medium ${getComplianceBadgeClass(fridge.complianceScore)}`}
                         >
                           {fridge.complianceScore}%
                         </Badge>

@@ -3,11 +3,11 @@
 @tailwind utilities;
 
 :root {
-  --background: hsl(184 100% 94%);
+  --background: hsl(0 0% 98%);
   --foreground: hsl(0 0% 27%);
-  --card: hsl(183 100% 92%);
+  --card: hsl(0 0% 96%);
   --card-foreground: hsl(0 0% 27%);
-  --popover: hsl(184 100% 94%);
+  --popover: hsl(0 0% 98%);
   --popover-foreground: hsl(0 0% 27%);
   --primary: hsl(184 100% 33%);
   --primary-foreground: hsl(0 0% 100%);
@@ -20,18 +20,18 @@
   --destructive: hsl(356.3033 90.5579% 54.3137%);
   --destructive-foreground: hsl(0 0% 100%);
   --border: hsl(0 0% 88%);
-  --input: hsl(183 100% 92%);
+  --input: hsl(0 0% 96%);
   --ring: hsl(184 100% 33%);
   --chart-1: hsl(184 100% 33%);
   --chart-2: hsl(183 56% 46%);
   --chart-3: hsl(183 48% 59%);
   --chart-4: hsl(183 48% 71%);
   --chart-5: hsl(183 100% 84%);
-  --sidebar: hsl(183 100% 92%);
+  --sidebar: hsl(0 0% 96%);
   --sidebar-foreground: hsl(0 0% 27%);
   --sidebar-primary: hsl(184 100% 33%);
   --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(183 48% 71%);
+  --sidebar-accent: hsl(0 0% 92%);
   --sidebar-accent-foreground: hsl(184 100% 33%);
   --sidebar-border: hsl(0 0% 88%);
   --sidebar-ring: hsl(184 100% 33%);
@@ -54,7 +54,7 @@
 .dark {
   --background: hsl(0 0% 8%);
   --foreground: hsl(0 0% 88%);
-  --card: hsl(184 100% 15%);
+  --card: hsl(0 0% 12%);
   --card-foreground: hsl(0 0% 88%);
   --popover: hsl(0 0% 8%);
   --popover-foreground: hsl(0 0% 88%);
@@ -69,18 +69,18 @@
   --destructive: hsl(356.3033 90.5579% 54.3137%);
   --destructive-foreground: hsl(0 0% 100%);
   --border: hsl(0 0% 20%);
-  --input: hsl(184 100% 15%);
+  --input: hsl(0 0% 12%);
   --ring: hsl(183 56% 46%);
   --chart-1: hsl(183 56% 46%);
   --chart-2: hsl(184 100% 33%);
   --chart-3: hsl(183 48% 59%);
   --chart-4: hsl(183 48% 71%);
   --chart-5: hsl(183 100% 84%);
-  --sidebar: hsl(184 100% 15%);
+  --sidebar: hsl(0 0% 12%);
   --sidebar-foreground: hsl(0 0% 88%);
   --sidebar-primary: hsl(183 56% 46%);
   --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(184 100% 20%);
+  --sidebar-accent: hsl(0 0% 18%);
   --sidebar-accent-foreground: hsl(183 48% 71%);
   --sidebar-border: hsl(0 0% 20%);
   --sidebar-ring: hsl(183 56% 46%);

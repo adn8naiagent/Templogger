@@ -121,15 +121,15 @@ export default function ComplianceDashboard() {
   }, [autoRefresh, refetchOverview]);
 
   const getComplianceColor = (score: number) => {
-    if (score >= 95) return "text-green-600";
-    if (score >= 85) return "text-yellow-600";
+    if (score > 90) return "text-green-600";
+    if (score >= 80) return "text-amber-600";
     return "text-red-600";
   };
 
   const getComplianceBadge = (score: number) => {
-    if (score >= 95) return <Badge className="bg-green-600">Excellent</Badge>;
-    if (score >= 85) return <Badge variant="secondary">Good</Badge>;
-    return <Badge variant="destructive">Needs Attention</Badge>;
+    if (score > 90) return <Badge className="bg-green-600 text-white">{score.toFixed(1)}%</Badge>;
+    if (score >= 80) return <Badge className="bg-amber-500 text-white">{score.toFixed(1)}%</Badge>;
+    return <Badge className="bg-red-600 text-white">{score.toFixed(1)}%</Badge>;
   };
 
   const getStatusBadge = (status: string) => {
