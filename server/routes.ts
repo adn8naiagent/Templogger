@@ -459,7 +459,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.userId;
-      const { fridgeId, timeWindowId, temperature, personName, isOnTime = true, lateReason, correctiveAction, correctiveNotes } = result.data;
+      const { fridgeId, timeWindowId, minTempReading, maxTempReading, currentTempReading, personName, isOnTime = true, lateReason, correctiveAction, correctiveNotes } = result.data;
       
       // Verify fridge ownership
       const fridge = await storage.getFridge(fridgeId, userId);
@@ -467,16 +467,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Fridge not found" });
       }
 
-      // Check if temperature is out of range and create alert
-      const temp = parseFloat(temperature);
+      // Check if any temperature is out of range and create alert
       const minTemp = parseFloat(fridge.minTemp);
       const maxTemp = parseFloat(fridge.maxTemp);
-      const isAlert = temp < minTemp || temp > maxTemp;
+      
+      let isAlert = false;
+      const minReading = parseFloat(minTempReading);
+      const maxReading = parseFloat(maxTempReading);
+      const currentReading = parseFloat(currentTempReading);
+      
+      if ((minReading < minTemp || minReading > maxTemp) ||
+          (maxReading < minTemp || maxReading > maxTemp) ||
+          (currentReading < minTemp || currentReading > maxTemp)) {
+        isAlert = true;
+      }
 
       const logData = {
         fridgeId,
         timeWindowId: timeWindowId || null,
-        temperature,
+        minTempReading,
+        maxTempReading,
+        currentTempReading,
         personName,
         isAlert,
         isOnTime,

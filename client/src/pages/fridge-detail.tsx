@@ -17,9 +17,14 @@ import {
   Power,
   PowerOff,
   Download,
-  Refrigerator
+  Refrigerator,
+  Wrench,
+  Certificate,
+  Plus,
+  Calendar,
+  Upload
 } from 'lucide-react';
-import type { Fridge, TemperatureLog } from '@shared/schema';
+import type { Fridge, TemperatureLog, CalibrationRecord, MaintenanceRecord } from '@shared/schema';
 
 interface FridgeWithLogs extends Fridge {
   logs: (TemperatureLog & { fridgeName: string })[];
@@ -40,6 +45,16 @@ export default function FridgeDetail() {
 
   const { data: timeWindows = [] } = useQuery({
     queryKey: [`/api/time-windows/fridge/${id}`],
+    enabled: !!id,
+  });
+
+  const { data: calibrationRecords = [] } = useQuery<CalibrationRecord[]>({
+    queryKey: [`/api/fridges/${id}/calibrations`],
+    enabled: !!id,
+  });
+
+  const { data: maintenanceRecords = [] } = useQuery<MaintenanceRecord[]>({
+    queryKey: [`/api/fridges/${id}/maintenance`],
     enabled: !!id,
   });
 

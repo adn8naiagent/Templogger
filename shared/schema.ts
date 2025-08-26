@@ -88,7 +88,9 @@ export const temperatureLogs = pgTable("temperature_logs", {
   userId: varchar("user_id").notNull().references(() => users.id),
   fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
   timeWindowId: varchar("time_window_id").references(() => timeWindows.id),
-  temperature: decimal("temperature", { precision: 4, scale: 1 }).notNull(),
+  minTempReading: decimal("min_temp_reading", { precision: 4, scale: 1 }).notNull(),
+  maxTempReading: decimal("max_temp_reading", { precision: 4, scale: 1 }).notNull(),
+  currentTempReading: decimal("current_temp_reading", { precision: 4, scale: 1 }).notNull(),
   personName: text("person_name").notNull(),
   isAlert: boolean("is_alert").notNull().default(false),
   isOnTime: boolean("is_on_time").notNull().default(true),
@@ -173,13 +175,55 @@ export const outOfRangeEvents = pgTable("out_of_range_events", {
   userId: varchar("user_id").notNull().references(() => users.id),
   temperatureLogId: varchar("temperature_log_id").notNull().references(() => temperatureLogs.id),
   fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
-  temperature: decimal("temperature", { precision: 4, scale: 1 }).notNull(),
+  violationType: text("violation_type").notNull(), // "min", "max", "current", "multiple"
+  minTempReading: decimal("min_temp_reading", { precision: 4, scale: 1 }),
+  maxTempReading: decimal("max_temp_reading", { precision: 4, scale: 1 }),
+  currentTempReading: decimal("current_temp_reading", { precision: 4, scale: 1 }),
   expectedMin: decimal("expected_min", { precision: 4, scale: 1 }).notNull(),
   expectedMax: decimal("expected_max", { precision: 4, scale: 1 }).notNull(),
   severity: text("severity").notNull(), // "low", "medium", "high", "critical"
   correctiveAction: text("corrective_action"),
   notes: text("notes"),
   resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Calibration records for fridge thermometers
+export const calibrationRecords = pgTable("calibration_records", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
+  calibrationDate: timestamp("calibration_date").notNull(),
+  nextCalibrationDue: timestamp("next_calibration_due").notNull(),
+  performedBy: text("performed_by").notNull(),
+  calibrationStandard: text("calibration_standard"), // Reference standard used
+  beforeCalibrationReading: decimal("before_calibration_reading", { precision: 4, scale: 1 }),
+  afterCalibrationReading: decimal("after_calibration_reading", { precision: 4, scale: 1 }),
+  accuracy: decimal("accuracy", { precision: 4, scale: 2 }), // ±°C accuracy
+  certificateFileName: text("certificate_file_name"),
+  certificateFilePath: text("certificate_file_path"),
+  certificateFileSize: decimal("certificate_file_size", { precision: 10, scale: 0 }),
+  notes: text("notes"),
+  status: text("status").notNull().default("valid"), // "valid", "expired", "overdue"
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Maintenance records for fridges
+export const maintenanceRecords = pgTable("maintenance_records", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
+  maintenanceDate: timestamp("maintenance_date").notNull(),
+  maintenanceType: text("maintenance_type").notNull(), // "routine", "repair", "emergency", "cleaning"
+  performedBy: text("performed_by").notNull(),
+  description: text("description").notNull(),
+  partsReplaced: text("parts_replaced").array(),
+  cost: decimal("cost", { precision: 8, scale: 2 }),
+  nextMaintenanceDue: timestamp("next_maintenance_due"),
+  attachmentFileName: text("attachment_file_name"),
+  attachmentFilePath: text("attachment_file_path"),
+  attachmentFileSize: decimal("attachment_file_size", { precision: 10, scale: 0 }),
+  status: text("status").notNull().default("completed"), // "completed", "pending", "scheduled"
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -230,7 +274,9 @@ export const insertLabelSchema = createInsertSchema(labels).pick({
 export const insertTemperatureLogSchema = createInsertSchema(temperatureLogs).pick({
   fridgeId: true,
   timeWindowId: true,
-  temperature: true,
+  minTempReading: true,
+  maxTempReading: true,
+  currentTempReading: true,
   personName: true,
   isAlert: true,
   isOnTime: true,
@@ -287,12 +333,46 @@ export const insertChecklistCompletionSchema = createInsertSchema(checklistCompl
 export const insertOutOfRangeEventSchema = createInsertSchema(outOfRangeEvents).pick({
   temperatureLogId: true,
   fridgeId: true,
-  temperature: true,
+  violationType: true,
+  minTempReading: true,
+  maxTempReading: true,
+  currentTempReading: true,
   expectedMin: true,
   expectedMax: true,
   severity: true,
   correctiveAction: true,
   notes: true,
+});
+
+export const insertCalibrationRecordSchema = createInsertSchema(calibrationRecords).pick({
+  fridgeId: true,
+  calibrationDate: true,
+  nextCalibrationDue: true,
+  performedBy: true,
+  calibrationStandard: true,
+  beforeCalibrationReading: true,
+  afterCalibrationReading: true,
+  accuracy: true,
+  certificateFileName: true,
+  certificateFilePath: true,
+  certificateFileSize: true,
+  notes: true,
+  status: true,
+});
+
+export const insertMaintenanceRecordSchema = createInsertSchema(maintenanceRecords).pick({
+  fridgeId: true,
+  maintenanceDate: true,
+  maintenanceType: true,
+  performedBy: true,
+  description: true,
+  partsReplaced: true,
+  cost: true,
+  nextMaintenanceDue: true,
+  attachmentFileName: true,
+  attachmentFilePath: true,
+  attachmentFileSize: true,
+  status: true,
 });
 
 // Sign up schema for frontend forms
@@ -374,16 +454,32 @@ export const createLabelSchema = z.object({
 export const logTemperatureSchema = z.object({
   fridgeId: z.string().min(1, "Fridge selection is required"),
   timeWindowId: z.string().optional(),
-  temperature: z.string().refine((val) => {
+  minTempReading: z.string().refine((val) => {
     const num = parseFloat(val);
     return !isNaN(num) && num >= -50 && num <= 50;
-  }, "Temperature must be between -50°C and 50°C"),
+  }, "Minimum temperature reading must be between -50°C and 50°C"),
+  maxTempReading: z.string().refine((val) => {
+    const num = parseFloat(val);
+    return !isNaN(num) && num >= -50 && num <= 50;
+  }, "Maximum temperature reading must be between -50°C and 50°C"),
+  currentTempReading: z.string().refine((val) => {
+    const num = parseFloat(val);
+    return !isNaN(num) && num >= -50 && num <= 50;
+  }, "Current temperature reading must be between -50°C and 50°C"),
   personName: z.string().min(1, "Person name is required"),
   notes: z.string().optional(),
   isOnTime: z.boolean().default(true),
   lateReason: z.string().optional(),
   correctiveAction: z.string().optional(),
   correctiveNotes: z.string().optional(),
+}).refine((data) => {
+  const min = parseFloat(data.minTempReading);
+  const max = parseFloat(data.maxTempReading);
+  const current = parseFloat(data.currentTempReading);
+  return min <= current && current <= max;
+}, {
+  message: "Current temperature must be between minimum and maximum readings",
+  path: ["currentTempReading"],
 });
 
 // Time window schema
@@ -426,6 +522,51 @@ export const completeChecklistSchema = z.object({
   notes: z.string().optional(),
 });
 
+// Calibration record schema
+export const createCalibrationRecordSchema = z.object({
+  fridgeId: z.string().min(1, "Fridge selection is required"),
+  calibrationDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Valid calibration date is required"),
+  performedBy: z.string().min(1, "Performed by is required"),
+  calibrationStandard: z.string().optional(),
+  beforeCalibrationReading: z.string().optional().refine((val) => {
+    if (!val) return true;
+    const num = parseFloat(val);
+    return !isNaN(num) && num >= -50 && num <= 50;
+  }, "Before calibration reading must be between -50°C and 50°C"),
+  afterCalibrationReading: z.string().optional().refine((val) => {
+    if (!val) return true;
+    const num = parseFloat(val);
+    return !isNaN(num) && num >= -50 && num <= 50;
+  }, "After calibration reading must be between -50°C and 50°C"),
+  accuracy: z.string().optional().refine((val) => {
+    if (!val) return true;
+    const num = parseFloat(val);
+    return !isNaN(num) && num >= 0 && num <= 10;
+  }, "Accuracy must be between 0 and 10°C"),
+  notes: z.string().optional(),
+});
+
+// Maintenance record schema
+export const createMaintenanceRecordSchema = z.object({
+  fridgeId: z.string().min(1, "Fridge selection is required"),
+  maintenanceDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Valid maintenance date is required"),
+  maintenanceType: z.enum(["routine", "repair", "emergency", "cleaning"], {
+    required_error: "Maintenance type is required",
+  }),
+  performedBy: z.string().min(1, "Performed by is required"),
+  description: z.string().min(1, "Description is required"),
+  partsReplaced: z.array(z.string()).default([]),
+  cost: z.string().optional().refine((val) => {
+    if (!val) return true;
+    const num = parseFloat(val);
+    return !isNaN(num) && num >= 0;
+  }, "Cost must be a positive number"),
+  nextMaintenanceDue: z.string().optional().refine((val) => {
+    if (!val) return true;
+    return !isNaN(Date.parse(val));
+  }, "Valid next maintenance date required"),
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpsertUser = z.infer<typeof upsertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -445,6 +586,8 @@ export type LogTemperatureData = z.infer<typeof logTemperatureSchema>;
 export type CreateTimeWindowData = z.infer<typeof createTimeWindowSchema>;
 export type CreateChecklistData = z.infer<typeof createChecklistSchema>;
 export type CompleteChecklistData = z.infer<typeof completeChecklistSchema>;
+export type CreateCalibrationRecordData = z.infer<typeof createCalibrationRecordSchema>;
+export type CreateMaintenanceRecordData = z.infer<typeof createMaintenanceRecordSchema>;
 
 // Table select types
 export type TimeWindow = typeof timeWindows.$inferSelect;
@@ -453,6 +596,8 @@ export type Checklist = typeof checklists.$inferSelect;
 export type ChecklistItem = typeof checklistItems.$inferSelect;
 export type ChecklistCompletion = typeof checklistCompletions.$inferSelect;
 export type OutOfRangeEvent = typeof outOfRangeEvents.$inferSelect;
+export type CalibrationRecord = typeof calibrationRecords.$inferSelect;
+export type MaintenanceRecord = typeof maintenanceRecords.$inferSelect;
 
 // Insert types 
 export type InsertTimeWindow = z.infer<typeof insertTimeWindowSchema>;
@@ -461,6 +606,8 @@ export type InsertChecklist = z.infer<typeof insertChecklistSchema>;
 export type InsertChecklistItem = z.infer<typeof insertChecklistItemSchema>;
 export type InsertChecklistCompletion = z.infer<typeof insertChecklistCompletionSchema>;
 export type InsertOutOfRangeEvent = z.infer<typeof insertOutOfRangeEventSchema>;
+export type InsertCalibrationRecord = z.infer<typeof insertCalibrationRecordSchema>;
+export type InsertMaintenanceRecord = z.infer<typeof insertMaintenanceRecordSchema>;
 
 // Helper function to calculate trial end date (14 days from start)
 export function calculateTrialEndDate(startDate: Date): Date {

@@ -114,7 +114,11 @@ export default function AddFridge() {
           "New fridge with scheduled temperature checks has been added successfully." :
           "New fridge has been added successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/fridges/recent-temps"] });
+      
+      // Invalidate queries and prefetch the data to ensure it's ready when we navigate
+      await queryClient.invalidateQueries({ queryKey: ["/api/fridges/recent-temps"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/fridges/recent-temps"] });
+      
       setLocation("/");
     },
     onError: (error: any) => {
@@ -232,7 +236,11 @@ export default function AddFridge() {
         title: "Fridge created!",
         description: "New fridge with daily temperature check has been added successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/fridges/recent-temps"] });
+      
+      // Invalidate queries and prefetch the data to ensure it's ready when we navigate
+      await queryClient.invalidateQueries({ queryKey: ["/api/fridges/recent-temps"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/fridges/recent-temps"] });
+      
       setLocation("/");
       return;
     } else if (enableScheduledChecks && checkFrequency === 'twice') {
@@ -268,7 +276,11 @@ export default function AddFridge() {
         title: "Fridge created!",
         description: "New fridge with AM/PM temperature checks has been added successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/fridges/recent-temps"] });
+      
+      // Invalidate queries and prefetch the data to ensure it's ready when we navigate
+      await queryClient.invalidateQueries({ queryKey: ["/api/fridges/recent-temps"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/fridges/recent-temps"] });
+      
       setLocation("/");
       return;
     }

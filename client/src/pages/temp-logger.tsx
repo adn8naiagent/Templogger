@@ -174,7 +174,9 @@ export default function TempLogger() {
     resolver: zodResolver(logTemperatureSchema),
     defaultValues: {
       fridgeId: "",
-      temperature: "",
+      minTempReading: "",
+      maxTempReading: "",
+      currentTempReading: "",
       personName: "",
       notes: "",
       timeWindowId: "",
@@ -185,16 +187,30 @@ export default function TempLogger() {
     },
   });
 
-  // Check if temperature would be out of range
-  const checkTemperatureRange = (temperature: string, fridgeId: string) => {
+  // Check if any temperature would be out of range
+  const checkTemperatureRange = (minReading: string, maxReading: string, currentReading: string, fridgeId: string) => {
     const selectedFridge = fridges.find((f: Fridge) => f.id === fridgeId);
-    if (!selectedFridge || !temperature) return false;
+    if (!selectedFridge) return false;
 
-    const temp = parseFloat(temperature);
     const minTemp = parseFloat(selectedFridge.minTemp);
     const maxTemp = parseFloat(selectedFridge.maxTemp);
 
-    return temp < minTemp || temp > maxTemp;
+    if (minReading) {
+      const min = parseFloat(minReading);
+      if (!isNaN(min) && (min < minTemp || min > maxTemp)) return true;
+    }
+
+    if (maxReading) {
+      const max = parseFloat(maxReading);
+      if (!isNaN(max) && (max < minTemp || max > maxTemp)) return true;
+    }
+
+    if (currentReading) {
+      const current = parseFloat(currentReading);
+      if (!isNaN(current) && (current < minTemp || current > maxTemp)) return true;
+    }
+
+    return false;
   };
 
   // Log temperature mutation
@@ -261,15 +277,17 @@ export default function TempLogger() {
   };
 
   // Watch for temperature changes to show corrective actions
-  const currentTemp = tempForm.watch("temperature");
+  const minTemp = tempForm.watch("minTempReading");
+  const maxTemp = tempForm.watch("maxTempReading");
+  const currentTemp = tempForm.watch("currentTempReading");
   const currentFridgeId = tempForm.watch("fridgeId");
 
   useEffect(() => {
-    if (currentTemp && currentFridgeId) {
-      const isOutOfRange = checkTemperatureRange(currentTemp, currentFridgeId);
+    if ((minTemp || maxTemp || currentTemp) && currentFridgeId) {
+      const isOutOfRange = checkTemperatureRange(minTemp, maxTemp, currentTemp, currentFridgeId);
       setShowCorrectiveActions(isOutOfRange || isLateEntry);
     }
-  }, [currentTemp, currentFridgeId, isLateEntry]);
+  }, [minTemp, maxTemp, currentTemp, currentFridgeId, isLateEntry]);
 
   // Auto-fill time window and late entry detection
   useEffect(() => {
@@ -539,34 +557,86 @@ export default function TempLogger() {
 
                       {selectedFridgeId && (
                         <>
-                          <FormField
-                            control={tempForm.control}
-                            name="temperature"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-200">Temperature Reading (°C) *</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    {...field} 
-                                    type="number" 
-                                    step="0.1" 
-                                    placeholder="e.g. 4.5" 
-                                    className="h-11 border-slate-300 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400 text-lg"
-                                    data-testid="input-temperature"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                                {field.value && checkTemperatureRange(field.value, selectedFridgeId) && (
-                                  <Alert variant="destructive" className="mt-3 border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800">
-                                    <AlertTriangle className="h-5 w-5" />
-                                    <AlertDescription className="text-red-800 dark:text-red-200 font-medium">
-                                      ⚠️ Temperature is out of safe range! Corrective action required.
-                                    </AlertDescription>
-                                  </Alert>
-                                )}
-                              </FormItem>
-                            )}
-                          />
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <FormField
+                              control={tempForm.control}
+                              name="minTempReading"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-200">Min Temp (°C) *</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      {...field} 
+                                      type="number" 
+                                      step="0.1" 
+                                      placeholder="e.g. 2.1" 
+                                      className="h-11 border-slate-300 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400"
+                                      data-testid="input-min-temperature"
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={tempForm.control}
+                              name="maxTempReading"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-200">Max Temp (°C) *</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      {...field} 
+                                      type="number" 
+                                      step="0.1" 
+                                      placeholder="e.g. 7.8" 
+                                      className="h-11 border-slate-300 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400"
+                                      data-testid="input-max-temperature"
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={tempForm.control}
+                              name="currentTempReading"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-200">Current Temp (°C) *</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      {...field} 
+                                      type="number" 
+                                      step="0.1" 
+                                      placeholder="e.g. 4.5" 
+                                      className="h-11 border-slate-300 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400"
+                                      data-testid="input-current-temperature"
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          {/* Temperature range validation alert */}
+                          {(tempForm.watch("minTempReading") || tempForm.watch("maxTempReading") || tempForm.watch("currentTempReading")) && 
+                           checkTemperatureRange(
+                             tempForm.watch("minTempReading"), 
+                             tempForm.watch("maxTempReading"), 
+                             tempForm.watch("currentTempReading"), 
+                             selectedFridgeId
+                           ) && (
+                            <Alert variant="destructive" className="border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800">
+                              <AlertTriangle className="h-5 w-5" />
+                              <AlertDescription className="text-red-800 dark:text-red-200 font-medium">
+                                ⚠️ One or more temperature readings are out of safe range! Corrective action required.
+                              </AlertDescription>
+                            </Alert>
+                          )}
 
                           <FormField
                             control={tempForm.control}

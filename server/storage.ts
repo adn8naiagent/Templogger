@@ -363,7 +363,10 @@ export class DatabaseStorage implements IStorage {
       id: temperatureLogs.id,
       fridgeId: temperatureLogs.fridgeId,
       timeWindowId: temperatureLogs.timeWindowId,
-      temperature: temperatureLogs.temperature,
+      temperature: temperatureLogs.currentTempReading,
+      minTempReading: temperatureLogs.minTempReading,
+      maxTempReading: temperatureLogs.maxTempReading,
+      currentTempReading: temperatureLogs.currentTempReading,
       personName: temperatureLogs.personName,
       isAlert: temperatureLogs.isAlert,
       isOnTime: temperatureLogs.isOnTime,
@@ -861,7 +864,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     const fridgeData = fridge[0];
-    const temp = parseFloat(log.temperature);
+    const temp = parseFloat(log.currentTempReading);
     const minTemp = parseFloat(fridgeData.minTemp);
     const maxTemp = parseFloat(fridgeData.maxTemp);
 
@@ -882,7 +885,10 @@ export class DatabaseStorage implements IStorage {
       const eventData: InsertOutOfRangeEvent = {
         temperatureLogId: log.id,
         fridgeId: log.fridgeId,
-        temperature: log.temperature,
+        violationType: "current", // TODO: Determine violation type based on which reading is out of range
+        minTempReading: log.minTempReading,
+        maxTempReading: log.maxTempReading,
+        currentTempReading: log.currentTempReading,
         expectedMin: fridgeData.minTemp,
         expectedMax: fridgeData.maxTemp,
         severity,
@@ -900,7 +906,7 @@ export class DatabaseStorage implements IStorage {
     // Count temperature logs that are outside their fridge's acceptable range
     const logs = await this.db
       .select({
-        temperature: temperatureLogs.temperature,
+        temperature: temperatureLogs.currentTempReading,
         minTemp: fridges.minTemp,
         maxTemp: fridges.maxTemp
       })
@@ -909,9 +915,12 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(temperatureLogs.createdAt))
       .limit(100); // Check recent logs
 
-    const alertCount = logs.filter(log => 
-      log.temperature < log.minTemp || log.temperature > log.maxTemp
-    ).length;
+    const alertCount = logs.filter(log => {
+      const temp = parseFloat(log.temperature);
+      const minTemp = parseFloat(log.minTemp);
+      const maxTemp = parseFloat(log.maxTemp);
+      return temp < minTemp || temp > maxTemp;
+    }).length;
 
     return alertCount;
   }
@@ -1051,7 +1060,10 @@ export class DatabaseStorage implements IStorage {
       const logs = await this.db
         .select({
           id: temperatureLogs.id,
-          temperature: temperatureLogs.temperature,
+          temperature: temperatureLogs.currentTempReading,
+          minTempReading: temperatureLogs.minTempReading,
+          maxTempReading: temperatureLogs.maxTempReading,
+          currentTempReading: temperatureLogs.currentTempReading,
           personName: temperatureLogs.personName,
           isAlert: temperatureLogs.isAlert,
           isOnTime: temperatureLogs.isOnTime,
