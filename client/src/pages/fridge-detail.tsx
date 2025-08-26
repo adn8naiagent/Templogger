@@ -206,9 +206,7 @@ export default function FridgeDetail() {
         <Card 
           className="mb-8" 
           style={{ 
-            borderLeft: `4px solid ${fridge.color || '#3b82f6'}`,
-            borderColor: fridge.color || '#3b82f6', 
-            borderWidth: '2px' 
+            borderLeft: `4px solid ${fridge.color || '#3b82f6'}`
           }}
         >
           <CardHeader>
