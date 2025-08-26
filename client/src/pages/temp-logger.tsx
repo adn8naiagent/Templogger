@@ -835,16 +835,6 @@ export default function TempLogger() {
                   style={{ borderLeft: `4px solid ${fridge.color || '#3b82f6'}` }}
                   data-testid={`fridge-card-${fridge.name}`}
                 >
-                  {/* Status and color indicator bar */}
-                  <div className="absolute top-0 left-0 right-0 h-3 flex">
-                    <div className={`flex-1 ${
-                      fridge.isAlarm ? 'bg-red-500' : 
-                      fridge.status === 'warning' ? 'bg-yellow-500' :
-                      'bg-green-500'
-                    }`} />
-                    <div className="w-12" style={{ backgroundColor: fridge.color || '#3b82f6', opacity: 0.8 }} />
-                  </div>
-
                   <CardContent className="p-6">
                     <div className="space-y-4">
                       {/* Header */}
