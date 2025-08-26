@@ -71,6 +71,7 @@ export const labels = pgTable("labels", {
 // Time windows for fridge monitoring schedules
 export const timeWindows = pgTable("time_windows", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
   fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
   label: text("label").notNull(), // e.g. "Morning", "Afternoon", "Daily Check"
   checkType: text("check_type").notNull().default("specific"), // "specific" or "daily"
@@ -84,6 +85,7 @@ export const timeWindows = pgTable("time_windows", {
 // Enhanced temperature logs with compliance tracking
 export const temperatureLogs = pgTable("temperature_logs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
   fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
   timeWindowId: varchar("time_window_id").references(() => timeWindows.id),
   temperature: decimal("temperature", { precision: 4, scale: 1 }).notNull(),
@@ -99,6 +101,7 @@ export const temperatureLogs = pgTable("temperature_logs", {
 // Compliance records for tracking at different levels
 export const complianceRecords = pgTable("compliance_records", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
   fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
   date: timestamp("date").notNull(),
   level: text("level").notNull(), // "window", "fridge-day", "overall"
@@ -115,6 +118,7 @@ export const complianceRecords = pgTable("compliance_records", {
 // Missed checks tracking with manual override capability
 export const missedChecks = pgTable("missed_checks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
   fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
   timeWindowId: varchar("time_window_id").references(() => timeWindows.id),
   missedDate: timestamp("missed_date").notNull(),
@@ -142,6 +146,7 @@ export const checklists = pgTable("checklists", {
 // Checklist items 
 export const checklistItems = pgTable("checklist_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
   checklistId: varchar("checklist_id").notNull().references(() => checklists.id),
   title: text("title").notNull(),
   description: text("description"),
@@ -164,6 +169,7 @@ export const checklistCompletions = pgTable("checklist_completions", {
 // Out-of-range events tracking
 export const outOfRangeEvents = pgTable("out_of_range_events", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
   temperatureLogId: varchar("temperature_log_id").notNull().references(() => temperatureLogs.id),
   fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
   temperature: decimal("temperature", { precision: 4, scale: 1 }).notNull(),
