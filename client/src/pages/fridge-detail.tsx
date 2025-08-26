@@ -200,7 +200,10 @@ export default function FridgeDetail() {
 
       <div className="max-w-7xl mx-auto px-4 py-8" data-testid="fridge-detail-container">
         {/* Fridge Overview */}
-        <Card className="mb-8">
+        <Card 
+          className="mb-8" 
+          style={{ borderColor: fridge.color || '#3b82f6', borderWidth: '2px' }}
+        >
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>

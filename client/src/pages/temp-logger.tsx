@@ -818,11 +818,12 @@ export default function TempLogger() {
               {fridges.map((fridge: Fridge) => (
                 <Card 
                   key={fridge.id} 
-                  className={`relative overflow-hidden border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm hover:shadow-md transition-all duration-200 ${
+                  className={`relative overflow-hidden bg-white dark:bg-slate-800 shadow-sm hover:shadow-md transition-all duration-200 ${
                     fridge.isAlarm ? 'ring-2 ring-red-200 dark:ring-red-800' : 
                     fridge.status === 'warning' ? 'ring-2 ring-yellow-200 dark:ring-yellow-800' :
                     'hover:ring-2 hover:ring-blue-200 dark:hover:ring-blue-800'
                   }`}
+                  style={{ borderColor: fridge.color || '#3b82f6', borderWidth: '2px' }}
                   data-testid={`fridge-card-${fridge.name}`}
                 >
                   {/* Status indicator bar */}
