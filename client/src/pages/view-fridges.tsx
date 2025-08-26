@@ -160,11 +160,6 @@ export default function ViewFridges() {
                   className={`cursor-pointer hover:shadow-lg transition-shadow ${
                     !fridge.isActive ? 'opacity-75' : ''
                   }`}
-                  style={{ 
-                    borderColor: fridge.color || '#3b82f6', 
-                    borderWidth: '2px',
-                    opacity: !fridge.isActive ? 0.75 : 1
-                  }}
                   data-testid={`fridge-card-${fridge.id}`}
                 >
                   <CardHeader className="pb-3">

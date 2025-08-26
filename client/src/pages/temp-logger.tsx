@@ -823,7 +823,6 @@ export default function TempLogger() {
                     fridge.status === 'warning' ? 'ring-2 ring-yellow-200 dark:ring-yellow-800' :
                     'hover:ring-2 hover:ring-blue-200 dark:hover:ring-blue-800'
                   }`}
-                  style={{ borderColor: fridge.color || '#3b82f6', borderWidth: '2px' }}
                   data-testid={`fridge-card-${fridge.name}`}
                 >
                   {/* Status indicator bar */}
