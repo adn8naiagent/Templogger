@@ -202,7 +202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       csvContent += 'Fridge Name,Temperature,Person Name,Date,Time,Alert Status\n';
       temperatureLogs.forEach(log => {
         const date = new Date(log.createdAt!);
-        csvContent += `"${log.fridgeName}","${log.temperature}","${log.personName}","${date.toLocaleDateString()}","${date.toLocaleTimeString()}","${log.isAlert ? 'ALERT' : 'Normal'}"\n`;
+        csvContent += `"${log.fridgeName}","${log.currentTempReading}","${log.personName}","${date.toLocaleDateString()}","${date.toLocaleTimeString()}","${log.isAlert ? 'ALERT' : 'Normal'}"\n`;
       });
       
       res.send(csvContent);
@@ -723,7 +723,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const row = [
           `"${log.fridgeName}"`,
-          log.temperature,
+          log.currentTempReading,
           `"${log.personName}"`,
           dateStr,
           timeStr,
@@ -1623,7 +1623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           log.fridgeName,
           dateStr,
           timeStr,
-          log.temperature.toString(),
+          log.currentTempReading.toString(),
           tempStatus,
           log.personName,
           checkStatus,
