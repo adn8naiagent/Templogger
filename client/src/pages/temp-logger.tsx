@@ -352,10 +352,10 @@ export default function TempLogger() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" data-testid="user-menu">
+                <Button variant="outline" size="sm" className="hover:bg-accent" data-testid="user-menu">
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    <span className="text-sm">{user?.email}</span>
+                    <span className="text-sm font-medium">{user?.firstName || 'User'}</span>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
