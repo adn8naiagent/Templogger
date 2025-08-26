@@ -538,7 +538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/fridge/:id", requireAuth, async (req: any, res: Response) => {
     try {
       const userId = req.userId;
-      const fridge = await storage.updateFridge(userId, req.params.id, req.body);
+      const fridge = await storage.updateFridge(req.params.id, userId, req.body);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
@@ -583,7 +583,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/fridge/:id", requireAuth, async (req: any, res: Response) => {
     try {
       const userId = req.userId;
-      const success = await storage.deleteFridge(userId, req.params.id);
+      const success = await storage.deleteFridge(req.params.id, userId);
       if (!success) {
         return res.status(404).json({ error: "Fridge not found" });
       }
