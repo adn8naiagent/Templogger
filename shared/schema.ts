@@ -158,6 +158,7 @@ export const checklistItems = pgTable("checklist_items", {
 // Checklist completions
 export const checklistCompletions = pgTable("checklist_completions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
   checklistId: varchar("checklist_id").notNull().references(() => checklists.id),
   fridgeId: varchar("fridge_id").references(() => fridges.id),
   completedBy: varchar("completed_by").notNull().references(() => users.id),
