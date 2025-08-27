@@ -44,7 +44,7 @@ export default function FridgeDetail() {
   });
 
   const { data: timeWindows = [] } = useQuery({
-    queryKey: [`/api/time-windows/fridge/${id}`],
+    queryKey: [`/api/fridges/${id}/time-windows`],
     enabled: !!id,
   });
 
@@ -279,7 +279,12 @@ export default function FridgeDetail() {
                 <p className="text-lg font-semibold flex items-center gap-1">
                   <Clock className="h-4 w-4" />
                   {timeWindows.length === 0 ? 'No schedule' : 
-                   timeWindows.length === 1 && timeWindows[0].checkType === 'daily' ? 'Daily checks' :
+                   timeWindows.length === 1 ? (
+                     timeWindows[0].checkType === 'daily' ? 'Daily checks' : 
+                     timeWindows[0].startTime && timeWindows[0].endTime ? 
+                       `Daily ${timeWindows[0].startTime}-${timeWindows[0].endTime}` : 
+                       'Single check window'
+                   ) :
                    timeWindows.length === 2 ? 'Twice daily' :
                    `${timeWindows.length} times daily`}
                 </p>

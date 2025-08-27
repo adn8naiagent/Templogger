@@ -1643,6 +1643,236 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // =========================
+  // SELF-AUDIT CHECKLIST ENDPOINTS
+  // =========================
+  
+  // Get audit templates
+  app.get("/api/audit-templates", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const templates = await storage.getAuditTemplates(userId);
+      res.json(templates);
+    } catch (error: any) {
+      console.error("Get audit templates error:", error);
+      res.status(500).json({ error: "Failed to get audit templates" });
+    }
+  });
+
+  // Get specific audit template
+  app.get("/api/audit-templates/:templateId", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const { templateId } = req.params;
+      
+      const template = await storage.getAuditTemplate(templateId, userId);
+      if (!template) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+      
+      res.json(template);
+    } catch (error: any) {
+      console.error("Get audit template error:", error);
+      res.status(500).json({ error: "Failed to get audit template" });
+    }
+  });
+
+  // Create audit template
+  app.post("/api/audit-templates", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const { createAuditTemplateSchema } = await import("@shared/self-audit-types");
+      
+      const result = createAuditTemplateSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Invalid template data", 
+          details: result.error.errors 
+        });
+      }
+
+      const templateData = {
+        userId,
+        name: result.data.name,
+        description: result.data.description,
+        isDefault: false
+      };
+
+      const template = await storage.createAuditTemplate(templateData, result.data);
+      res.status(201).json(template);
+    } catch (error: any) {
+      console.error("Create audit template error:", error);
+      res.status(500).json({ error: "Failed to create audit template" });
+    }
+  });
+
+  // Update audit template
+  app.put("/api/audit-templates/:templateId", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const { templateId } = req.params;
+      const { updateAuditTemplateSchema } = await import("@shared/self-audit-types");
+      
+      const result = updateAuditTemplateSchema.safeParse({ ...req.body, id: templateId });
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Invalid template data", 
+          details: result.error.errors 
+        });
+      }
+
+      const { id, sections, ...templateData } = result.data;
+      const sectionsData = sections ? { sections } : undefined;
+
+      const template = await storage.updateAuditTemplate(templateId, userId, templateData, sectionsData);
+      if (!template) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+      
+      res.json(template);
+    } catch (error: any) {
+      console.error("Update audit template error:", error);
+      res.status(500).json({ error: "Failed to update audit template" });
+    }
+  });
+
+  // Delete audit template
+  app.delete("/api/audit-templates/:templateId", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const { templateId } = req.params;
+      
+      const success = await storage.deleteAuditTemplate(templateId, userId);
+      if (!success) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+      
+      res.json({ message: "Template deleted successfully" });
+    } catch (error: any) {
+      console.error("Delete audit template error:", error);
+      res.status(500).json({ error: "Failed to delete audit template" });
+    }
+  });
+
+  // Create default audit template
+  app.post("/api/audit-templates/default", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const template = await storage.createDefaultAuditTemplate(userId);
+      res.status(201).json(template);
+    } catch (error: any) {
+      console.error("Create default audit template error:", error);
+      res.status(500).json({ error: "Failed to create default audit template" });
+    }
+  });
+
+  // Complete audit checklist
+  app.post("/api/audit-completions", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const { completeAuditSchema, calculateComplianceRate } = await import("@shared/self-audit-types");
+      
+      const result = completeAuditSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Invalid completion data", 
+          details: result.error.errors 
+        });
+      }
+
+      // Get template to validate responses and get template name
+      const template = await storage.getAuditTemplate(result.data.templateId, userId);
+      if (!template) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+
+      // Calculate compliance rate
+      const complianceRate = calculateComplianceRate(result.data.responses);
+
+      const completionData = {
+        userId,
+        templateId: result.data.templateId,
+        templateName: template.name,
+        completedBy: userId,
+        notes: result.data.notes,
+        complianceRate: complianceRate.toString()
+      };
+
+      // Map responses to include section and item details
+      const responsesData = result.data.responses.map(response => {
+        const section = template.sections.find(s => s.id === response.sectionId);
+        const item = section?.items.find(i => i.id === response.itemId);
+        
+        return {
+          completionId: '', // Will be set by storage method
+          sectionId: response.sectionId,
+          sectionTitle: section?.title || 'Unknown Section',
+          itemId: response.itemId,
+          itemText: item?.text || 'Unknown Item',
+          isCompliant: response.isCompliant,
+          notes: response.notes,
+          actionRequired: response.actionRequired
+        };
+      });
+
+      const completion = await storage.createAuditCompletion(completionData, responsesData);
+      res.status(201).json(completion);
+    } catch (error: any) {
+      console.error("Complete audit error:", error);
+      res.status(500).json({ error: "Failed to complete audit" });
+    }
+  });
+
+  // Get audit completions
+  app.get("/api/audit-completions", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const { auditFiltersSchema } = await import("@shared/self-audit-types");
+      
+      const filters: any = {};
+      if (req.query.templateId) filters.templateId = req.query.templateId as string;
+      if (req.query.startDate) filters.startDate = new Date(req.query.startDate as string);
+      if (req.query.endDate) filters.endDate = new Date(req.query.endDate as string);
+      if (req.query.completedBy) filters.completedBy = req.query.completedBy as string;
+
+      const completions = await storage.getAuditCompletions(userId, filters);
+      res.json(completions);
+    } catch (error: any) {
+      console.error("Get audit completions error:", error);
+      res.status(500).json({ error: "Failed to get audit completions" });
+    }
+  });
+
+  // Get specific audit completion
+  app.get("/api/audit-completions/:completionId", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const { completionId } = req.params;
+      
+      const completion = await storage.getAuditCompletion(completionId, userId);
+      if (!completion) {
+        return res.status(404).json({ error: "Completion not found" });
+      }
+      
+      res.json(completion);
+    } catch (error: any) {
+      console.error("Get audit completion error:", error);
+      res.status(500).json({ error: "Failed to get audit completion" });
+    }
+  });
+
+  // Get audit completion statistics
+  app.get("/api/audit-stats", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.userId;
+      const stats = await storage.getAuditCompletionStats(userId);
+      res.json(stats);
+    } catch (error: any) {
+      console.error("Get audit stats error:", error);
+      res.status(500).json({ error: "Failed to get audit statistics" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

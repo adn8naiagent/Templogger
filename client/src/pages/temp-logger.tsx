@@ -450,7 +450,7 @@ export default function TempLogger() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <Link to="/fridges">
             <Card className="hover:shadow-md transition-shadow cursor-pointer border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
               <CardContent className="p-6">
@@ -509,6 +509,21 @@ export default function TempLogger() {
                   <div>
                     <h3 className="font-semibold text-slate-900 dark:text-white">Checklists</h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400">Manage scheduled tasks</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link to="/self-audit-checklists">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-red-100 dark:bg-red-900/20 rounded-lg">
+                    <Shield className="h-6 w-6 text-red-600 dark:text-red-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">Self-Audit</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Compliance checklists</p>
                   </div>
                 </div>
               </CardContent>

@@ -9,7 +9,9 @@
       "Bash(npm install:*)",
       "Bash(curl:*)",
       "Bash(find:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(ss:*)",
+      "Bash(PORT=5001 npm run dev)"
     ],
     "deny": [],
     "ask": []

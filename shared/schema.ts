@@ -609,6 +609,117 @@ export type InsertOutOfRangeEvent = z.infer<typeof insertOutOfRangeEventSchema>;
 export type InsertCalibrationRecord = z.infer<typeof insertCalibrationRecordSchema>;
 export type InsertMaintenanceRecord = z.infer<typeof insertMaintenanceRecordSchema>;
 
+// Self-audit checklist tables
+export const auditTemplates = pgTable("audit_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  isDefault: boolean("is_default").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const auditSections = pgTable("audit_sections", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  templateId: varchar("template_id").notNull().references(() => auditTemplates.id, { onDelete: 'cascade' }),
+  title: text("title").notNull(),
+  description: text("description"),
+  orderIndex: decimal("order_index", { precision: 3, scale: 0 }).notNull().default("0"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const auditItems = pgTable("audit_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sectionId: varchar("section_id").notNull().references(() => auditSections.id, { onDelete: 'cascade' }),
+  text: text("text").notNull(),
+  isRequired: boolean("is_required").notNull().default(true),
+  orderIndex: decimal("order_index", { precision: 3, scale: 0 }).notNull().default("0"),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const auditCompletions = pgTable("audit_completions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  templateId: varchar("template_id").notNull().references(() => auditTemplates.id),
+  templateName: text("template_name").notNull(), // Snapshot for historical reference
+  completedBy: varchar("completed_by").notNull().references(() => users.id),
+  completedAt: timestamp("completed_at").defaultNow(),
+  notes: text("notes"),
+  complianceRate: decimal("compliance_rate", { precision: 5, scale: 2 }).notNull().default("0"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const auditResponses = pgTable("audit_responses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  completionId: varchar("completion_id").notNull().references(() => auditCompletions.id, { onDelete: 'cascade' }),
+  sectionId: varchar("section_id").notNull(),
+  sectionTitle: text("section_title").notNull(), // Snapshot for historical reference
+  itemId: varchar("item_id").notNull(),
+  itemText: text("item_text").notNull(), // Snapshot for historical reference
+  isCompliant: boolean("is_compliant").notNull(),
+  notes: text("notes"),
+  actionRequired: text("action_required"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Insert schemas for self-audit tables
+export const insertAuditTemplateSchema = createInsertSchema(auditTemplates).pick({
+  userId: true,
+  name: true,
+  description: true,
+  isDefault: true,
+});
+
+export const insertAuditSectionSchema = createInsertSchema(auditSections).pick({
+  templateId: true,
+  title: true,
+  description: true,
+  orderIndex: true,
+});
+
+export const insertAuditItemSchema = createInsertSchema(auditItems).pick({
+  sectionId: true,
+  text: true,
+  isRequired: true,
+  orderIndex: true,
+  note: true,
+});
+
+export const insertAuditCompletionSchema = createInsertSchema(auditCompletions).pick({
+  userId: true,
+  templateId: true,
+  templateName: true,
+  completedBy: true,
+  notes: true,
+  complianceRate: true,
+});
+
+export const insertAuditResponseSchema = createInsertSchema(auditResponses).pick({
+  completionId: true,
+  sectionId: true,
+  sectionTitle: true,
+  itemId: true,
+  itemText: true,
+  isCompliant: true,
+  notes: true,
+  actionRequired: true,
+});
+
+// Self-audit type exports
+export type AuditTemplate = typeof auditTemplates.$inferSelect;
+export type AuditSection = typeof auditSections.$inferSelect;
+export type AuditItem = typeof auditItems.$inferSelect;
+export type AuditCompletion = typeof auditCompletions.$inferSelect;
+export type AuditResponse = typeof auditResponses.$inferSelect;
+
+export type InsertAuditTemplate = z.infer<typeof insertAuditTemplateSchema>;
+export type InsertAuditSection = z.infer<typeof insertAuditSectionSchema>;
+export type InsertAuditItem = z.infer<typeof insertAuditItemSchema>;
+export type InsertAuditCompletion = z.infer<typeof insertAuditCompletionSchema>;
+export type InsertAuditResponse = z.infer<typeof insertAuditResponseSchema>;
+
 // Helper function to calculate trial end date (14 days from start)
 export function calculateTrialEndDate(startDate: Date): Date {
   const endDate = new Date(startDate);

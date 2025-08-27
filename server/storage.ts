@@ -8,6 +8,16 @@ import {
   type InsertTemperatureLog,
   type TimeWindow,
   type InsertTimeWindow,
+  type AuditTemplate,
+  type AuditSection,
+  type AuditItem,
+  type AuditCompletion,
+  type AuditResponse,
+  type InsertAuditTemplate,
+  type InsertAuditSection,
+  type InsertAuditItem,
+  type InsertAuditCompletion,
+  type InsertAuditResponse,
   type ComplianceRecord,
   type InsertComplianceRecord,
   type Checklist,
@@ -28,7 +38,12 @@ import {
   checklistItems,
   checklistCompletions,
   outOfRangeEvents,
-  missedChecks
+  missedChecks,
+  auditTemplates,
+  auditSections,
+  auditItems,
+  auditCompletions,
+  auditResponses
 } from "@shared/schema";
 
 type MissedCheck = typeof missedChecks.$inferSelect;
@@ -156,6 +171,20 @@ export interface IStorage {
   getFridgeWithLogs(userId: string, fridgeId: string): Promise<any>;
   deactivateFridge(userId: string, fridgeId: string): Promise<any>;
   reactivateFridge(userId: string, fridgeId: string): Promise<any>;
+  
+  // Self-audit methods
+  getAuditTemplates(userId: string): Promise<(AuditTemplate & { sections: (AuditSection & { items: AuditItem[] })[] })[]>;
+  getAuditTemplate(templateId: string, userId: string): Promise<(AuditTemplate & { sections: (AuditSection & { items: AuditItem[] })[] }) | undefined>;
+  createAuditTemplate(templateData: InsertAuditTemplate, sectionsData: { sections: Array<{ title: string; description?: string; orderIndex: number; items: Array<{ text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }): Promise<AuditTemplate>;
+  updateAuditTemplate(templateId: string, userId: string, templateData: Partial<AuditTemplate>, sectionsData?: { sections: Array<{ id?: string; title: string; description?: string; orderIndex: number; items: Array<{ id?: string; text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }): Promise<AuditTemplate | undefined>;
+  deleteAuditTemplate(templateId: string, userId: string): Promise<boolean>;
+  createDefaultAuditTemplate(userId: string): Promise<AuditTemplate>;
+  
+  // Self-audit completion methods
+  createAuditCompletion(completionData: InsertAuditCompletion, responsesData: InsertAuditResponse[]): Promise<AuditCompletion>;
+  getAuditCompletions(userId: string, filters?: { templateId?: string; startDate?: Date; endDate?: Date; completedBy?: string }): Promise<(AuditCompletion & { responses: AuditResponse[]; complianceRate: number })[]>;
+  getAuditCompletion(completionId: string, userId: string): Promise<(AuditCompletion & { responses: AuditResponse[]; template?: AuditTemplate }) | undefined>;
+  getAuditCompletionStats(userId: string): Promise<{ totalCompletions: number; averageCompliance: number; recentCompletions: AuditCompletion[] }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -539,7 +568,7 @@ export class DatabaseStorage implements IStorage {
     // Calculate overall compliance rate
     const totalLogs = allUserLogs.length;
     const alertLogs = allUserLogs.filter(log => log.temperature_logs.isAlert).length;
-    const overallComplianceRate = totalLogs > 0 ? ((totalLogs - alertLogs) / totalLogs) * 100 : 100;
+    const overallComplianceRate = totalLogs > 0 ? ((totalLogs - alertLogs) / totalLogs) * 100 : 0;
 
     // Get checklist completions for today
     const todayChecklistsCompleted = await this.db.select({ count: sql<number>`count(*)` })
@@ -561,7 +590,7 @@ export class DatabaseStorage implements IStorage {
 
         const fridgeAlertLogs = fridgeLogs.filter(log => log.isAlert);
         const complianceScore = fridgeLogs.length > 0 ? 
-          ((fridgeLogs.length - fridgeAlertLogs.length) / fridgeLogs.length) * 100 : 100;
+          ((fridgeLogs.length - fridgeAlertLogs.length) / fridgeLogs.length) * 100 : 0;
 
         // Get last reading
         const lastReading = fridgeLogs.length > 0 ? fridgeLogs[0].createdAt!.toISOString() : new Date().toISOString();
@@ -1131,6 +1160,231 @@ export class DatabaseStorage implements IStorage {
       console.error("Error reactivating fridge:", error);
       throw error;
     }
+  }
+
+  // Self-audit template methods
+  async getAuditTemplates(userId: string): Promise<(AuditTemplate & { sections: (AuditSection & { items: AuditItem[] })[] })[]> {
+    const templates = await this.db.select().from(auditTemplates)
+      .where(eq(auditTemplates.userId, userId))
+      .orderBy(auditTemplates.name);
+
+    const templatesWithSections = await Promise.all(
+      templates.map(async (template) => {
+        const sections = await this.db.select().from(auditSections)
+          .where(eq(auditSections.templateId, template.id))
+          .orderBy(auditSections.orderIndex);
+
+        const sectionsWithItems = await Promise.all(
+          sections.map(async (section) => {
+            const items = await this.db.select().from(auditItems)
+              .where(eq(auditItems.sectionId, section.id))
+              .orderBy(auditItems.orderIndex);
+            return { ...section, items };
+          })
+        );
+
+        return { ...template, sections: sectionsWithItems };
+      })
+    );
+
+    return templatesWithSections;
+  }
+
+  async getAuditTemplate(templateId: string, userId: string): Promise<(AuditTemplate & { sections: (AuditSection & { items: AuditItem[] })[] }) | undefined> {
+    const template = await this.db.select().from(auditTemplates)
+      .where(and(eq(auditTemplates.id, templateId), eq(auditTemplates.userId, userId)))
+      .limit(1);
+
+    if (!template[0]) return undefined;
+
+    const sections = await this.db.select().from(auditSections)
+      .where(eq(auditSections.templateId, templateId))
+      .orderBy(auditSections.orderIndex);
+
+    const sectionsWithItems = await Promise.all(
+      sections.map(async (section) => {
+        const items = await this.db.select().from(auditItems)
+          .where(eq(auditItems.sectionId, section.id))
+          .orderBy(auditItems.orderIndex);
+        return { ...section, items };
+      })
+    );
+
+    return { ...template[0], sections: sectionsWithItems };
+  }
+
+  async createAuditTemplate(
+    templateData: InsertAuditTemplate, 
+    sectionsData: { sections: Array<{ title: string; description?: string; orderIndex: number; items: Array<{ text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }
+  ): Promise<AuditTemplate> {
+    const [template] = await this.db.insert(auditTemplates).values(templateData).returning();
+
+    for (const sectionData of sectionsData.sections) {
+      const [section] = await this.db.insert(auditSections).values({
+        templateId: template.id,
+        title: sectionData.title,
+        description: sectionData.description,
+        orderIndex: sectionData.orderIndex.toString()
+      }).returning();
+
+      for (const itemData of sectionData.items) {
+        await this.db.insert(auditItems).values({
+          sectionId: section.id,
+          text: itemData.text,
+          isRequired: itemData.isRequired,
+          orderIndex: itemData.orderIndex.toString(),
+          note: itemData.note
+        });
+      }
+    }
+
+    return template;
+  }
+
+  async updateAuditTemplate(
+    templateId: string, 
+    userId: string, 
+    templateData: Partial<AuditTemplate>, 
+    sectionsData?: { sections: Array<{ id?: string; title: string; description?: string; orderIndex: number; items: Array<{ id?: string; text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }
+  ): Promise<AuditTemplate | undefined> {
+    const [updated] = await this.db.update(auditTemplates)
+      .set({ ...templateData, updatedAt: new Date() })
+      .where(and(eq(auditTemplates.id, templateId), eq(auditTemplates.userId, userId)))
+      .returning();
+
+    if (!updated) return undefined;
+
+    if (sectionsData) {
+      // Delete existing sections and items (cascade will handle items)
+      await this.db.delete(auditSections).where(eq(auditSections.templateId, templateId));
+
+      // Create new sections and items
+      for (const sectionData of sectionsData.sections) {
+        const [section] = await this.db.insert(auditSections).values({
+          templateId: templateId,
+          title: sectionData.title,
+          description: sectionData.description,
+          orderIndex: sectionData.orderIndex.toString()
+        }).returning();
+
+        for (const itemData of sectionData.items) {
+          await this.db.insert(auditItems).values({
+            sectionId: section.id,
+            text: itemData.text,
+            isRequired: itemData.isRequired,
+            orderIndex: itemData.orderIndex.toString(),
+            note: itemData.note
+          });
+        }
+      }
+    }
+
+    return updated;
+  }
+
+  async deleteAuditTemplate(templateId: string, userId: string): Promise<boolean> {
+    const result = await this.db.delete(auditTemplates)
+      .where(and(eq(auditTemplates.id, templateId), eq(auditTemplates.userId, userId)));
+    return result.rowCount > 0;
+  }
+
+  async createDefaultAuditTemplate(userId: string): Promise<AuditTemplate> {
+    // Import the default checklist structure
+    const { DEFAULT_COMPLIANCE_CHECKLIST } = await import("@shared/self-audit-types");
+    
+    const templateData: InsertAuditTemplate = {
+      userId,
+      name: "FridgeSafe Self Audit Checklist 🧾",
+      description: "Cold Chain Self-Audit Checklist for healthcare facilities to ensure compliance with temperature monitoring, documentation, and staff training requirements for vaccine and medicine storage.",
+      isDefault: true
+    };
+
+    return await this.createAuditTemplate(templateData, DEFAULT_COMPLIANCE_CHECKLIST);
+  }
+
+  // Self-audit completion methods
+  async createAuditCompletion(completionData: InsertAuditCompletion, responsesData: InsertAuditResponse[]): Promise<AuditCompletion> {
+    const [completion] = await this.db.insert(auditCompletions).values(completionData).returning();
+
+    for (const responseData of responsesData) {
+      await this.db.insert(auditResponses).values({
+        ...responseData,
+        completionId: completion.id
+      });
+    }
+
+    return completion;
+  }
+
+  async getAuditCompletions(userId: string, filters?: { templateId?: string; startDate?: Date; endDate?: Date; completedBy?: string }): Promise<(AuditCompletion & { responses: AuditResponse[]; complianceRate: number })[]> {
+    let query = this.db.select().from(auditCompletions)
+      .where(eq(auditCompletions.userId, userId));
+
+    if (filters?.templateId) {
+      query = query.where(eq(auditCompletions.templateId, filters.templateId));
+    }
+    if (filters?.startDate) {
+      query = query.where(sql`${auditCompletions.completedAt} >= ${filters.startDate}`);
+    }
+    if (filters?.endDate) {
+      query = query.where(sql`${auditCompletions.completedAt} <= ${filters.endDate}`);
+    }
+    if (filters?.completedBy) {
+      query = query.where(eq(auditCompletions.completedBy, filters.completedBy));
+    }
+
+    const completions = await query.orderBy(desc(auditCompletions.completedAt));
+
+    const completionsWithResponses = await Promise.all(
+      completions.map(async (completion) => {
+        const responses = await this.db.select().from(auditResponses)
+          .where(eq(auditResponses.completionId, completion.id));
+        
+        const complianceRate = responses.length > 0 
+          ? Math.round((responses.filter(r => r.isCompliant).length / responses.length) * 100)
+          : 0;
+
+        return { ...completion, responses, complianceRate };
+      })
+    );
+
+    return completionsWithResponses;
+  }
+
+  async getAuditCompletion(completionId: string, userId: string): Promise<(AuditCompletion & { responses: AuditResponse[]; template?: AuditTemplate }) | undefined> {
+    const completion = await this.db.select().from(auditCompletions)
+      .where(and(eq(auditCompletions.id, completionId), eq(auditCompletions.userId, userId)))
+      .limit(1);
+
+    if (!completion[0]) return undefined;
+
+    const responses = await this.db.select().from(auditResponses)
+      .where(eq(auditResponses.completionId, completionId));
+
+    const template = await this.db.select().from(auditTemplates)
+      .where(eq(auditTemplates.id, completion[0].templateId))
+      .limit(1);
+
+    return { 
+      ...completion[0], 
+      responses, 
+      template: template[0] 
+    };
+  }
+
+  async getAuditCompletionStats(userId: string): Promise<{ totalCompletions: number; averageCompliance: number; recentCompletions: AuditCompletion[] }> {
+    const completions = await this.db.select().from(auditCompletions)
+      .where(eq(auditCompletions.userId, userId))
+      .orderBy(desc(auditCompletions.completedAt));
+
+    const totalCompletions = completions.length;
+    const averageCompliance = completions.length > 0 
+      ? Math.round(completions.reduce((sum, c) => sum + Number(c.complianceRate), 0) / completions.length)
+      : 0;
+
+    const recentCompletions = completions.slice(0, 10);
+
+    return { totalCompletions, averageCompliance, recentCompletions };
   }
 }
 
