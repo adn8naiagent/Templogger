@@ -108,7 +108,7 @@ export default function ChecklistCalendar() {
       );
 
       if (!response.ok) {
-        if (isUnauthorizedError(response.status)) {
+        if (response.status === 401) {
           logout();
         }
         throw new Error(`Failed to fetch calendar data: ${response.status}`);

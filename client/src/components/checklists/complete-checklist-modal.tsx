@@ -104,7 +104,7 @@ export default function CompleteChecklistModal({
       );
 
       if (!response.ok) {
-        if (isUnauthorizedError(response.status)) {
+        if (response.status === 401) {
           logout();
         }
         const error = await response.json();

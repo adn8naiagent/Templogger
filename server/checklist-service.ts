@@ -262,7 +262,6 @@ export class ChecklistService {
 
       // Create completion record
       const completionData: InsertChecklistCompletion = {
-        userId,
         checklistId: instance.checklistId,
         fridgeId: null,
         completedBy: userId,
@@ -568,7 +567,6 @@ export class ChecklistService {
     };
 
     const completionData: InsertChecklistCompletion = {
-      userId,
       checklistId: instance.checklistId,
       fridgeId: null,
       completedBy: userId,
@@ -591,7 +589,7 @@ export class ChecklistService {
   }
 
   private calculateOnTimeInstances(instances: ChecklistInstance[], cadence: string): number {
-    return instances.filter(i => this.isInstanceOnTime({ ...i, cadence } as CalendarInstance)).length;
+    return instances.filter(i => this.isInstanceOnTime({ ...i, cadence, checklistName: '' } as CalendarInstance)).length;
   }
 
   private isInstanceOnTime(instance: CalendarInstance): boolean {

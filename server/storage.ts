@@ -102,7 +102,7 @@ export interface IStorage {
   // Compliance Record methods
   getComplianceRecords(fridgeId: string, startDate: Date, endDate: Date): Promise<ComplianceRecord[]>;
   getComplianceRecord(id: string): Promise<ComplianceRecord | undefined>;
-  createComplianceRecord(recordData: InsertComplianceRecord): Promise<ComplianceRecord>;
+  createComplianceRecord(userId: string, recordData: InsertComplianceRecord): Promise<ComplianceRecord>;
   updateComplianceRecord(id: string, updates: Partial<ComplianceRecord>): Promise<ComplianceRecord | undefined>;
   getComplianceOverview(userId: string, date?: Date): Promise<{
     totalFridges: number;
@@ -511,8 +511,8 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async createComplianceRecord(recordData: InsertComplianceRecord): Promise<ComplianceRecord> {
-    const result = await this.db.insert(complianceRecords).values(recordData).returning();
+  async createComplianceRecord(userId: string, recordData: InsertComplianceRecord): Promise<ComplianceRecord> {
+    const result = await this.db.insert(complianceRecords).values({ ...recordData, userId }).returning();
     return result[0];
   }
 
@@ -704,6 +704,7 @@ export class DatabaseStorage implements IStorage {
     if (items.length > 0) {
       const itemsWithChecklistId = items.map((item, index) => ({
         ...item,
+        userId: checklist.createdBy,
         checklistId: checklist.id,
         sortOrder: index.toString(),
       }));
@@ -752,7 +753,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createChecklistCompletion(completionData: InsertChecklistCompletion): Promise<ChecklistCompletion> {
-    const result = await this.db.insert(checklistCompletions).values(completionData).returning();
+    const result = await this.db.insert(checklistCompletions).values({ ...completionData, userId: completionData.completedBy }).returning();
     return result[0];
   }
 
@@ -817,7 +818,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createOutOfRangeEvent(eventData: InsertOutOfRangeEvent): Promise<OutOfRangeEvent> {
-    const result = await this.db.insert(outOfRangeEvents).values(eventData).returning();
+    // Get the userId from the fridge associated with this event
+    const fridge = await this.db.select({ userId: fridges.userId })
+      .from(fridges)
+      .where(eq(fridges.id, eventData.fridgeId))
+      .limit(1);
+    
+    if (!fridge[0]) {
+      throw new Error(`Fridge not found: ${eventData.fridgeId}`);
+    }
+    
+    const result = await this.db.insert(outOfRangeEvents).values({ ...eventData, userId: fridge[0].userId }).returning();
     return result[0];
   }
 
@@ -1050,6 +1061,7 @@ export class DatabaseStorage implements IStorage {
     return await this.db
       .select({
         id: missedChecks.id,
+        userId: missedChecks.userId,
         fridgeId: missedChecks.fridgeId,
         timeWindowId: missedChecks.timeWindowId,
         missedDate: missedChecks.missedDate,

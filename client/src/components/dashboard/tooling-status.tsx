@@ -9,6 +9,11 @@ interface ToolingCardProps {
   cardKey: string;
 }
 
+interface ToolingStatus {
+  codeQuality?: Record<string, { status: string; description: string }>;
+  buildDeploy?: Record<string, { status: string; description: string }>;
+}
+
 function ToolingCard({ title, icon, tools, cardKey }: ToolingCardProps) {
   return (
     <Card data-testid={`card-${cardKey}`}>
@@ -36,7 +41,7 @@ function ToolingCard({ title, icon, tools, cardKey }: ToolingCardProps) {
 }
 
 export default function ToolingStatus() {
-  const { data: tooling } = useQuery({
+  const { data: tooling } = useQuery<ToolingStatus>({
     queryKey: ["/api/tooling-status"],
   });
 

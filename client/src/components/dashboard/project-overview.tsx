@@ -11,6 +11,37 @@ interface StatusCardProps {
   details: Array<{ label: string; status: "success" | "error" | "active" }>;
 }
 
+interface DevStatus {
+  frontend?: {
+    port: number;
+    status: string;
+  };
+  backend?: {
+    port: number;
+    status: string;
+  };
+  hotReload?: {
+    vite: string;
+    nodemon: string;
+  };
+}
+
+interface TsStatus {
+  client?: {
+    status: string;
+  };
+  server?: {
+    status: string;
+  };
+}
+
+interface EnvStatus {
+  summary?: {
+    configured: number;
+    status: string;
+  };
+}
+
 function StatusCard({ title, description, icon, status, details }: StatusCardProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -78,15 +109,15 @@ function StatusCard({ title, description, icon, status, details }: StatusCardPro
 }
 
 export default function ProjectOverview() {
-  const { data: devStatus } = useQuery({
+  const { data: devStatus } = useQuery<DevStatus>({
     queryKey: ["/api/dev-status"],
   });
 
-  const { data: tsStatus } = useQuery({
+  const { data: tsStatus } = useQuery<TsStatus>({
     queryKey: ["/api/typescript-status"], 
   });
 
-  const { data: envStatus } = useQuery({
+  const { data: envStatus } = useQuery<EnvStatus>({
     queryKey: ["/api/env-status"],
   });
 
