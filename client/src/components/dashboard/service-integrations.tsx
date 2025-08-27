@@ -6,6 +6,19 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+interface ServiceData {
+  name: string;
+  status: "connected" | "disconnected";
+  description: string;
+  features: Record<string, string>;
+}
+
+interface ServicesResponse {
+  supabase?: ServiceData;
+  stripe?: ServiceData;
+  claude?: ServiceData;
+}
+
 interface ServiceCardProps {
   name: string;
   description: string;
@@ -94,7 +107,7 @@ function ServiceCard({ name, description, icon, status, features, serviceKey }: 
 }
 
 export default function ServiceIntegrations() {
-  const { data: services } = useQuery({
+  const { data: services } = useQuery<ServicesResponse>({
     queryKey: ["/api/services-status"],
   });
 

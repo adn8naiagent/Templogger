@@ -1786,24 +1786,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Template not found" });
       }
 
-      // Calculate compliance rate
-      const complianceRate = calculateComplianceRate(result.data.responses);
-
-      const completionData = {
-        userId,
-        templateId: result.data.templateId,
-        templateName: template.name,
-        completedBy: userId,
-        notes: result.data.notes,
-        complianceRate: complianceRate.toString()
-      };
-
-      // Map responses to include section and item details
+      // Map responses to include section and item details first
       const responsesData = result.data.responses.map(response => {
         const section = template.sections.find(s => s.id === response.sectionId);
         const item = section?.items.find(i => i.id === response.itemId);
         
         return {
+          id: '', // Will be set by storage method
           completionId: '', // Will be set by storage method
           sectionId: response.sectionId,
           sectionTitle: section?.title || 'Unknown Section',
@@ -1814,6 +1803,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           actionRequired: response.actionRequired
         };
       });
+
+      // Calculate compliance rate using the properly typed responses
+      const complianceRate = calculateComplianceRate(responsesData);
+
+      const completionData = {
+        userId,
+        templateId: result.data.templateId,
+        templateName: template.name,
+        completedBy: userId,
+        notes: result.data.notes,
+        complianceRate: complianceRate.toString()
+      };
 
       const completion = await storage.createAuditCompletion(completionData, responsesData);
       res.status(201).json(completion);
