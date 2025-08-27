@@ -27,6 +27,7 @@ import CreateAuditTemplate from "@/pages/create-audit-template";
 import CompleteSelfAudit from "@/pages/complete-self-audit";
 import ViewAuditCompletion from "@/pages/view-audit-completion";
 import NotFound from "@/pages/not-found";
+import SecurityStatus from "@/components/security/security-status";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -75,6 +76,12 @@ function App() {
       <TooltipProvider>
         <Toaster />
         <Router />
+        {/* Development-only security status widget */}
+        {import.meta.env.DEV && (
+          <div className="fixed bottom-4 right-4 z-50 w-80">
+            <SecurityStatus />
+          </div>
+        )}
       </TooltipProvider>
     </QueryClientProvider>
   );

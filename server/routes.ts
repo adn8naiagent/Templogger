@@ -2004,6 +2004,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Security status endpoint (development only)
+  app.get("/api/security/status", requireAuth, async (req: any, res: Response) => {
+    try {
+      // Only allow in development environment
+      if (process.env.NODE_ENV !== 'development') {
+        return res.status(404).json({ error: "Endpoint not available in production" });
+      }
+
+      // Try to read security status from file
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      
+      try {
+        const statusFile = path.join(process.cwd(), '.security-status.json');
+        const statusContent = await fs.readFile(statusFile, 'utf-8');
+        const status = JSON.parse(statusContent);
+        res.json(status);
+      } catch (fileError) {
+        // If no status file exists, return default status
+        res.json({
+          vulnerabilities: { low: 0, medium: 0, high: 0, critical: 0 },
+          lastScan: null,
+          packagesScanned: 0,
+          hasIssues: false,
+          message: "No security scan has been run yet"
+        });
+      }
+    } catch (error: any) {
+      console.error("Get security status error:", error);
+      res.status(500).json({ error: "Failed to get security status" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
