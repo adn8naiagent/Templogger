@@ -1,0 +1,46 @@
+Configure ESLint, TypeScript checking, and Husky for our React + Express TypeScript project in Replit:
+
+1. Update .eslintrc.json for React + TypeScript with these rules:
+   - Set @typescript-eslint/no-explicit-any to "warn" (not error)
+   - Set @typescript-eslint/no-unused-vars to warn with argsIgnorePattern: "^_"
+   - Allow console.warn and console.error but not console.log in production
+   - Enable React Hooks rules
+   - Set max line length to 100
+
+2. Configure TypeScript for strict type checking:
+   - Update tsconfig.json with "strict": true
+   - Add "noImplicitAny": true, "strictNullChecks": true
+   - Ensure both client and server TypeScript configs are aligned
+   - Add type checking to build scripts
+
+3. Ensure Husky pre-commit hooks are working:
+   - Check if .husky/pre-commit exists, if not create it
+   - Make it run: lint-staged AND tsc --noEmit for type checking
+   - Configure lint-staged in package.json to run: eslint --fix, prettier --write, and related tests
+
+4. Add/update these npm scripts:
+   - "lint": "eslint . --ext .ts,.tsx,.js,.jsx"
+   - "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix"
+   - "type-check": "tsc --noEmit"
+   - "type-check:watch": "tsc --noEmit --watch"
+   - "quality": "npm run lint && npm run type-check"
+   - "prepare": "husky install"
+
+5. Update build scripts to include type checking:
+   - "build": "npm run type-check && npm run build:client && npm run build:server"
+
+6. Run eslint --fix on all files to auto-fix formatting issues
+
+7. Create .eslintignore to exclude: node_modules, dist, build, coverage, *.config.js
+
+8. Configure Replit to show TypeScript errors:
+   - Add TypeScript error checking to .replit config if possible
+   - Ensure tsconfig.json is in root directory
+
+9. Test the complete setup:
+   - Create a TypeScript error intentionally
+   - Try to commit (Husky should block it)
+   - Fix the error and commit successfully
+   - Run npm run build to ensure type checking happens during build
+
+Show me any errors encountered and the final configuration.
