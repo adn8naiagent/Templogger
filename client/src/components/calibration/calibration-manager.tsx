@@ -35,7 +35,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Certificate,
+  Award,
   Plus,
   Edit,
   Trash2,

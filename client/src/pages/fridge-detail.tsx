@@ -19,7 +19,7 @@ import {
   Download,
   Refrigerator,
   Wrench,
-  Certificate,
+  Award,
   Plus,
   Calendar,
   Upload
