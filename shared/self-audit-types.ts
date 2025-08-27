@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // Self-Audit Checklist Data Structures
 export interface AuditSection {
-  id: string;
+  _id: string;
   title: string;
   description?: string;
   orderIndex: number;
@@ -10,7 +10,7 @@ export interface AuditSection {
 }
 
 export interface AuditItem {
-  id: string;
+  _id: string;
   sectionId: string;
   text: string;
   isRequired: boolean;
@@ -19,7 +19,7 @@ export interface AuditItem {
 }
 
 export interface AuditTemplate {
-  id: string;
+  _id: string;
   name: string;
   description?: string;
   isDefault: boolean;
@@ -30,8 +30,8 @@ export interface AuditTemplate {
 }
 
 export interface AuditCompletion {
-  id: string;
-  templateId: string;
+  _id: string;
+  _templateId: string;
   templateName: string;
   completedBy: string;
   completedAt: Date;
@@ -40,8 +40,8 @@ export interface AuditCompletion {
 }
 
 export interface AuditResponse {
-  id: string;
-  completionId: string;
+  _id: string;
+  _completionId: string;
   sectionId: string;
   sectionTitle: string;
   itemId: string;
@@ -84,11 +84,11 @@ export const createAuditTemplateSchema = z.object({
 });
 
 export const updateAuditTemplateSchema = createAuditTemplateSchema.partial().extend({
-  id: z.string().min(1, "Template ID is required")
+  _id: z.string().min(1, "Template ID is required")
 });
 
 export const completeAuditSchema = z.object({
-  templateId: z.string().min(1, "Template ID is required"),
+  _templateId: z.string().min(1, "Template ID is required"),
   notes: z.string().optional(),
   responses: z.array(z.object({
     sectionId: z.string().min(1, "Section ID is required"),
@@ -100,7 +100,7 @@ export const completeAuditSchema = z.object({
 });
 
 export const auditFiltersSchema = z.object({
-  templateId: z.string().optional(),
+  _templateId: z.string().optional(),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   completedBy: z.string().optional(),
@@ -387,14 +387,14 @@ export function getNonCompliantItems(responses: AuditResponse[]): AuditResponse[
 
 // Error classes
 export class AuditTemplateError extends Error {
-  constructor(message: string, public code: string = 'TEMPLATE_ERROR') {
+  constructor(message: string, public _code: string = 'TEMPLATE_ERROR') {
     super(message);
     this.name = 'AuditTemplateError';
   }
 }
 
 export class AuditCompletionError extends Error {
-  constructor(message: string, public code: string = 'COMPLETION_ERROR') {
+  constructor(message: string, public _code: string = 'COMPLETION_ERROR') {
     super(message);
     this.name = 'AuditCompletionError';
   }

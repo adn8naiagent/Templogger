@@ -3,7 +3,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { useEffect, useState } from 'react';
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle, Star } from "lucide-react";
 import { Link, useLocation } from "wouter";
@@ -93,7 +93,7 @@ export default function Subscribe() {
     // Create subscription as soon as the page loads
     apiRequest("POST", "/api/create-subscription")
       .then((res) => res.json())
-      .then((data) => {
+      .then((_data) => {
         setClientSecret(data.clientSecret);
         setLoading(false);
       })

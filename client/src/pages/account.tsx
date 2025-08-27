@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+// import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+// import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -25,7 +25,7 @@ import {
   Download, 
   Trash2, 
   Shield,
-  Crown,
+  // Crown,
   Star,
   ArrowLeft,
   Lock,
@@ -43,7 +43,7 @@ export default function Account() {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  // const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   // Calculate trial days remaining
   const trialDaysRemaining = user?.trialEndDate ? 
@@ -71,8 +71,8 @@ export default function Account() {
 
   // Update profile mutation
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: UpdateProfileData) => {
-      return apiRequest("PUT", "/api/user/profile", data);
+    mutationFn: async (_data: UpdateProfileData) => {
+      return apiRequest("PUT", "/api/user/profile", _data);
     },
     onSuccess: () => {
       toast({
@@ -92,7 +92,7 @@ export default function Account() {
 
   // Reset password mutation
   const resetPasswordMutation = useMutation({
-    mutationFn: async (data: ResetPasswordData) => {
+    mutationFn: async (_data: ResetPasswordData) => {
       return apiRequest("PUT", "/api/user/reset-password", { newPassword: data.newPassword });
     },
     onSuccess: () => {
@@ -161,8 +161,8 @@ export default function Account() {
     }
   };
 
-  const getSubscriptionBadge = (status: string) => {
-    switch (status) {
+  const getSubscriptionBadge = (_status: string) => {
+    switch (_status) {
       case "trial":
         return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Trial</Badge>;
       case "paid":
@@ -299,7 +299,7 @@ export default function Account() {
             </div>
 
             <Form {...profileForm}>
-              <form onSubmit={profileForm.handleSubmit((data) => updateProfileMutation.mutate(data))} className="space-y-4">
+              <form onSubmit={profileForm.handleSubmit((_data) => updateProfileMutation.mutate(_data))} className="space-y-4">
                 <FormField
                   control={profileForm.control}
                   name="email"
@@ -370,7 +370,7 @@ export default function Account() {
             </CardHeader>
             <CardContent>
               <Form {...passwordForm}>
-                <form onSubmit={passwordForm.handleSubmit((data) => resetPasswordMutation.mutate(data))} className="space-y-4">
+                <form onSubmit={passwordForm.handleSubmit((_data) => resetPasswordMutation.mutate(_data))} className="space-y-4">
                   <FormField
                     control={passwordForm.control}
                     name="newPassword"

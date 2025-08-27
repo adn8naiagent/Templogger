@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Checkbox } from "@/components/ui/checkbox";
+// import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Dialog,
@@ -22,7 +22,7 @@ import {
   XCircle,
   AlertTriangle,
   FileText,
-  Save,
+  // Save,
   Send
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -30,14 +30,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 
 interface AuditTemplate {
-  id: string;
+  _id: string;
   name: string;
   description?: string;
   sections: AuditSection[];
 }
 
 interface AuditSection {
-  id: string;
+  _id: string;
   title: string;
   description?: string;
   orderIndex: number;
@@ -45,7 +45,7 @@ interface AuditSection {
 }
 
 interface AuditItem {
-  id: string;
+  _id: string;
   text: string;
   isRequired: boolean;
   orderIndex: number;
@@ -61,10 +61,10 @@ interface AuditResponse {
 }
 
 export default function CompleteSelfAudit() {
-  const { templateId } = useParams<{ templateId: string }>();
+  const { templateId } = useParams<{ _templateId: string }>();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user: _user, isAuthenticated, isLoading } = useAuth();
   const queryClient = useQueryClient();
 
   const [responses, setResponses] = useState<Record<string, AuditResponse>>({});
@@ -88,7 +88,7 @@ export default function CompleteSelfAudit() {
 
   // Fetch template
   const { 
-    data: template, 
+    _data: template, 
     isLoading: templateLoading, 
     error: templateError 
   } = useQuery({
@@ -103,14 +103,14 @@ export default function CompleteSelfAudit() {
       }
       return response.json() as Promise<AuditTemplate>;
     },
-    enabled: isAuthenticated && !!templateId,
+    enabled: isAuthenticated && !!_templateId,
   });
 
   // Submit audit completion
   const completeMutation = useMutation({
-    mutationFn: async (data: { responses: AuditResponse[]; notes?: string }) => {
+    mutationFn: async (_data: { responses: AuditResponse[]; notes?: string }) => {
       const response = await apiRequest('POST', '/api/audit-completions', {
-        templateId,
+        _templateId,
         responses: data.responses,
         notes: data.notes
       });
@@ -120,7 +120,7 @@ export default function CompleteSelfAudit() {
       }
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (_data) => {
       queryClient.invalidateQueries({ queryKey: ['audit-completions'] });
       toast({
         title: "Audit Completed!",
@@ -186,7 +186,7 @@ export default function CompleteSelfAudit() {
     for (const section of template.sections) {
       for (const item of section.items) {
         if (item.isRequired) {
-          const response = getResponse(section.id, item.id);
+          const response = getResponse(section._id, item._id);
           if (!response || response.isCompliant === undefined) {
             return false;
           }
@@ -361,7 +361,7 @@ export default function CompleteSelfAudit() {
                     {section.items
                       .sort((a, b) => a.orderIndex - b.orderIndex)
                       .map((item, itemIndex) => {
-                        const response = getResponse(section.id, item.id);
+                        const response = getResponse(section._id, item._id);
                         const isCompliant = response?.isCompliant;
                         
                         return (
@@ -400,7 +400,7 @@ export default function CompleteSelfAudit() {
                                       <Button
                                         variant={isCompliant === true ? "default" : "outline"}
                                         size="sm"
-                                        onClick={() => handleResponseChange(section.id, item.id, 'isCompliant', true)}
+                                        onClick={() => handleResponseChange(section._id, item._id, 'isCompliant', true)}
                                         className={isCompliant === true ? "bg-green-600 hover:bg-green-700" : ""}
                                       >
                                         <CheckCircle className="h-4 w-4 mr-1" />
@@ -409,7 +409,7 @@ export default function CompleteSelfAudit() {
                                       <Button
                                         variant={isCompliant === false ? "default" : "outline"}
                                         size="sm"
-                                        onClick={() => handleResponseChange(section.id, item.id, 'isCompliant', false)}
+                                        onClick={() => handleResponseChange(section._id, item._id, 'isCompliant', false)}
                                         className={isCompliant === false ? "bg-red-600 hover:bg-red-700" : ""}
                                       >
                                         <XCircle className="h-4 w-4 mr-1" />
@@ -430,7 +430,7 @@ export default function CompleteSelfAudit() {
                                         id={`notes-${item.id}`}
                                         placeholder="Add any additional notes or observations..."
                                         value={response?.notes || ""}
-                                        onChange={(e) => handleResponseChange(section.id, item.id, 'notes', e.target.value)}
+                                        onChange={(e) => handleResponseChange(section._id, item._id, 'notes', e.target._value)}
                                         className="mt-1"
                                         rows={2}
                                       />
@@ -445,7 +445,7 @@ export default function CompleteSelfAudit() {
                                           id={`action-${item.id}`}
                                           placeholder="What corrective actions need to be taken?"
                                           value={response?.actionRequired || ""}
-                                          onChange={(e) => handleResponseChange(section.id, item.id, 'actionRequired', e.target.value)}
+                                          onChange={(e) => handleResponseChange(section._id, item._id, 'actionRequired', e.target._value)}
                                           className="mt-1"
                                           rows={2}
                                         />
@@ -476,7 +476,7 @@ export default function CompleteSelfAudit() {
             <Textarea
               placeholder="Enter your overall notes and recommendations..."
               value={overallNotes}
-              onChange={(e) => setOverallNotes(e.target.value)}
+              onChange={(e) => setOverallNotes(e.target._value)}
               rows={4}
             />
           </CardContent>

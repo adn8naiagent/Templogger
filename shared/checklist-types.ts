@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // Base checklist data models extending existing schema
 export interface ChecklistSchedule {
-  id: string;
+  _id: string;
   checklistId: string;
   cadence: 'DAILY' | 'DOW' | 'WEEKLY';
   daysOfWeek?: number[]; // For DOW: 0=Sunday, 1=Monday, etc.
@@ -15,7 +15,7 @@ export interface ChecklistSchedule {
 }
 
 export interface ChecklistInstance {
-  id: string;
+  _id: string;
   checklistId: string;
   scheduleId: string;
   targetDate: string; // ISO date string (for DAILY/DOW) or week identifier (for WEEKLY like "2024-W08")
@@ -29,11 +29,11 @@ export interface ChecklistInstance {
 }
 
 export interface ChecklistWithScheduleAndItems {
-  id: string;
+  _id: string;
   name: string;
   description?: string;
   items: Array<{
-    id: string;
+    _id: string;
     label: string;
     required: boolean;
     orderIndex: number;
@@ -48,7 +48,7 @@ export interface ChecklistWithScheduleAndItems {
 
 // Calendar view types
 export interface CalendarInstance {
-  id: string;
+  _id: string;
   checklistId: string;
   checklistName: string;
   targetDate: string;
@@ -110,7 +110,7 @@ export const scheduleChecklistRequestSchema = z.object({
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date must be in YYYY-MM-DD format"),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "End date must be in YYYY-MM-DD format").optional(),
   timezone: z.string().default("UTC")
-}).refine((data) => {
+}).refine((_data) => {
   // DOW cadence requires daysOfWeek
   if (data.cadence === 'DOW') {
     return data.daysOfWeek && data.daysOfWeek.length > 0;
@@ -119,7 +119,7 @@ export const scheduleChecklistRequestSchema = z.object({
 }, {
   message: "Days of week must be specified for DOW cadence",
   path: ["daysOfWeek"]
-}).refine((data) => {
+}).refine((_data) => {
   // End date must be after start date if provided
   if (data.endDate) {
     return new Date(data.endDate) > new Date(data.startDate);
@@ -142,7 +142,7 @@ export const completeChecklistInstanceRequestSchema = z.object({
 export const calendarRequestSchema = z.object({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "From date must be in YYYY-MM-DD format"),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "To date must be in YYYY-MM-DD format")
-}).refine((data) => {
+}).refine((_data) => {
   return new Date(data.to) >= new Date(data.from);
 }, {
   message: "To date must be on or after from date",
@@ -198,7 +198,7 @@ export interface ChecklistCSVRecord {
 
 // Error types
 export class ChecklistError extends Error {
-  constructor(message: string, public code: string, public statusCode: number = 400) {
+  constructor(message: string, public _code: string, public _statusCode: number = 400) {
     super(message);
     this.name = 'ChecklistError';
   }

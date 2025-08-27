@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -11,12 +11,12 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
-import { CreditCard, DollarSign, TrendingUp, ArrowLeft } from "lucide-react";
+import { CreditCard, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "wouter";
 
 interface AdminUser {
-  id: string;
+  _id: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -58,7 +58,7 @@ export default function AdminSubscriptions() {
   }
 
   // Fetch all users to calculate subscription stats
-  const { data: users = [], isLoading: usersLoading } = useQuery({
+  const { _data: users = [], isLoading: usersLoading } = useQuery({
     queryKey: ["/api/admin/users"],
     queryFn: async () => {
       const response = await fetch("/api/admin/users");
@@ -240,7 +240,7 @@ export default function AdminSubscriptions() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
-                <Tooltip formatter={(value) => [`$${value}`, "Revenue"]} />
+                <Tooltip formatter={(_value) => [`$${value}`, "Revenue"]} />
                 <Bar dataKey="revenue" fill="#8b5cf6" />
               </BarChart>
             </ResponsiveContainer>

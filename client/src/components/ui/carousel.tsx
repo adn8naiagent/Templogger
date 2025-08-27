@@ -16,7 +16,7 @@ type CarouselProps = {
   opts?: CarouselOptions
   plugins?: CarouselPlugin
   orientation?: "horizontal" | "vertical"
-  setApi?: (api: CarouselApi) => void
+  setApi?: (_api: CarouselApi) => void
 }
 
 type CarouselContextProps = {
@@ -67,7 +67,7 @@ const Carousel = React.forwardRef<
     const [canScrollNext, setCanScrollNext] = React.useState(false)
 
     const onSelect = React.useCallback((api: CarouselApi) => {
-      if (!api) {
+      if (!_api) {
         return
       }
 
@@ -97,32 +97,32 @@ const Carousel = React.forwardRef<
     )
 
     React.useEffect(() => {
-      if (!api || !setApi) {
+      if (!_api || !setApi) {
         return
       }
 
-      setApi(api)
-    }, [api, setApi])
+      setApi(_api)
+    }, [_api, setApi])
 
     React.useEffect(() => {
-      if (!api) {
+      if (!_api) {
         return
       }
 
-      onSelect(api)
+      onSelect(_api)
       api.on("reInit", onSelect)
       api.on("select", onSelect)
 
       return () => {
         api?.off("select", onSelect)
       }
-    }, [api, onSelect])
+    }, [_api, onSelect])
 
     return (
       <CarouselContext.Provider
         value={{
           carouselRef,
-          api: api,
+          api: _api,
           opts,
           orientation:
             orientation || (opts?.axis === "y" ? "vertical" : "horizontal"),

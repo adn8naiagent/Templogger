@@ -3,10 +3,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -35,15 +34,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Award,
   Plus,
   Edit,
   Trash2,
   AlertTriangle,
   CheckCircle,
-  Calendar,
-  User,
-  Thermometer,
   FileText,
   Upload,
   ShieldCheck
@@ -54,7 +49,7 @@ import type { CalibrationRecord } from "@shared/schema";
 
 // Form validation schema
 const calibrationSchema = z.object({
-  fridgeId: z.string().min(1, "Fridge is required"),
+  _fridgeId: z.string().min(1, "Fridge is required"),
   calibrationDate: z.string().min(1, "Calibration date is required"),
   performedBy: z.string().min(1, "Performed by is required"),
   calibrationStandard: z.string().optional(),
@@ -67,11 +62,11 @@ const calibrationSchema = z.object({
 type CalibrationForm = z.infer<typeof calibrationSchema>;
 
 interface CalibrationManagerProps {
-  fridgeId: string;
+  _fridgeId: string;
   fridgeName: string;
 }
 
-export default function CalibrationManager({ fridgeId, fridgeName }: CalibrationManagerProps) {
+export default function CalibrationManager({ _fridgeId, fridgeName }: CalibrationManagerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -80,7 +75,7 @@ export default function CalibrationManager({ fridgeId, fridgeName }: Calibration
   const form = useForm<CalibrationForm>({
     resolver: zodResolver(calibrationSchema),
     defaultValues: {
-      fridgeId,
+      _fridgeId,
       calibrationDate: "",
       performedBy: "",
       calibrationStandard: "",
@@ -92,7 +87,7 @@ export default function CalibrationManager({ fridgeId, fridgeName }: Calibration
   });
 
   // Fetch calibration records
-  const { data: records = [], isLoading } = useQuery({
+  const { _data: records = [], isLoading } = useQuery({
     queryKey: [`/api/fridges/${fridgeId}/calibrations`],
     queryFn: async () => {
       const response = await apiRequest('GET', `/api/fridges/${fridgeId}/calibrations`);
@@ -103,8 +98,8 @@ export default function CalibrationManager({ fridgeId, fridgeName }: Calibration
 
   // Create calibration record mutation
   const createMutation = useMutation({
-    mutationFn: async (data: CalibrationForm) => {
-      const response = await apiRequest('POST', '/api/calibration-records', data);
+    mutationFn: async (_data: CalibrationForm) => {
+      const response = await apiRequest('POST', '/api/calibration-records', _data);
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to create calibration record: ${response.status} - ${errorText}`);
@@ -131,8 +126,8 @@ export default function CalibrationManager({ fridgeId, fridgeName }: Calibration
 
   // Update calibration record mutation
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: CalibrationForm }) => {
-      const response = await apiRequest('PUT', `/api/calibration-records/${id}`, data);
+    mutationFn: async ({ _id, _data }: { _id: string; _data: CalibrationForm }) => {
+      const response = await apiRequest('PUT', `/api/calibration-records/${id}`, _data);
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to update calibration record: ${response.status} - ${errorText}`);
@@ -159,7 +154,7 @@ export default function CalibrationManager({ fridgeId, fridgeName }: Calibration
 
   // Delete calibration record mutation
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (_id: string) => {
       const response = await apiRequest('DELETE', `/api/calibration-records/${id}`);
       if (!response.ok) {
         const errorText = await response.text();
@@ -183,18 +178,18 @@ export default function CalibrationManager({ fridgeId, fridgeName }: Calibration
     },
   });
 
-  const onSubmit = (data: CalibrationForm) => {
+  const onSubmit = (_data: CalibrationForm) => {
     if (editingRecord) {
-      updateMutation.mutate({ id: editingRecord.id, data });
+      updateMutation.mutate({ _id: editingRecord._id, data });
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(_data);
     }
   };
 
   const handleEdit = (record: CalibrationRecord) => {
     setEditingRecord(record);
     form.reset({
-      fridgeId,
+      _fridgeId,
       calibrationDate: new Date(record.calibrationDate).toISOString().split('T')[0],
       performedBy: record.performedBy,
       calibrationStandard: record.calibrationStandard || "",
@@ -206,9 +201,9 @@ export default function CalibrationManager({ fridgeId, fridgeName }: Calibration
     setIsCreateDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (_id: string) => {
     if (confirm("Are you sure you want to delete this calibration record?")) {
-      deleteMutation.mutate(id);
+      deleteMutation.mutate(_id);
     }
   };
 
@@ -246,7 +241,7 @@ export default function CalibrationManager({ fridgeId, fridgeName }: Calibration
               <Button onClick={() => {
                 setEditingRecord(null);
                 form.reset({
-                  fridgeId,
+                  _fridgeId,
                   calibrationDate: "",
                   performedBy: "",
                   calibrationStandard: "",
@@ -510,7 +505,7 @@ export default function CalibrationManager({ fridgeId, fridgeName }: Calibration
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(record.id)}
+                          onClick={() => handleDelete(record._id)}
                           className="text-destructive hover:text-destructive"
                         >
                           <Trash2 className="h-3 w-3" />

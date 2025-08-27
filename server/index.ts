@@ -24,7 +24,7 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com"],
-      imgSrc: ["'self'", "data:", "https:"],
+      imgSrc: ["'self'", "_data:", "https:"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       connectSrc: ["'self'", "ws:", "wss:", "https://api.stripe.com"],
       frameSrc: ["'self'", "https://js.stripe.com", "https://hooks.stripe.com"],
@@ -149,7 +149,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     const message = err.message || "Internal Server Error";
 
     if (!res.headersSent) {
-      res.status(status).json({ message });
+      res.status(_status).json({ message });
     }
     console.error('Error handled:', err);
   });

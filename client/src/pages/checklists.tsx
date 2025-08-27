@@ -1,19 +1,19 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+// import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
-} from "@/components/ui/dialog";
+// import { 
+//   Dialog, 
+//   DialogContent, 
+//   DialogDescription, 
+//   DialogHeader, 
+//   DialogTitle, 
+//   DialogTrigger 
+// } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,29 +24,28 @@ import {
 import {
   CheckSquare,
   Plus,
-  Calendar,
   Clock,
-  Settings,
-  Eye,
+  // Settings,
+  // Eye,
   Edit,
   MoreHorizontal,
-  PlayCircle,
-  PauseCircle,
+  // PlayCircle,
+  // PauseCircle,
   Search,
   Filter,
-  Download,
+  // Download,
   BarChart3,
-  User,
-  LogOut,
-  Shield,
-  Crown,
-  Star
+  // User,
+  // LogOut,
+  // Shield,
+  // Crown,
+  // Star
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { isUnauthorizedError } from "@/lib/authUtils";
+// import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Link } from "wouter";
+// import { Link } from "wouter";
 import Navigation from "@/components/layout/navigation";
 import ChecklistEditor from "@/components/checklists/checklist-editor";
 import ScheduleEditor from "@/components/checklists/schedule-editor";
@@ -54,7 +53,7 @@ import ChecklistCalendar from "@/components/checklists/checklist-calendar";
 import ChecklistDashboard from "@/components/checklists/checklist-dashboard";
 
 interface ChecklistItem {
-  id: string;
+  _id: string;
   label: string;
   required: boolean;
   orderIndex: number;
@@ -62,7 +61,7 @@ interface ChecklistItem {
 }
 
 interface ChecklistSchedule {
-  id: string;
+  _id: string;
   checklistId: string;
   cadence: 'DAILY' | 'DOW' | 'WEEKLY';
   daysOfWeek?: number[];
@@ -75,7 +74,7 @@ interface ChecklistSchedule {
 }
 
 interface ChecklistWithScheduleAndItems {
-  id: string;
+  _id: string;
   name: string;
   description?: string;
   items: ChecklistItem[];
@@ -88,7 +87,7 @@ interface ChecklistWithScheduleAndItems {
 
 export default function Checklists() {
   const { toast } = useToast();
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { user: _user, isAuthenticated, isLoading, logout } = useAuth();
   const queryClient = useQueryClient();
   
   const [searchQuery, setSearchQuery] = useState("");
@@ -114,9 +113,9 @@ export default function Checklists() {
 
   // Fetch checklists
   const { 
-    data: checklists = [], 
+    _data: checklists = [], 
     isLoading: checklistsLoading, 
-    error: checklistsError 
+    error: _checklistsError 
   } = useQuery({
     queryKey: ['checklists', { activeOnly }],
     queryFn: async () => {
@@ -138,8 +137,8 @@ export default function Checklists() {
 
   // Create/Update checklist mutation
   const createChecklistMutation = useMutation({
-    mutationFn: async (data: { name: string; description?: string; items: Omit<ChecklistItem, 'id'>[] }) => {
-      const response = await apiRequest('POST', '/api/v2/checklists', data);
+    mutationFn: async (_data: { name: string; description?: string; items: Omit<ChecklistItem, 'id'>[] }) => {
+      const response = await apiRequest('POST', '/api/v2/checklists', _data);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -248,73 +247,6 @@ export default function Checklists() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
-      {/* Header */}
-      <div className="border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <CheckSquare className="w-8 h-8 text-primary" />
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">Checklists</h1>
-                <p className="text-muted-foreground">Manage and track your scheduled checklists</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              {/* User Menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2">
-                    <div className="flex items-center space-x-2">
-                      {user?.role === 'admin' && <Crown className="w-4 h-4 text-yellow-500" />}
-                      {user?.role === 'manager' && <Shield className="w-4 h-4 text-blue-500" />}
-                      {user?.role === 'staff' && <Star className="w-4 h-4 text-green-500" />}
-                      <User className="w-4 h-4" />
-                      <span className="hidden sm:inline-block">{user?.firstName} {user?.lastName}</span>
-                    </div>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem asChild>
-                    <Link href="/account">
-                      <User className="w-4 h-4 mr-2" />
-                      Account
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings">
-                      <Settings className="w-4 h-4 mr-2" />
-                      Settings
-                    </Link>
-                  </DropdownMenuItem>
-                  {user?.role === 'admin' && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link href="/admin/dashboard">
-                          <Crown className="w-4 h-4 mr-2" />
-                          Admin Dashboard
-                        </Link>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout}>
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Sign out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <Button onClick={handleCreateChecklist}>
-                <Plus className="w-4 h-4 mr-2" />
-                New Checklist
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Tabs defaultValue="list" className="w-full">
@@ -343,7 +275,7 @@ export default function Checklists() {
                   <Input
                     placeholder="Search checklists..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => setSearchQuery(e.target._value)}
                     className="pl-10"
                   />
                 </div>
@@ -417,7 +349,7 @@ export default function Checklists() {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
-                              onClick={() => handleDeleteChecklist(checklist.id)}
+                              onClick={() => handleDeleteChecklist(checklist._id)}
                               className="text-destructive"
                             >
                               Delete

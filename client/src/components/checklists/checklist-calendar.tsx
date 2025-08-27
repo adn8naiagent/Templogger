@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -8,8 +8,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  DialogTitle } from "@/components/ui/dialog";
 import CompleteChecklistModal from "./complete-checklist-modal";
 import {
   ChevronLeft,
@@ -18,15 +17,13 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  AlertTriangle,
-} from "lucide-react";
+  AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 
 interface CalendarInstance {
-  id: string;
+  _id: string;
   checklistId: string;
   checklistName: string;
   targetDate: string;
@@ -51,7 +48,7 @@ const MONTHS = [
 ];
 
 export default function ChecklistCalendar() {
-  const { toast } = useToast();
+  const { toast: _toast } = useToast();
   const { logout } = useAuth();
   
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -63,7 +60,7 @@ export default function ChecklistCalendar() {
   const getCalendarPeriod = () => {
     if (viewMode === 'month') {
       const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-      const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      const _lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
       
       // Extend to include previous month days to fill the first week
       const startDate = new Date(firstDay);
@@ -75,8 +72,7 @@ export default function ChecklistCalendar() {
       
       return {
         start: startDate.toISOString().split('T')[0],
-        end: endDate.toISOString().split('T')[0],
-      };
+        end: endDate.toISOString().split('T')[0] };
     } else {
       // Week view
       const startOfWeek = new Date(currentDate);
@@ -87,8 +83,7 @@ export default function ChecklistCalendar() {
       
       return {
         start: startOfWeek.toISOString().split('T')[0],
-        end: endOfWeek.toISOString().split('T')[0],
-      };
+        end: endOfWeek.toISOString().split('T')[0] };
     }
   };
 
@@ -96,7 +91,7 @@ export default function ChecklistCalendar() {
 
   // Fetch calendar data
   const { 
-    data: calendarData, 
+    _data: calendarData, 
     isLoading, 
     error 
   } = useQuery({
@@ -111,12 +106,11 @@ export default function ChecklistCalendar() {
         if (response.status === 401) {
           logout();
         }
-        throw new Error(`Failed to fetch calendar data: ${response.status}`);
+        throw new Error(`Failed to fetch calendar _data: ${response.status}`);
       }
 
       return response.json();
-    },
-  });
+    } });
 
   // Group instances by date
   const instancesByDate = calendarData?.instances.reduce((acc, instance) => {
@@ -169,7 +163,7 @@ export default function ChecklistCalendar() {
   // Render calendar days for month view
   const renderMonthView = () => {
     const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+    const _lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
     
     const startDate = new Date(firstDay);
     startDate.setDate(startDate.getDate() - firstDay.getDay());

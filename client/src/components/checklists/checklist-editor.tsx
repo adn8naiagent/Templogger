@@ -3,36 +3,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  DialogTitle } from "@/components/ui/dialog";
 import {
   DragDropContext,
   Droppable,
   Draggable,
-  DropResult,
-} from "react-beautiful-dnd";
+  DropResult } from "react-beautiful-dnd";
 import {
   Plus,
   Trash2,
   GripVertical,
   CheckSquare,
-  Square,
   Save,
-  X,
-} from "lucide-react";
+  X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ChecklistItem {
-  id: string;
+  _id: string;
   label: string;
   required: boolean;
   orderIndex: number;
@@ -40,7 +35,7 @@ interface ChecklistItem {
 }
 
 interface ChecklistWithScheduleAndItems {
-  id: string;
+  _id: string;
   name: string;
   description?: string;
   items: ChecklistItem[];
@@ -52,14 +47,14 @@ interface ChecklistWithScheduleAndItems {
 
 interface ChecklistEditorProps {
   isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange: (_open: boolean) => void;
   checklist?: ChecklistWithScheduleAndItems | null;
-  onSave: (data: { name: string; description?: string; items: Omit<ChecklistItem, 'id'>[] }) => void;
+  onSave: (_data: { name: string; description?: string; items: Omit<ChecklistItem, 'id'>[] }) => void;
   isSaving: boolean;
 }
 
 interface EditingItem {
-  id: string;
+  _id: string;
   label: string;
   required: boolean;
   orderIndex: number;
@@ -71,8 +66,7 @@ export default function ChecklistEditor({
   onOpenChange,
   checklist,
   onSave,
-  isSaving,
-}: ChecklistEditorProps) {
+  isSaving }: ChecklistEditorProps) {
   const { toast } = useToast();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -96,27 +90,26 @@ export default function ChecklistEditor({
   // Add new item
   const addItem = () => {
     const newItem: EditingItem = {
-      id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      _id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       label: "",
       required: true,
       orderIndex: items.length,
-      note: "",
-    };
+      note: "" };
     setItems([...items, newItem]);
-    setEditingItemId(newItem.id);
+    setEditingItemId(newItem._id);
   };
 
   // Update item
-  const updateItem = (id: string, updates: Partial<EditingItem>) => {
+  const updateItem = (_id: string, _updates: Partial<EditingItem>) => {
     setItems(items.map(item => 
       item.id === id ? { ...item, ...updates } : item
     ));
   };
 
   // Remove item
-  const removeItem = (id: string) => {
-    setItems(items.filter(item => item.id !== id));
-    if (editingItemId === id) {
+  const removeItem = (_id: string) => {
+    setItems(items.filter(item => item.id !== _id));
+    if (editingItemId === _id) {
       setEditingItemId(null);
     }
   };
@@ -132,8 +125,7 @@ export default function ChecklistEditor({
     // Update order indices
     const updatedItems = reorderedItems.map((item, index) => ({
       ...item,
-      orderIndex: index,
-    }));
+      orderIndex: index }));
 
     setItems(updatedItems);
   };
@@ -144,8 +136,7 @@ export default function ChecklistEditor({
       toast({
         title: "Validation Error",
         description: "Checklist name is required",
-        variant: "destructive",
-      });
+        variant: "destructive" });
       return false;
     }
 
@@ -153,8 +144,7 @@ export default function ChecklistEditor({
       toast({
         title: "Validation Error",
         description: "At least one checklist item is required",
-        variant: "destructive",
-      });
+        variant: "destructive" });
       return false;
     }
 
@@ -163,8 +153,7 @@ export default function ChecklistEditor({
       toast({
         title: "Validation Error",
         description: "All items must have a label",
-        variant: "destructive",
-      });
+        variant: "destructive" });
       return false;
     }
 
@@ -178,12 +167,10 @@ export default function ChecklistEditor({
     const saveData = {
       name: name.trim(),
       description: description.trim() || undefined,
-      items: items.map(({ id, ...item }) => ({
+      items: items.map(({ _id, ...item }) => ({
         label: item.label.trim(),
         required: item.required,
-        orderIndex: item.orderIndex,
-      })),
-    };
+        orderIndex: item.orderIndex })) };
 
     onSave(saveData);
   };
@@ -227,7 +214,7 @@ export default function ChecklistEditor({
                 id="name"
                 placeholder="Enter checklist name..."
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => setName(e.target._value)}
                 className="mt-1"
               />
             </div>
@@ -238,7 +225,7 @@ export default function ChecklistEditor({
                 id="description"
                 placeholder="Optional description..."
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) => setDescription(e.target._value)}
                 className="mt-1"
                 rows={3}
               />
@@ -310,7 +297,7 @@ export default function ChecklistEditor({
                                   <div className="flex items-center mt-2">
                                     <button
                                       type="button"
-                                      onClick={() => updateItem(item.id, { required: !item.required })}
+                                      onClick={() => updateItem(item._id, { required: !item.required })}
                                       className="text-muted-foreground hover:text-foreground"
                                     >
                                       {item.required ? (
@@ -327,7 +314,7 @@ export default function ChecklistEditor({
                                       <Input
                                         placeholder="Item label..."
                                         value={item.label}
-                                        onChange={(e) => updateItem(item.id, { label: e.target.value })}
+                                        onChange={(e) => updateItem(item._id, { label: e.target.value })}
                                         className="flex-1"
                                       />
                                       <Badge variant={item.required ? "default" : "secondary"}>
@@ -339,7 +326,7 @@ export default function ChecklistEditor({
                                       <Textarea
                                         placeholder="Optional notes for this item..."
                                         value={item.note || ""}
-                                        onChange={(e) => updateItem(item.id, { note: e.target.value })}
+                                        onChange={(e) => updateItem(item._id, { note: e.target.value })}
                                         rows={2}
                                       />
                                     )}
@@ -353,7 +340,7 @@ export default function ChecklistEditor({
                                           size="sm"
                                           onClick={() => 
                                             setEditingItemId(
-                                              editingItemId === item.id ? null : item.id
+                                              editingItemId === item.id ? null : item._id
                                             )
                                           }
                                         >
@@ -363,7 +350,7 @@ export default function ChecklistEditor({
                                           type="button"
                                           variant="ghost"
                                           size="sm"
-                                          onClick={() => removeItem(item.id)}
+                                          onClick={() => removeItem(item._id)}
                                           className="text-destructive hover:text-destructive"
                                         >
                                           <Trash2 className="w-4 h-4" />

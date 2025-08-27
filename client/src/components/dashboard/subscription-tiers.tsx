@@ -1,9 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { formatPrice } from "@/lib/subscription";
-import type { SubscriptionTiers } from "@/lib/subscription";
+import type { SubscriptionTiers as SubscriptionTiersType } from "@/lib/subscription";
 
 interface TierCardProps {
   name: string;
@@ -55,7 +55,7 @@ function TierCard({ name, price, currency, interval, popular, features, limitati
 }
 
 export default function SubscriptionTiers() {
-  const { data: tiers } = useQuery<SubscriptionTiers>({
+  const { _data: tiers } = useQuery<SubscriptionTiersType>({
     queryKey: ["/api/subscription-tiers"],
   });
 

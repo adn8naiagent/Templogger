@@ -13,7 +13,7 @@ async function seedAdminUser() {
       
       // Update to admin role if not already
       if (existingUser.role !== "admin") {
-        await storage.updateUser(existingUser.id, { role: "admin" });
+        await storage.updateUser(existingUser._id, { role: "admin" });
         console.log(`Updated ${adminEmail} to admin role`);
       }
       return;

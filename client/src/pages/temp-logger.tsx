@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -26,7 +26,6 @@ import {
   Refrigerator,
   User,
   CheckCircle2,
-  Calendar,
   Settings,
   LogOut,
   Shield,
@@ -48,7 +47,7 @@ import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 
 interface Fridge {
-  id: string;
+  _id: string;
   name: string;
   location?: string;
   minTemp: string;
@@ -74,8 +73,8 @@ interface Fridge {
 }
 
 interface TimeWindow {
-  id: string;
-  fridgeId: string;
+  _id: string;
+  _fridgeId: string;
   label: string;
   startTime: string;
   endTime: string;
@@ -84,7 +83,7 @@ interface TimeWindow {
 }
 
 interface Label {
-  id: string;
+  _id: string;
   name: string;
   color: string;
   createdAt: string;
@@ -100,7 +99,7 @@ export default function TempLogger() {
   const [showCorrectiveActions, setShowCorrectiveActions] = useState(false);
 
   // Fetch fridges with recent temperatures
-  const { data: fridges = [], isLoading: fridgesLoading, error, refetch } = useQuery<Fridge[]>({
+  const { _data: fridges = [], isLoading: fridgesLoading, error, refetch } = useQuery<Fridge[]>({
     queryKey: ["/api/fridges/recent-temps"],
     retry: (failureCount, error) => {
       if (isUnauthorizedError(error as Error)) {
@@ -119,17 +118,17 @@ export default function TempLogger() {
   });
 
   // Debug logging
-  console.log('[temp-logger] Fridges data:', fridges);
+  console.log('[temp-logger] Fridges _data:', fridges);
   console.log('[temp-logger] Loading state:', fridgesLoading);
   console.log('[temp-logger] Error:', error);
 
   // Fetch labels
-  const { data: labels = [] } = useQuery<Label[]>({
+  const { _data: labels = [] } = useQuery<Label[]>({
     queryKey: ["/api/labels"],
   });
 
   // Fetch time windows for selected fridge
-  const { data: timeWindows = [] } = useQuery<TimeWindow[]>({
+  const { _data: timeWindows = [] } = useQuery<TimeWindow[]>({
     queryKey: ["/api/fridges", selectedFridgeId, "time-windows"],
     queryFn: async () => {
       if (!selectedFridgeId) return [];
@@ -164,7 +163,7 @@ export default function TempLogger() {
 
       if (missedWindow) {
         setIsLateEntry(true);
-        setSelectedTimeWindowId(missedWindow.id);
+        setSelectedTimeWindowId(missedWindow._id);
       }
     }
   }, [timeWindows, currentTimeWindow]);
@@ -178,7 +177,7 @@ export default function TempLogger() {
 
   // Helper function for calibration status badge
   const getCalibrationBadgeClass = (status: string) => {
-    switch (status) {
+    switch (_status) {
       case 'current': return "bg-green-600 text-white";
       case 'due-soon': return "bg-amber-500 text-white";
       case 'overdue': return "bg-red-600 text-white";
@@ -188,7 +187,7 @@ export default function TempLogger() {
   };
 
   const getCalibrationStatusText = (status: string) => {
-    switch (status) {
+    switch (_status) {
       case 'current': return "Calibrated";
       case 'due-soon': return "Due Soon";
       case 'overdue': return "Overdue";
@@ -201,7 +200,7 @@ export default function TempLogger() {
   const tempForm = useForm<LogTemperatureData>({
     resolver: zodResolver(logTemperatureSchema),
     defaultValues: {
-      fridgeId: "",
+      _fridgeId: "",
       minTempReading: "",
       maxTempReading: "",
       currentTempReading: "",
@@ -216,8 +215,8 @@ export default function TempLogger() {
   });
 
   // Check if any temperature would be out of range
-  const checkTemperatureRange = (minReading: string, maxReading: string, currentReading: string, fridgeId: string) => {
-    const selectedFridge = fridges.find((f: Fridge) => f.id === fridgeId);
+  const checkTemperatureRange = (minReading: string, maxReading: string, currentReading: string, _fridgeId: string) => {
+    const selectedFridge = fridges.find((f: Fridge) => f.id === _fridgeId);
     if (!selectedFridge) return false;
 
     const minTemp = parseFloat(selectedFridge.minTemp);
@@ -243,8 +242,8 @@ export default function TempLogger() {
 
   // Log temperature mutation
   const logTempMutation = useMutation({
-    mutationFn: async (data: LogTemperatureData) => {
-      const response = await apiRequest("POST", "/api/temperature-logs", data);
+    mutationFn: async (_data: LogTemperatureData) => {
+      const response = await apiRequest("POST", "/api/temperature-logs", _data);
       return response.json();
     },
     onSuccess: (result) => {
@@ -320,7 +319,7 @@ export default function TempLogger() {
   // Auto-fill time window and late entry detection
   useEffect(() => {
     if (selectedFridgeId && currentTimeWindow) {
-      tempForm.setValue("timeWindowId", currentTimeWindow.id);
+      tempForm.setValue("timeWindowId", currentTimeWindow._id);
       tempForm.setValue("isOnTime", true);
       setIsLateEntry(false);
     } else if (selectedFridgeId && timeWindows.length > 0) {
@@ -333,10 +332,10 @@ export default function TempLogger() {
       );
 
       if (missedWindow) {
-        tempForm.setValue("timeWindowId", missedWindow.id);
+        tempForm.setValue("timeWindowId", missedWindow._id);
         tempForm.setValue("isOnTime", false);
         setIsLateEntry(true);
-        setSelectedTimeWindowId(missedWindow.id);
+        setSelectedTimeWindowId(missedWindow._id);
       }
     }
   }, [selectedFridgeId, timeWindows, currentTimeWindow, tempForm]);
@@ -555,16 +554,16 @@ export default function TempLogger() {
                 </CardHeader>
                 <CardContent className="p-6">
                   <Form {...tempForm}>
-                    <form onSubmit={tempForm.handleSubmit((data) => logTempMutation.mutate(data))} className="space-y-6">
+                    <form onSubmit={tempForm.handleSubmit((_data) => logTempMutation.mutate(_data))} className="space-y-6">
                       <FormField
                         control={tempForm.control}
                         name="fridgeId"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-200">Select Fridge *</FormLabel>
-                            <Select onValueChange={(value) => {
-                              field.onChange(value);
-                              setSelectedFridgeId(value);
+                            <Select onValueChange={(_value) => {
+                              field.onChange(_value);
+                              setSelectedFridgeId(_value);
                             }} value={field.value}>
                               <FormControl>
                                 <SelectTrigger className="h-11 border-slate-300 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400" data-testid="select-fridge">

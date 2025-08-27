@@ -64,7 +64,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/user/profile", requireAuth, async (req: any, res) => {
     try {
       const userId = req.userId;
-      const user = await storage.getUser(userId);
+      const user = await storage.getUser(_userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -94,14 +94,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if email is being updated and if it's already taken
       if (result.data.email) {
         const existingUser = await storage.getUserByEmail(result.data.email);
-        if (existingUser && existingUser.id !== userId) {
+        if (existingUser && existingUser.id !== _userId) {
           return res.status(400).json({ 
             error: "Email already in use by another account" 
           });
         }
       }
       
-      const updatedUser = await storage.updateUser(userId, result.data);
+      const updatedUser = await storage.updateUser(_userId, result._data);
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -122,7 +122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { darkMode } = req.body;
       const userId = req.userId;
       
-      const updatedUser = await storage.updateUser(userId, { darkMode });
+      const updatedUser = await storage.updateUser(_userId, { darkMode });
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -146,7 +146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Hash the new password
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       
-      const updatedUser = await storage.updateUser(userId, { 
+      const updatedUser = await storage.updateUser(_userId, { 
         password: hashedPassword 
       });
       
@@ -165,7 +165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/user/account", requireAuth, async (req: any, res) => {
     try {
       const userId = req.userId;
-      const deleted = await storage.deleteUser(userId);
+      const deleted = await storage.deleteUser(_userId);
       if (!deleted) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -181,13 +181,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/user/export", requireAuth, async (req: any, res) => {
     try {
       const userId = req.userId;
-      const user = await storage.getUser(userId);
+      const user = await storage.getUser(_userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
 
       // Get user's temperature logs as well
-      const temperatureLogs = await storage.getAllTemperatureLogsForUser(userId);
+      const temperatureLogs = await storage.getAllTemperatureLogsForUser(_userId);
       
       // Set CSV headers
       res.setHeader('Content-Type', 'text/csv');
@@ -218,7 +218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/create-subscription', requireAuth, async (req: any, res) => {
     try {
       const userId = req.userId;
-      const user = await storage.getUser(userId);
+      const user = await storage.getUser(_userId);
       
       if (!user) {
         return res.status(404).json({ error: "User not found" });
@@ -239,7 +239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         stripeCustomerId = customer.id;
-        await storage.updateUser(userId, { stripeCustomerId });
+        await storage.updateUser(_userId, { stripeCustomerId });
       }
 
       // Create a product and price first
@@ -249,7 +249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const price = await stripe.prices.create({
-        product: product.id,
+        product: product._id,
         currency: 'usd',
         unit_amount: 1000, // $10.00 in cents
         recurring: {
@@ -261,20 +261,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const subscription = await stripe.subscriptions.create({
         customer: stripeCustomerId,
         items: [{
-          price: price.id,
+          price: price._id,
         }],
         payment_behavior: 'default_incomplete',
         expand: ['latest_invoice.payment_intent'],
       });
 
       // Update user with subscription info
-      await storage.updateUser(userId, {
-        stripeSubscriptionId: subscription.id,
+      await storage.updateUser(_userId, {
+        stripeSubscriptionId: subscription._id,
       });
 
       const latestInvoice = subscription.latest_invoice as any;
       res.json({
-        subscriptionId: subscription.id,
+        subscriptionId: subscription._id,
         clientSecret: latestInvoice?.payment_intent?.client_secret,
       });
     } catch (error: any) {
@@ -294,7 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (subscription.status === 'active') {
         // Update user to paid status
-        await storage.updateUser(userId, {
+        await storage.updateUser(_userId, {
           subscriptionStatus: 'paid',
         });
 
@@ -318,7 +318,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/subscription-status', requireAuth, async (req: any, res) => {
     try {
       const userId = req.userId;
-      const user = await storage.getUser(userId);
+      const user = await storage.getUser(_userId);
       
       if (!user) {
         return res.status(404).json({ error: "User not found" });
@@ -329,8 +329,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
           stripeStatus = {
-            id: subscription.id,
-            status: subscription.status,
+            _id: subscription._id,
+            status: subscription._status,
             currentPeriodEnd: (subscription as any).current_period_end,
             cancelAtPeriodEnd: subscription.cancel_at_period_end,
           };
@@ -367,7 +367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { userId } = req.params;
       const { role, subscriptionStatus } = req.body;
       
-      const updatedUser = await storage.updateUser(userId, { role, subscriptionStatus });
+      const updatedUser = await storage.updateUser(_userId, { role, subscriptionStatus });
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -386,7 +386,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/users/:userId", requireAdmin, async (req, res) => {
     try {
       const { userId } = req.params;
-      const deleted = await storage.deleteUser(userId);
+      const deleted = await storage.deleteUser(_userId);
       if (!deleted) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -404,7 +404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/fridges", requireAuth, async (req: any, res: Response) => {
     try {
       const userId = req.userId;
-      const fridges = await storage.getFridges(userId);
+      const fridges = await storage.getFridges(_userId);
       res.json(fridges);
     } catch (error: any) {
       console.error("Get fridges error:", error);
@@ -427,7 +427,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.userId;
       
       const newFridge = await storage.createFridge({
-        userId,
+        _userId,
         name,
         location,
         notes,
@@ -459,10 +459,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.userId;
-      const { fridgeId, timeWindowId, minTempReading, maxTempReading, currentTempReading, personName, isOnTime = true, lateReason, correctiveAction, correctiveNotes } = result.data;
+      const { _fridgeId, timeWindowId, minTempReading, maxTempReading, currentTempReading, personName, isOnTime = true, lateReason, correctiveAction, correctiveNotes } = result.data;
       
       // Verify fridge ownership
-      const fridge = await storage.getFridge(fridgeId, userId);
+      const fridge = await storage.getFridge(_fridgeId, _userId);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
@@ -483,8 +483,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const logData = {
-        userId: req.userId,
-        fridgeId,
+        _userId: req._userId,
+        _fridgeId,
         timeWindowId: timeWindowId || null,
         minTempReading,
         maxTempReading,
@@ -511,7 +511,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { fridgeId } = req.params;
       const userId = req.userId;
-      const logs = await storage.getTemperatureLogs(fridgeId, userId);
+      const logs = await storage.getTemperatureLogs(_fridgeId, _userId);
       res.json(logs);
     } catch (error: any) {
       console.error("Get temperature logs error:", error);
@@ -524,7 +524,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.userId;
       console.log(`[API] getFridgesWithRecentTemps called for user: ${userId}`);
-      const fridgesWithData = await storage.getFridgesWithRecentTemps(userId);
+      const fridgesWithData = await storage.getFridgesWithRecentTemps(_userId);
       console.log(`[API] Returning ${fridgesWithData.length} fridges`);
       res.json(fridgesWithData);
     } catch (error: any) {
@@ -537,7 +537,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/fridges/all", requireAuth, async (req: any, res: Response) => {
     try {
       const userId = req.userId;
-      const fridges = await storage.getAllFridgesWithLogs(userId);
+      const fridges = await storage.getAllFridgesWithLogs(_userId);
       res.json(fridges);
     } catch (error: any) {
       console.error("Error fetching all fridges:", error);
@@ -549,7 +549,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/fridge/:id", requireAuth, async (req: any, res: Response) => {
     try {
       const userId = req.userId;
-      const fridge = await storage.getFridgeWithLogs(userId, req.params.id);
+      const fridge = await storage.getFridgeWithLogs(_userId, req.params._id);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
@@ -564,7 +564,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/fridge/:id", requireAuth, async (req: any, res: Response) => {
     try {
       const userId = req.userId;
-      const fridge = await storage.updateFridge(req.params.id, userId, req.body);
+      const fridge = await storage.updateFridge(req.params._id, _userId, req.body);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
@@ -579,7 +579,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/fridge/:id/deactivate", requireAuth, async (req: any, res: Response) => {
     try {
       const userId = req.userId;
-      const fridge = await storage.deactivateFridge(userId, req.params.id);
+      const fridge = await storage.deactivateFridge(_userId, req.params._id);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
@@ -594,7 +594,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/fridge/:id/activate", requireAuth, async (req: any, res: Response) => {
     try {
       const userId = req.userId;
-      const fridge = await storage.reactivateFridge(userId, req.params.id);
+      const fridge = await storage.reactivateFridge(_userId, req.params._id);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
@@ -609,7 +609,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/fridge/:id", requireAuth, async (req: any, res: Response) => {
     try {
       const userId = req.userId;
-      const success = await storage.deleteFridge(req.params.id, userId);
+      const success = await storage.deleteFridge(req.params._id, _userId);
       if (!success) {
         return res.status(404).json({ error: "Fridge not found" });
       }
@@ -626,7 +626,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/labels", requireAuth, async (req: any, res: Response) => {
     try {
       const userId = req.userId;
-      const labels = await storage.getLabels(userId);
+      const labels = await storage.getLabels(_userId);
       res.json(labels);
     } catch (error: any) {
       console.error("Get labels error:", error);
@@ -647,7 +647,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const userId = req.userId;
       const newLabel = await storage.createLabel({
-        ...result.data,
+        ...result._data,
         userId
       });
 
@@ -672,7 +672,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const updatedLabel = await storage.updateLabel(labelId, userId, result.data);
+      const updatedLabel = await storage.updateLabel(labelId, _userId, result._data);
       if (!updatedLabel) {
         return res.status(404).json({ error: "Label not found" });
       }
@@ -690,7 +690,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { labelId } = req.params;
       const userId = req.userId;
       
-      const deleted = await storage.deleteLabel(labelId, userId);
+      const deleted = await storage.deleteLabel(labelId, _userId);
       if (!deleted) {
         return res.status(404).json({ error: "Label not found" });
       }
@@ -706,7 +706,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/export/temperature-logs", requireAuth, async (req: any, res: Response) => {
     try {
       const userId = req.userId;
-      const logs = await storage.getAllTemperatureLogsForUser(userId);
+      const logs = await storage.getAllTemperatureLogsForUser(_userId);
       
       // Set CSV headers
       res.setHeader('Content-Type', 'text/csv');
@@ -1019,7 +1019,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { userId } = req.params;
       const { role, subscriptionStatus } = req.body;
       
-      const updatedUser = await storage.updateUser(userId, { role, subscriptionStatus });
+      const updatedUser = await storage.updateUser(_userId, { role, subscriptionStatus });
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -1036,7 +1036,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       
-      const deleted = await storage.deleteUser(userId);
+      const deleted = await storage.deleteUser(_userId);
       if (!deleted) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -1111,7 +1111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { fridgeId } = req.params;
       const userId = req.userId;
       
-      const timeWindows = await storage.getTimeWindows(fridgeId, userId);
+      const timeWindows = await storage.getTimeWindows(_fridgeId, _userId);
       res.json(timeWindows);
     } catch (error: any) {
       console.error("Get time windows error:", error);
@@ -1131,17 +1131,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.userId;
-      const { fridgeId, label, startTime, endTime } = result.data;
+      const { _fridgeId, label, startTime, endTime } = result.data;
       
       // Verify fridge ownership
-      const fridge = await storage.getFridge(fridgeId, userId);
+      const fridge = await storage.getFridge(_fridgeId, _userId);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
 
       const timeWindow = await storage.createTimeWindow({
-        userId,
-        fridgeId,
+        _userId,
+        _fridgeId,
         label,
         startTime,
         endTime,
@@ -1165,7 +1165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.userId;
       const date = req.query.date ? new Date(req.query.date as string) : undefined;
       
-      const overview = await storage.getComplianceOverview(userId, date);
+      const overview = await storage.getComplianceOverview(_userId, date);
       res.json(overview);
     } catch (error: any) {
       console.error("Get compliance overview error:", error);
@@ -1177,7 +1177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/out-of-range-events/unresolved/count", requireAuth, async (req: any, res: Response) => {
     try {
       const userId = req.userId;
-      const count = await storage.getUnresolvedEventsCount(userId);
+      const count = await storage.getUnresolvedEventsCount(_userId);
       res.json({ count });
     } catch (error: any) {
       console.error("Get unresolved events count error:", error);
@@ -1195,7 +1195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.userId;
       const { fridgeId } = req.query;
       
-      const checklists = await storage.getChecklists(userId, fridgeId as string);
+      const checklists = await storage.getChecklists(_userId, fridgeId as string);
       res.json(checklists);
     } catch (error: any) {
       console.error("Get checklists error:", error);
@@ -1207,7 +1207,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/checklists/due", requireAuth, async (req: any, res: Response) => {
     try {
       const userId = req.userId;
-      const dueChecklists = await storage.getDueChecklists(userId);
+      const dueChecklists = await storage.getDueChecklists(_userId);
       res.json(dueChecklists);
     } catch (error: any) {
       console.error("Get due checklists error:", error);
@@ -1227,21 +1227,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.userId;
-      const user = await storage.getUser(userId);
+      const user = await storage.getUser(_userId);
       
       // Check if user has permission to create checklists
       if (!user || (user.role !== 'admin' && user.role !== 'manager')) {
         return res.status(403).json({ error: "Insufficient permissions to create checklists" });
       }
 
-      const { title, description, frequency, fridgeId, items } = result.data;
+      const { title, description, frequency, _fridgeId, items } = result.data;
       
       const checklistData = {
         title,
         description: description || null,
         frequency,
-        fridgeId: fridgeId || null,
-        createdBy: userId,
+        _fridgeId: fridgeId || null,
+        createdBy: _userId,
         isActive: true,
       };
 
@@ -1275,17 +1275,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { fridgeId, completedItems, notes } = result.data;
+      const { _fridgeId, completedItems, notes } = result.data;
       
-      const completionData = {
-        checklistId: id,
-        fridgeId: fridgeId || null,
-        completedBy: userId,
+      const _completionData = {
+        checklistId: _id,
+        _fridgeId: fridgeId || null,
+        completedBy: _userId,
         completedItems,
         notes: notes || null,
       };
 
-      const completion = await storage.createChecklistCompletion(completionData);
+      const completion = await storage.createChecklistCompletion(_completionData);
       res.json(completion);
     } catch (error: any) {
       console.error("Complete checklist error:", error);
@@ -1304,7 +1304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { active } = req.query;
       const activeOnly = active === 'true';
       
-      const checklists = await checklistService.listChecklists(userId, activeOnly);
+      const checklists = await checklistService.listChecklists(_userId, activeOnly);
       res.json(checklists);
     } catch (error: any) {
       console.error("Get enhanced checklists error:", error);
@@ -1324,7 +1324,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.userId;
-      const checklist = await checklistService.createChecklist(userId, result.data);
+      const checklist = await checklistService.createChecklist(_userId, result._data);
       res.status(201).json(checklist);
     } catch (error: any) {
       console.error("Create enhanced checklist error:", error);
@@ -1345,7 +1345,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.userId;
-      const checklist = await checklistService.updateChecklist(userId, id, result.data);
+      const checklist = await checklistService.updateChecklist(_userId, _id, result._data);
       res.json(checklist);
     } catch (error: any) {
       console.error("Update enhanced checklist error:", error);
@@ -1366,7 +1366,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.userId;
-      const schedule = await checklistService.createOrReplaceSchedule(userId, id, result.data);
+      const schedule = await checklistService.createOrReplaceSchedule(_userId, _id, result._data);
       res.json(schedule);
     } catch (error: any) {
       console.error("Schedule checklist error:", error);
@@ -1387,7 +1387,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const userId = req.userId;
       const { from, to } = result.data;
-      const calendarData = await checklistService.getCalendarInstances(userId, from, to);
+      const calendarData = await checklistService.getCalendarInstances(_userId, from, to);
       res.json(calendarData);
     } catch (error: any) {
       console.error("Get calendar error:", error);
@@ -1408,7 +1408,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const userId = req.userId;
       const { from, to } = result.data;
-      await checklistService.generateInstances(userId, from, to);
+      await checklistService.generateInstances(_userId, from, to);
       res.json({ message: "Instances generated successfully" });
     } catch (error: any) {
       console.error("Generate instances error:", error);
@@ -1429,7 +1429,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.userId;
-      const instance = await checklistService.completeInstance(userId, instanceId, result.data);
+      const instance = await checklistService.completeInstance(_userId, instanceId, result._data);
       res.json(instance);
     } catch (error: any) {
       console.error("Complete instance error:", error);
@@ -1450,7 +1450,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const userId = req.userId;
       const { from, to, checklistId, cadence } = result.data;
-      const summaries = await checklistService.getSummaries(userId, from, to, checklistId, cadence);
+      const summaries = await checklistService.getSummaries(_userId, from, to, checklistId, cadence);
       res.json(summaries);
     } catch (error: any) {
       console.error("Get summaries error:", error);
@@ -1471,7 +1471,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const userId = req.userId;
       const { from, to } = result.data;
-      const csvData = await checklistService.exportCSV(userId, from, to);
+      const csvData = await checklistService.exportCSV(_userId, from, to);
       
       // Set CSV headers
       res.setHeader('Content-Type', 'text/csv');
@@ -1513,7 +1513,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { fridgeId } = req.params;
       const userId = req.userId;
       
-      const records = await storage.getCalibrationRecords(fridgeId, userId);
+      const records = await storage.getCalibrationRecords(_fridgeId, _userId);
       res.json(records);
     } catch (error: any) {
       console.error("Get calibration records error:", error);
@@ -1534,10 +1534,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.userId;
-      const { fridgeId, calibrationDate, performedBy, calibrationStandard, beforeCalibrationReading, afterCalibrationReading, accuracy, notes } = result.data;
+      const { _fridgeId, calibrationDate, performedBy, calibrationStandard, beforeCalibrationReading, afterCalibrationReading, accuracy, notes } = result.data;
       
       // Verify fridge ownership
-      const fridge = await storage.getFridge(fridgeId, userId);
+      const fridge = await storage.getFridge(_fridgeId, _userId);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
@@ -1547,8 +1547,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       nextDue.setFullYear(nextDue.getFullYear() + 1);
 
       const recordData = {
-        userId,
-        fridgeId,
+        _userId,
+        _fridgeId,
         calibrationDate: new Date(calibrationDate),
         nextCalibrationDue: nextDue,
         performedBy,
@@ -1561,7 +1561,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         certificateFilePath: null,
       };
 
-      const record = await storage.createCalibrationRecord(recordData);
+      const record = await storage.createCalibrationRecord(_recordData);
       res.status(201).json(record);
     } catch (error: any) {
       console.error("Create calibration record error:", error);
@@ -1601,7 +1601,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes: notes || null,
       };
 
-      const record = await storage.updateCalibrationRecord(recordId, userId, updates);
+      const record = await storage.updateCalibrationRecord(recordId, _userId, _updates);
       if (!record) {
         return res.status(404).json({ error: "Calibration record not found" });
       }
@@ -1619,7 +1619,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { recordId } = req.params;
       const userId = req.userId;
       
-      const deleted = await storage.deleteCalibrationRecord(recordId, userId);
+      const deleted = await storage.deleteCalibrationRecord(recordId, _userId);
       if (!deleted) {
         return res.status(404).json({ error: "Calibration record not found" });
       }
@@ -1637,8 +1637,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.userId;
       
       // Get comprehensive compliance data
-      const logs = await storage.getAllTemperatureLogsForUser(userId);
-      const overview = await storage.getComplianceOverview(userId);
+      const logs = await storage.getAllTemperatureLogsForUser(_userId);
+      const overview = await storage.getComplianceOverview(_userId);
       
       // Set CSV headers
       res.setHeader('Content-Type', 'text/csv');
@@ -1781,7 +1781,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/audit-templates", requireAuth, async (req: any, res: Response) => {
     try {
       const userId = req.userId;
-      const templates = await storage.getAuditTemplates(userId);
+      const templates = await storage.getAuditTemplates(_userId);
       res.json(templates);
     } catch (error: any) {
       console.error("Get audit templates error:", error);
@@ -1795,7 +1795,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.userId;
       const { templateId } = req.params;
       
-      const template = await storage.getAuditTemplate(templateId, userId);
+      const template = await storage.getAuditTemplate(_templateId, _userId);
       if (!template) {
         return res.status(404).json({ error: "Template not found" });
       }
@@ -1822,13 +1822,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const templateData = {
-        userId,
+        _userId,
         name: result.data.name,
         description: result.data.description,
         isDefault: false
       };
 
-      const template = await storage.createAuditTemplate(templateData, result.data);
+      const template = await storage.createAuditTemplate(_templateData, result._data);
       res.status(201).json(template);
     } catch (error: any) {
       console.error("Create audit template error:", error);
@@ -1843,7 +1843,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { templateId } = req.params;
       const { updateAuditTemplateSchema } = await import("@shared/self-audit-types");
       
-      const result = updateAuditTemplateSchema.safeParse({ ...req.body, id: templateId });
+      const result = updateAuditTemplateSchema.safeParse({ ...req.body, _id: templateId });
       if (!result.success) {
         return res.status(400).json({ 
           error: "Invalid template data", 
@@ -1851,10 +1851,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { id, sections, ...templateData } = result.data;
+      const { _id, sections, ...templateData } = result.data;
       const sectionsData = sections ? { sections } : undefined;
 
-      const template = await storage.updateAuditTemplate(templateId, userId, templateData, sectionsData);
+      const template = await storage.updateAuditTemplate(_templateId, _userId, _templateData, _sectionsData);
       if (!template) {
         return res.status(404).json({ error: "Template not found" });
       }
@@ -1872,7 +1872,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.userId;
       const { templateId } = req.params;
       
-      const success = await storage.deleteAuditTemplate(templateId, userId);
+      const success = await storage.deleteAuditTemplate(_templateId, _userId);
       if (!success) {
         return res.status(404).json({ error: "Template not found" });
       }
@@ -1888,7 +1888,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/audit-templates/default", requireAuth, async (req: any, res: Response) => {
     try {
       const userId = req.userId;
-      const template = await storage.createDefaultAuditTemplate(userId);
+      const template = await storage.createDefaultAuditTemplate(_userId);
       res.status(201).json(template);
     } catch (error: any) {
       console.error("Create default audit template error:", error);
@@ -1911,7 +1911,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get template to validate responses and get template name
-      const template = await storage.getAuditTemplate(result.data.templateId, userId);
+      const template = await storage.getAuditTemplate(result.data._templateId, _userId);
       if (!template) {
         return res.status(404).json({ error: "Template not found" });
       }
@@ -1922,8 +1922,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const item = section?.items.find(i => i.id === response.itemId);
         
         return {
-          id: '', // Will be set by storage method
-          completionId: '', // Will be set by storage method
+          _id: '', // Will be set by storage method
+          _completionId: '', // Will be set by storage method
           sectionId: response.sectionId,
           sectionTitle: section?.title || 'Unknown Section',
           itemId: response.itemId,
@@ -1935,18 +1935,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Calculate compliance rate using the properly typed responses
-      const complianceRate = calculateComplianceRate(responsesData);
+      const complianceRate = calculateComplianceRate(_responsesData);
 
-      const completionData = {
-        userId,
-        templateId: result.data.templateId,
+      const _completionData = {
+        _userId,
+        _templateId: result.data._templateId,
         templateName: template.name,
-        completedBy: userId,
+        completedBy: _userId,
         notes: result.data.notes,
         complianceRate: complianceRate.toString()
       };
 
-      const completion = await storage.createAuditCompletion(completionData, responsesData);
+      const completion = await storage.createAuditCompletion(_completionData, _responsesData);
       res.status(201).json(completion);
     } catch (error: any) {
       console.error("Complete audit error:", error);
@@ -1960,13 +1960,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.userId;
       const { auditFiltersSchema } = await import("@shared/self-audit-types");
       
-      const filters: any = {};
-      if (req.query.templateId) filters.templateId = req.query.templateId as string;
+      const _filters: any = {};
+      if (req.query._templateId) filters.templateId = req.query.templateId as string;
       if (req.query.startDate) filters.startDate = new Date(req.query.startDate as string);
       if (req.query.endDate) filters.endDate = new Date(req.query.endDate as string);
       if (req.query.completedBy) filters.completedBy = req.query.completedBy as string;
 
-      const completions = await storage.getAuditCompletions(userId, filters);
+      const completions = await storage.getAuditCompletions(_userId, _filters);
       res.json(completions);
     } catch (error: any) {
       console.error("Get audit completions error:", error);
@@ -1980,7 +1980,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.userId;
       const { completionId } = req.params;
       
-      const completion = await storage.getAuditCompletion(completionId, userId);
+      const completion = await storage.getAuditCompletion(_completionId, _userId);
       if (!completion) {
         return res.status(404).json({ error: "Completion not found" });
       }
@@ -1996,7 +1996,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/audit-stats", requireAuth, async (req: any, res: Response) => {
     try {
       const userId = req.userId;
-      const stats = await storage.getAuditCompletionStats(userId);
+      const stats = await storage.getAuditCompletionStats(_userId);
       res.json(stats);
     } catch (error: any) {
       console.error("Get audit stats error:", error);
@@ -2020,7 +2020,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const statusFile = path.join(process.cwd(), '.security-status.json');
         const statusContent = await fs.readFile(statusFile, 'utf-8');
         const status = JSON.parse(statusContent);
-        res.json(status);
+        res.json(_status);
       } catch (fileError) {
         // If no status file exists, return default status
         res.json({

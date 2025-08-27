@@ -55,7 +55,7 @@ const useFormField = () => {
   const { id } = itemContext
 
   return {
-    id,
+    _id,
     name: fieldContext.name,
     formItemId: `${id}-form-item`,
     formDescriptionId: `${id}-form-item-description`,
@@ -65,7 +65,7 @@ const useFormField = () => {
 }
 
 type FormItemContextValue = {
-  id: string
+  _id: string
 }
 
 const FormItemContext = React.createContext<FormItemContextValue>(

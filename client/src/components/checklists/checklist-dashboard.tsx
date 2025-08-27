@@ -1,16 +1,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import {
   Table,
@@ -23,9 +19,7 @@ import {
 import {
   BarChart3,
   Download,
-  Calendar,
   CheckCircle2,
-  XCircle,
   Clock,
   TrendingUp,
   TrendingDown,
@@ -35,7 +29,6 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 
 interface ChecklistSummary {
@@ -224,7 +217,7 @@ export default function ChecklistDashboard() {
                 id="dateFrom"
                 type="date"
                 value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
+                onChange={(e) => setDateFrom(e.target._value)}
                 className="mt-1"
               />
             </div>
@@ -235,7 +228,7 @@ export default function ChecklistDashboard() {
                 id="dateTo"
                 type="date"
                 value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
+                onChange={(e) => setDateTo(e.target._value)}
                 className="mt-1"
               />
             </div>

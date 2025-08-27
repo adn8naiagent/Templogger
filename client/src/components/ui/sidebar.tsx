@@ -32,10 +32,10 @@ const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
 type SidebarContextProps = {
   state: "expanded" | "collapsed"
-  open: boolean
-  setOpen: (open: boolean) => void
+  _open: boolean
+  setOpen: (_open: boolean) => void
   openMobile: boolean
-  setOpenMobile: (open: boolean) => void
+  setOpenMobile: (_open: boolean) => void
   isMobile: boolean
   toggleSidebar: () => void
 }
@@ -56,13 +56,13 @@ const SidebarProvider = React.forwardRef<
   React.ComponentProps<"div"> & {
     defaultOpen?: boolean
     open?: boolean
-    onOpenChange?: (open: boolean) => void
+    onOpenChange?: (_open: boolean) => void
   }
 >(
   (
     {
       defaultOpen = true,
-      open: openProp,
+      _open: openProp,
       onOpenChange: setOpenProp,
       className,
       style,
@@ -79,8 +79,8 @@ const SidebarProvider = React.forwardRef<
     const [_open, _setOpen] = React.useState(defaultOpen)
     const open = openProp ?? _open
     const setOpen = React.useCallback(
-      (value: boolean | ((value: boolean) => boolean)) => {
-        const openState = typeof value === "function" ? value(open) : value
+      (_value: boolean | ((_value: boolean) => boolean)) => {
+        const openState = typeof _value === "function" ? _value(_open) : _value
         if (setOpenProp) {
           setOpenProp(openState)
         } else {
@@ -96,8 +96,8 @@ const SidebarProvider = React.forwardRef<
     // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
       return isMobile
-        ? setOpenMobile((open) => !open)
-        : setOpen((open) => !open)
+        ? setOpenMobile((_open) => !_open)
+        : setOpen((_open) => !_open)
     }, [isMobile, setOpen, setOpenMobile])
 
     // Adds a keyboard shortcut to toggle the sidebar.
@@ -123,14 +123,14 @@ const SidebarProvider = React.forwardRef<
     const contextValue = React.useMemo<SidebarContextProps>(
       () => ({
         state,
-        open,
+        _open,
         setOpen,
         isMobile,
         openMobile,
         setOpenMobile,
         toggleSidebar,
       }),
-      [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
+      [state, _open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
     )
 
     return (

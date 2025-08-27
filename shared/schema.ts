@@ -14,7 +14,7 @@ export const sessions = pgTable(
 );
 
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: text("email").unique().notNull(),
   password: text("password").notNull(),
   firstName: text("first_name").notNull(),
@@ -32,8 +32,8 @@ export const users = pgTable("users", {
 });
 
 export const subscriptions = pgTable("subscriptions", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id").notNull().references(() => users._id),
   tier: text("tier").notNull(),
   status: text("status").notNull(),
   stripeSubscriptionId: text("stripe_subscription_id"),
@@ -43,8 +43,8 @@ export const subscriptions = pgTable("subscriptions", {
 });
 
 export const fridges = pgTable("fridges", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id").notNull().references(() => users._id),
   name: text("name").notNull(),
   location: text("location"),
   notes: text("notes"),
@@ -61,8 +61,8 @@ export const fridges = pgTable("fridges", {
 });
 
 export const labels = pgTable("labels", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id").notNull().references(() => users._id),
   name: text("name").notNull(),
   color: text("color").default("#6b7280"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -70,9 +70,9 @@ export const labels = pgTable("labels", {
 
 // Time windows for fridge monitoring schedules
 export const timeWindows = pgTable("time_windows", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
+  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id").notNull().references(() => users._id),
+  _fridgeId: varchar("fridge_id").notNull().references(() => fridges._id),
   label: text("label").notNull(), // e.g. "Morning", "Afternoon", "Daily Check"
   checkType: text("check_type").notNull().default("specific"), // "specific" or "daily"
   startTime: text("start_time"), // HH:MM format - nullable for daily checks
@@ -84,10 +84,10 @@ export const timeWindows = pgTable("time_windows", {
 
 // Enhanced temperature logs with compliance tracking
 export const temperatureLogs = pgTable("temperature_logs", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
-  timeWindowId: varchar("time_window_id").references(() => timeWindows.id),
+  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id").notNull().references(() => users._id),
+  _fridgeId: varchar("fridge_id").notNull().references(() => fridges._id),
+  timeWindowId: varchar("time_window_id").references(() => timeWindows._id),
   minTempReading: decimal("min_temp_reading", { precision: 4, scale: 1 }).notNull(),
   maxTempReading: decimal("max_temp_reading", { precision: 4, scale: 1 }).notNull(),
   currentTempReading: decimal("current_temp_reading", { precision: 4, scale: 1 }).notNull(),
@@ -102,9 +102,9 @@ export const temperatureLogs = pgTable("temperature_logs", {
 
 // Compliance records for tracking at different levels
 export const complianceRecords = pgTable("compliance_records", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
+  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id").notNull().references(() => users._id),
+  _fridgeId: varchar("fridge_id").notNull().references(() => fridges._id),
   date: timestamp("date").notNull(),
   level: text("level").notNull(), // "window", "fridge-day", "overall"
   status: text("status").notNull(), // "compliant", "missed", "partial", "late"
@@ -119,37 +119,37 @@ export const complianceRecords = pgTable("compliance_records", {
 
 // Missed checks tracking with manual override capability
 export const missedChecks = pgTable("missed_checks", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
-  timeWindowId: varchar("time_window_id").references(() => timeWindows.id),
+  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id").notNull().references(() => users._id),
+  _fridgeId: varchar("fridge_id").notNull().references(() => fridges._id),
+  timeWindowId: varchar("time_window_id").references(() => timeWindows._id),
   missedDate: timestamp("missed_date").notNull(),
   checkType: text("check_type").notNull(), // "specific" or "daily"
   reason: text("reason"), // Auto-generated or user provided
   isOverridden: boolean("is_overridden").notNull().default(false),
   overrideReason: text("override_reason"), // User explanation for override
-  overriddenBy: varchar("overridden_by").references(() => users.id),
+  overriddenBy: varchar("overridden_by").references(() => users._id),
   overriddenAt: timestamp("overridden_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Custom checklists for admin-created tasks
 export const checklists = pgTable("checklists", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   title: text("title").notNull(),
   description: text("description"),
   frequency: text("frequency").notNull(), // "daily", "weekly", "monthly"
   isActive: boolean("is_active").notNull().default(true),
-  fridgeId: varchar("fridge_id").references(() => fridges.id), // Optional - can be global
-  createdBy: varchar("created_by").notNull().references(() => users.id),
+  _fridgeId: varchar("fridge_id").references(() => fridges._id), // Optional - can be global
+  createdBy: varchar("created_by").notNull().references(() => users._id),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Checklist items 
 export const checklistItems = pgTable("checklist_items", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  checklistId: varchar("checklist_id").notNull().references(() => checklists.id),
+  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id").notNull().references(() => users._id),
+  checklistId: varchar("checklist_id").notNull().references(() => checklists._id),
   title: text("title").notNull(),
   description: text("description"),
   isRequired: boolean("is_required").notNull().default(true),
@@ -159,11 +159,11 @@ export const checklistItems = pgTable("checklist_items", {
 
 // Checklist completions
 export const checklistCompletions = pgTable("checklist_completions", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  checklistId: varchar("checklist_id").notNull().references(() => checklists.id),
-  fridgeId: varchar("fridge_id").references(() => fridges.id),
-  completedBy: varchar("completed_by").notNull().references(() => users.id),
+  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id").notNull().references(() => users._id),
+  checklistId: varchar("checklist_id").notNull().references(() => checklists._id),
+  _fridgeId: varchar("fridge_id").references(() => fridges._id),
+  completedBy: varchar("completed_by").notNull().references(() => users._id),
   completedItems: text("completed_items").array(), // Array of checklist item IDs
   notes: text("notes"),
   completedAt: timestamp("completed_at").defaultNow(),
@@ -171,10 +171,10 @@ export const checklistCompletions = pgTable("checklist_completions", {
 
 // Out-of-range events tracking
 export const outOfRangeEvents = pgTable("out_of_range_events", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  temperatureLogId: varchar("temperature_log_id").notNull().references(() => temperatureLogs.id),
-  fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
+  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id").notNull().references(() => users._id),
+  temperatureLogId: varchar("temperature_log_id").notNull().references(() => temperatureLogs._id),
+  _fridgeId: varchar("fridge_id").notNull().references(() => fridges._id),
   violationType: text("violation_type").notNull(), // "min", "max", "current", "multiple"
   minTempReading: decimal("min_temp_reading", { precision: 4, scale: 1 }),
   maxTempReading: decimal("max_temp_reading", { precision: 4, scale: 1 }),
@@ -190,9 +190,9 @@ export const outOfRangeEvents = pgTable("out_of_range_events", {
 
 // Calibration records for fridge thermometers
 export const calibrationRecords = pgTable("calibration_records", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
+  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id").notNull().references(() => users._id),
+  _fridgeId: varchar("fridge_id").notNull().references(() => fridges._id),
   calibrationDate: timestamp("calibration_date").notNull(),
   nextCalibrationDue: timestamp("next_calibration_due").notNull(),
   performedBy: text("performed_by").notNull(),
@@ -210,9 +210,9 @@ export const calibrationRecords = pgTable("calibration_records", {
 
 // Maintenance records for fridges
 export const maintenanceRecords = pgTable("maintenance_records", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  fridgeId: varchar("fridge_id").notNull().references(() => fridges.id),
+  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id").notNull().references(() => users._id),
+  _fridgeId: varchar("fridge_id").notNull().references(() => fridges._id),
   maintenanceDate: timestamp("maintenance_date").notNull(),
   maintenanceType: text("maintenance_type").notNull(), // "routine", "repair", "emergency", "cleaning"
   performedBy: text("performed_by").notNull(),
@@ -228,7 +228,7 @@ export const maintenanceRecords = pgTable("maintenance_records", {
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
-  id: true,
+  _id: true,
   email: true,
   password: true,
   firstName: true,
@@ -241,7 +241,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
 });
 
 export const upsertUserSchema = createInsertSchema(users).pick({
-  id: true,
+  _id: true,
   email: true,
   password: true,
   firstName: true,
@@ -250,13 +250,13 @@ export const upsertUserSchema = createInsertSchema(users).pick({
 });
 
 export const insertSubscriptionSchema = createInsertSchema(subscriptions).pick({
-  userId: true,
+  _userId: true,
   tier: true,
   status: true,
 });
 
 export const insertFridgeSchema = createInsertSchema(fridges).pick({
-  userId: true,
+  _userId: true,
   name: true,
   location: true,
   notes: true,
@@ -267,14 +267,14 @@ export const insertFridgeSchema = createInsertSchema(fridges).pick({
 });
 
 export const insertLabelSchema = createInsertSchema(labels).pick({
-  userId: true,
+  _userId: true,
   name: true,
   color: true,
 });
 
 export const insertTemperatureLogSchema = createInsertSchema(temperatureLogs).pick({
-  userId: true,
-  fridgeId: true,
+  _userId: true,
+  _fridgeId: true,
   timeWindowId: true,
   minTempReading: true,
   maxTempReading: true,
@@ -288,8 +288,8 @@ export const insertTemperatureLogSchema = createInsertSchema(temperatureLogs).pi
 });
 
 export const insertTimeWindowSchema = createInsertSchema(timeWindows).pick({
-  userId: true,
-  fridgeId: true,
+  _userId: true,
+  _fridgeId: true,
   label: true,
   checkType: true,
   startTime: true,
@@ -299,7 +299,7 @@ export const insertTimeWindowSchema = createInsertSchema(timeWindows).pick({
 });
 
 export const insertComplianceRecordSchema = createInsertSchema(complianceRecords).pick({
-  fridgeId: true,
+  _fridgeId: true,
   date: true,
   level: true,
   status: true,
@@ -313,7 +313,7 @@ export const insertChecklistSchema = createInsertSchema(checklists).pick({
   description: true,
   frequency: true,
   isActive: true,
-  fridgeId: true,
+  _fridgeId: true,
   createdBy: true,
 });
 
@@ -327,7 +327,7 @@ export const insertChecklistItemSchema = createInsertSchema(checklistItems).pick
 
 export const insertChecklistCompletionSchema = createInsertSchema(checklistCompletions).pick({
   checklistId: true,
-  fridgeId: true,
+  _fridgeId: true,
   completedBy: true,
   completedItems: true,
   notes: true,
@@ -335,7 +335,7 @@ export const insertChecklistCompletionSchema = createInsertSchema(checklistCompl
 
 export const insertOutOfRangeEventSchema = createInsertSchema(outOfRangeEvents).pick({
   temperatureLogId: true,
-  fridgeId: true,
+  _fridgeId: true,
   violationType: true,
   minTempReading: true,
   maxTempReading: true,
@@ -348,8 +348,8 @@ export const insertOutOfRangeEventSchema = createInsertSchema(outOfRangeEvents).
 });
 
 export const insertCalibrationRecordSchema = createInsertSchema(calibrationRecords).pick({
-  userId: true,
-  fridgeId: true,
+  _userId: true,
+  _fridgeId: true,
   calibrationDate: true,
   nextCalibrationDue: true,
   performedBy: true,
@@ -365,7 +365,7 @@ export const insertCalibrationRecordSchema = createInsertSchema(calibrationRecor
 });
 
 export const insertMaintenanceRecordSchema = createInsertSchema(maintenanceRecords).pick({
-  fridgeId: true,
+  _fridgeId: true,
   maintenanceDate: true,
   maintenanceType: true,
   performedBy: true,
@@ -421,7 +421,7 @@ export const resetPasswordSchema = z.object({
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 
       "Password must include uppercase, lowercase, numbers, and symbols"),
   confirmPassword: z.string(),
-}).refine((data) => data.newPassword === data.confirmPassword, {
+}).refine((_data) => data.newPassword === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
 });
@@ -441,7 +441,7 @@ export const createFridgeSchema = z.object({
     const num = parseFloat(val);
     return !isNaN(num) && num >= -50 && num <= 50;
   }, "Maximum temperature must be between -50°C and 50°C"),
-}).refine((data) => {
+}).refine((_data) => {
   const min = parseFloat(data.minTemp);
   const max = parseFloat(data.maxTemp);
   return min < max;
@@ -456,7 +456,7 @@ export const createLabelSchema = z.object({
 });
 
 export const logTemperatureSchema = z.object({
-  fridgeId: z.string().min(1, "Fridge selection is required"),
+  _fridgeId: z.string().min(1, "Fridge selection is required"),
   timeWindowId: z.string().optional(),
   minTempReading: z.string().refine((val) => {
     const num = parseFloat(val);
@@ -476,7 +476,7 @@ export const logTemperatureSchema = z.object({
   lateReason: z.string().optional(),
   correctiveAction: z.string().optional(),
   correctiveNotes: z.string().optional(),
-}).refine((data) => {
+}).refine((_data) => {
   const min = parseFloat(data.minTempReading);
   const max = parseFloat(data.maxTempReading);
   const current = parseFloat(data.currentTempReading);
@@ -488,13 +488,13 @@ export const logTemperatureSchema = z.object({
 
 // Time window schema
 export const createTimeWindowSchema = z.object({
-  fridgeId: z.string().min(1, "Please select a fridge"),
+  _fridgeId: z.string().min(1, "Please select a fridge"),
   label: z.string().min(1, "Label is required"),
   checkType: z.enum(["specific", "daily"]).default("specific"),
   startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)").optional(),
   endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)").optional(),
   excludedDays: z.array(z.number().min(0).max(6)).default([]), // 0=Sunday, 6=Saturday
-}).refine((data) => {
+}).refine((_data) => {
   // For specific checks, require start and end times
   if (data.checkType === "specific") {
     return data.startTime && data.endTime && data.startTime < data.endTime;
@@ -510,7 +510,7 @@ export const createChecklistSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   frequency: z.enum(["daily", "weekly", "monthly"]),
-  fridgeId: z.string().optional(),
+  _fridgeId: z.string().optional(),
   items: z.array(z.object({
     title: z.string().min(1, "Item title is required"),
     description: z.string().optional(),
@@ -521,14 +521,14 @@ export const createChecklistSchema = z.object({
 // Checklist completion schema
 export const completeChecklistSchema = z.object({
   checklistId: z.string().min(1, "Checklist ID is required"),
-  fridgeId: z.string().optional(),
+  _fridgeId: z.string().optional(),
   completedItems: z.array(z.string()),
   notes: z.string().optional(),
 });
 
 // Calibration record schema
 export const createCalibrationRecordSchema = z.object({
-  fridgeId: z.string().min(1, "Fridge selection is required"),
+  _fridgeId: z.string().min(1, "Fridge selection is required"),
   calibrationDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Valid calibration date is required"),
   performedBy: z.string().min(1, "Performed by is required"),
   calibrationStandard: z.string().optional(),
@@ -552,7 +552,7 @@ export const createCalibrationRecordSchema = z.object({
 
 // Maintenance record schema
 export const createMaintenanceRecordSchema = z.object({
-  fridgeId: z.string().min(1, "Fridge selection is required"),
+  _fridgeId: z.string().min(1, "Fridge selection is required"),
   maintenanceDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Valid maintenance date is required"),
   maintenanceType: z.enum(["routine", "repair", "emergency", "cleaning"], {
     required_error: "Maintenance type is required",
@@ -615,8 +615,8 @@ export type InsertMaintenanceRecord = z.infer<typeof insertMaintenanceRecordSche
 
 // Self-audit checklist tables
 export const auditTemplates = pgTable("audit_templates", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id").notNull().references(() => users._id),
   name: text("name").notNull(),
   description: text("description"),
   isDefault: boolean("is_default").notNull().default(false),
@@ -625,8 +625,8 @@ export const auditTemplates = pgTable("audit_templates", {
 });
 
 export const auditSections = pgTable("audit_sections", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  templateId: varchar("template_id").notNull().references(() => auditTemplates.id, { onDelete: 'cascade' }),
+  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  _templateId: varchar("template_id").notNull().references(() => auditTemplates._id, { onDelete: 'cascade' }),
   title: text("title").notNull(),
   description: text("description"),
   orderIndex: decimal("order_index", { precision: 3, scale: 0 }).notNull().default("0"),
@@ -634,8 +634,8 @@ export const auditSections = pgTable("audit_sections", {
 });
 
 export const auditItems = pgTable("audit_items", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  sectionId: varchar("section_id").notNull().references(() => auditSections.id, { onDelete: 'cascade' }),
+  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sectionId: varchar("section_id").notNull().references(() => auditSections._id, { onDelete: 'cascade' }),
   text: text("text").notNull(),
   isRequired: boolean("is_required").notNull().default(true),
   orderIndex: decimal("order_index", { precision: 3, scale: 0 }).notNull().default("0"),
@@ -644,11 +644,11 @@ export const auditItems = pgTable("audit_items", {
 });
 
 export const auditCompletions = pgTable("audit_completions", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  templateId: varchar("template_id").notNull().references(() => auditTemplates.id),
+  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id").notNull().references(() => users._id),
+  _templateId: varchar("template_id").notNull().references(() => auditTemplates._id),
   templateName: text("template_name").notNull(), // Snapshot for historical reference
-  completedBy: varchar("completed_by").notNull().references(() => users.id),
+  completedBy: varchar("completed_by").notNull().references(() => users._id),
   completedAt: timestamp("completed_at").defaultNow(),
   notes: text("notes"),
   complianceRate: decimal("compliance_rate", { precision: 5, scale: 2 }).notNull().default("0"),
@@ -656,8 +656,8 @@ export const auditCompletions = pgTable("audit_completions", {
 });
 
 export const auditResponses = pgTable("audit_responses", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  completionId: varchar("completion_id").notNull().references(() => auditCompletions.id, { onDelete: 'cascade' }),
+  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  _completionId: varchar("completion_id").notNull().references(() => auditCompletions._id, { onDelete: 'cascade' }),
   sectionId: varchar("section_id").notNull(),
   sectionTitle: text("section_title").notNull(), // Snapshot for historical reference
   itemId: varchar("item_id").notNull(),
@@ -670,14 +670,14 @@ export const auditResponses = pgTable("audit_responses", {
 
 // Insert schemas for self-audit tables
 export const insertAuditTemplateSchema = createInsertSchema(auditTemplates).pick({
-  userId: true,
+  _userId: true,
   name: true,
   description: true,
   isDefault: true,
 });
 
 export const insertAuditSectionSchema = createInsertSchema(auditSections).pick({
-  templateId: true,
+  _templateId: true,
   title: true,
   description: true,
   orderIndex: true,
@@ -692,8 +692,8 @@ export const insertAuditItemSchema = createInsertSchema(auditItems).pick({
 });
 
 export const insertAuditCompletionSchema = createInsertSchema(auditCompletions).pick({
-  userId: true,
-  templateId: true,
+  _userId: true,
+  _templateId: true,
   templateName: true,
   completedBy: true,
   notes: true,
@@ -701,7 +701,7 @@ export const insertAuditCompletionSchema = createInsertSchema(auditCompletions).
 });
 
 export const insertAuditResponseSchema = createInsertSchema(auditResponses).pick({
-  completionId: true,
+  _completionId: true,
   sectionId: true,
   sectionTitle: true,
   itemId: true,

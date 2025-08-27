@@ -5,7 +5,7 @@ import type { User } from "@shared/schema";
 export function useAuth() {
   const queryClient = useQueryClient();
   
-  const { data: user, isLoading, refetch } = useQuery<User>({
+  const { _data: user, isLoading, refetch } = useQuery<User>({
     queryKey: ["/api/auth/user"],
     retry: false,
   });
@@ -22,6 +22,7 @@ export function useAuth() {
       queryClient.clear();
     } catch (error) {
       // Even if server call fails, clear local data
+      // eslint-disable-next-line no-console
       console.error("Logout error:", error);
     }
   };

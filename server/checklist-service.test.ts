@@ -5,7 +5,7 @@ import { ChecklistSchedule } from '@shared/checklist-types';
 describe('SchedulingUtils', () => {
   test('should generate daily instances correctly', () => {
     const schedule: ChecklistSchedule = {
-      id: 'test-schedule',
+      _id: 'test-schedule',
       checklistId: 'test-checklist',
       cadence: 'DAILY',
       startDate: '2024-01-01',
@@ -31,7 +31,7 @@ describe('SchedulingUtils', () => {
 
   test('should generate DOW instances correctly', () => {
     const schedule: ChecklistSchedule = {
-      id: 'test-schedule',
+      _id: 'test-schedule',
       checklistId: 'test-checklist',
       cadence: 'DOW',
       daysOfWeek: [1, 3, 5], // Monday, Wednesday, Friday

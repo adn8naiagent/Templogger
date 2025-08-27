@@ -1,13 +1,24 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Zap, Settings, Sun, RefreshCw } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Zap, Settings, Sun, RefreshCw, User, LogOut, Crown, Shield, Star } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Link } from "wouter";
 
 interface NavigationProps {
   onRefresh?: () => void;
 }
 
 export default function Navigation({ onRefresh }: NavigationProps) {
+  const { user, logout } = useAuth();
+
   return (
     <nav className="bg-card border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -38,11 +49,55 @@ export default function Navigation({ onRefresh }: NavigationProps) {
             <Button variant="ghost" size="icon" data-testid="button-theme">
               <Sun className="w-5 h-5" />
             </Button>
-            <Avatar className="w-8 h-8" data-testid="avatar-user">
-              <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">
-                U
-              </AvatarFallback>
-            </Avatar>
+            
+            {/* User Account Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center space-x-2" data-testid="user-menu">
+                  <div className="flex items-center space-x-2">
+                    {user?.role === 'admin' && <Crown className="w-4 h-4 text-yellow-500" />}
+                    {user?.role === 'manager' && <Shield className="w-4 h-4 text-blue-500" />}
+                    {user?.role === 'staff' && <Star className="w-4 h-4 text-green-500" />}
+                    <Avatar className="w-6 h-6">
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs font-medium">
+                        {user?.firstName?.[0] || user?.username?.[0] || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden sm:inline-block text-sm">{user?.firstName || user?.username || 'User'}</span>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem asChild>
+                  <Link to="/account">
+                    <User className="w-4 h-4 mr-2" />
+                    Account Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/settings">
+                    <Settings className="w-4 h-4 mr-2" />
+                    App Settings
+                  </Link>
+                </DropdownMenuItem>
+                {user?.role === 'admin' && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin/dashboard">
+                        <Crown className="w-4 h-4 mr-2" />
+                        Admin Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={logout}>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>

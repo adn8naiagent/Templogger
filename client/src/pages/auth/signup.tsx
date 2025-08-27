@@ -2,10 +2,10 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useLocation } from "wouter";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+// import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Loader2, UserPlus, AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
@@ -30,11 +30,11 @@ export default function Signup() {
   });
 
   const signupMutation = useMutation({
-    mutationFn: async (data: SignUpData) => {
-      const response = await apiRequest("POST", "/api/auth/signup", data);
+    mutationFn: async (_data: SignUpData) => {
+      const response = await apiRequest("POST", "/api/auth/signup", _data);
       return response.json();
     },
-    onSuccess: async (data) => {
+    onSuccess: async (_data) => {
       // Store the auth token in localStorage
       if (data.authToken) {
         localStorage.setItem('authToken', data.authToken);
@@ -57,8 +57,8 @@ export default function Signup() {
     },
   });
 
-  const onSubmit = (data: SignUpData) => {
-    signupMutation.mutate(data);
+  const onSubmit = (_data: SignUpData) => {
+    signupMutation.mutate(_data);
   };
 
   const password = form.watch("password");

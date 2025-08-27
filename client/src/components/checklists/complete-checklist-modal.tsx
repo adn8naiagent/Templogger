@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,26 +12,21 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  DialogTitle } from "@/components/ui/dialog";
 import {
   CheckSquare,
-  Square,
   Save,
   X,
   AlertTriangle,
   FileText,
   Clock,
-  Calendar,
-  User,
-} from "lucide-react";
+  User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 
 interface ChecklistItem {
-  id: string;
+  _id: string;
   label: string;
   required: boolean;
   orderIndex: number;
@@ -40,7 +34,7 @@ interface ChecklistItem {
 }
 
 interface ChecklistInstance {
-  id: string;
+  _id: string;
   checklistId: string;
   checklistName: string;
   targetDate: string;
@@ -53,7 +47,7 @@ interface ChecklistInstance {
 
 interface CompleteChecklistModalProps {
   isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange: (_open: boolean) => void;
   instance?: ChecklistInstance | null;
   onComplete?: () => void;
 }
@@ -68,8 +62,7 @@ export default function CompleteChecklistModal({
   isOpen,
   onOpenChange,
   instance,
-  onComplete,
-}: CompleteChecklistModalProps) {
+  onComplete }: CompleteChecklistModalProps) {
   const { toast } = useToast();
   const { logout, user } = useAuth();
   const queryClient = useQueryClient();
@@ -81,17 +74,16 @@ export default function CompleteChecklistModal({
   useEffect(() => {
     if (instance?.items) {
       setItemStates(instance.items.map(item => ({
-        itemId: item.id,
+        itemId: item._id,
         checked: false,
-        note: '',
-      })));
+        note: '' })));
       setConfirmationNote('');
     }
   }, [instance]);
 
   // Complete instance mutation
   const completeInstanceMutation = useMutation({
-    mutationFn: async (data: {
+    mutationFn: async (_data: {
       items: Array<{ itemId: string; checked: boolean; note?: string }>;
       confirmationNote?: string;
     }) => {
@@ -100,7 +92,7 @@ export default function CompleteChecklistModal({
       const response = await apiRequest(
         'POST',
         `/api/v2/instances/${instance.id}/complete`,
-        data
+        _data
       );
 
       if (!response.ok) {
@@ -120,23 +112,20 @@ export default function CompleteChecklistModal({
       onComplete?.();
       toast({
         title: "Success",
-        description: "Checklist completed successfully",
-      });
+        description: "Checklist completed successfully" });
     },
     onError: (error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to complete checklist",
-        variant: "destructive",
-      });
-    },
-  });
+        variant: "destructive" });
+    } });
 
   // Update item state
-  const updateItemState = (itemId: string, updates: Partial<ItemCompletionState>) => {
+  const updateItemState = (itemId: string, _updates: Partial<ItemCompletionState>) => {
     setItemStates(prev => 
       prev.map(state => 
-        state.itemId === itemId ? { ...state, ...updates } : state
+        state.itemId === itemId ? { ..._state, ...updates } : _state
       )
     );
   };
@@ -160,21 +149,18 @@ export default function CompleteChecklistModal({
       toast({
         title: "Validation Error",
         description: "All required items must be completed",
-        variant: "destructive",
-      });
+        variant: "destructive" });
       return;
     }
 
-    const completionData = {
+    const _completionData = {
       items: itemStates.map(state => ({
         itemId: state.itemId,
         checked: state.checked,
-        note: state.note || undefined,
-      })),
-      confirmationNote: confirmationNote || undefined,
-    };
+        note: state.note || undefined })),
+      confirmationNote: confirmationNote || undefined };
 
-    completeInstanceMutation.mutate(completionData);
+    completeInstanceMutation.mutate(_completionData);
   };
 
   // Format target date display
@@ -189,8 +175,7 @@ export default function CompleteChecklistModal({
         weekday: 'long',
         year: 'numeric',
         month: 'long',
-        day: 'numeric',
-      });
+        day: 'numeric' });
     }
   };
 
@@ -258,8 +243,7 @@ export default function CompleteChecklistModal({
                     areRequiredItemsCompleted() ? 'bg-green-500' : 'bg-blue-500'
                   }`}
                   style={{
-                    width: `${requiredItems.length > 0 ? (completedRequiredCount / requiredItems.length) * 100 : 0}%`,
-                  }}
+                    width: `${requiredItems.length > 0 ? (completedRequiredCount / requiredItems.length) * 100 : 0}%` }}
                 />
               </div>
             </CardContent>
@@ -275,7 +259,7 @@ export default function CompleteChecklistModal({
               
               <div className="space-y-3">
                 {requiredItems.map((item) => {
-                  const itemState = itemStates.find(s => s.itemId === item.id);
+                  const itemState = itemStates.find(s => s.itemId === item._id);
                   if (!itemState) return null;
 
                   return (
@@ -290,7 +274,7 @@ export default function CompleteChecklistModal({
                             <Checkbox
                               checked={itemState.checked}
                               onCheckedChange={(checked) => 
-                                updateItemState(item.id, { checked: !!checked })
+                                updateItemState(item._id, { checked: !!checked })
                               }
                               className="mt-1"
                             />
@@ -317,7 +301,7 @@ export default function CompleteChecklistModal({
                               placeholder="Add notes about this item..."
                               value={itemState.note}
                               onChange={(e) => 
-                                updateItemState(item.id, { note: e.target.value })
+                                updateItemState(item._id, { note: e.target.value })
                               }
                               rows={2}
                               className="mt-1"
@@ -342,7 +326,7 @@ export default function CompleteChecklistModal({
               
               <div className="space-y-3">
                 {optionalItems.map((item) => {
-                  const itemState = itemStates.find(s => s.itemId === item.id);
+                  const itemState = itemStates.find(s => s.itemId === item._id);
                   if (!itemState) return null;
 
                   return (
@@ -357,7 +341,7 @@ export default function CompleteChecklistModal({
                             <Checkbox
                               checked={itemState.checked}
                               onCheckedChange={(checked) => 
-                                updateItemState(item.id, { checked: !!checked })
+                                updateItemState(item._id, { checked: !!checked })
                               }
                               className="mt-1"
                             />
@@ -384,7 +368,7 @@ export default function CompleteChecklistModal({
                               placeholder="Add notes about this item..."
                               value={itemState.note}
                               onChange={(e) => 
-                                updateItemState(item.id, { note: e.target.value })
+                                updateItemState(item._id, { note: e.target.value })
                               }
                               rows={2}
                               className="mt-1"
@@ -408,7 +392,7 @@ export default function CompleteChecklistModal({
               id="confirmationNote"
               placeholder="Add any overall notes or observations about completing this checklist..."
               value={confirmationNote}
-              onChange={(e) => setConfirmationNote(e.target.value)}
+              onChange={(e) => setConfirmationNote(e.target._value)}
               rows={3}
             />
           </div>

@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ShieldCheck, Rocket, CheckCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -9,7 +9,7 @@ interface ToolingCardProps {
   cardKey: string;
 }
 
-interface ToolingStatus {
+interface ToolingStatusType {
   codeQuality?: Record<string, { status: string; description: string }>;
   buildDeploy?: Record<string, { status: string; description: string }>;
 }
@@ -41,7 +41,7 @@ function ToolingCard({ title, icon, tools, cardKey }: ToolingCardProps) {
 }
 
 export default function ToolingStatus() {
-  const { data: tooling } = useQuery<ToolingStatus>({
+  const { _data: tooling } = useQuery<ToolingStatusType>({
     queryKey: ["/api/tooling-status"],
   });
 

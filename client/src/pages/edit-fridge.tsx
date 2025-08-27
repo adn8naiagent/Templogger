@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,17 +21,13 @@ import {
 } from 'lucide-react';
 import { HexColorPicker } from "react-colorful";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Switch } from "@/components/ui/switch";
+// import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from '@/components/ui/badge';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
+// import { 
+//   Select 
+// } from '@/components/ui/select';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -55,8 +51,8 @@ interface TimeWindow {
 }
 
 export default function EditFridge() {
-  const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { id } = useParams<{ _id: string }>();
+  const { user: _user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -77,9 +73,9 @@ export default function EditFridge() {
   const [deleteConfirmName, setDeleteConfirmName] = useState('');
 
   // Fetch fridge data
-  const { data: fridge, isLoading } = useQuery<Fridge>({
+  const { _data: fridge, isLoading } = useQuery<Fridge>({
     queryKey: [`/api/fridge/${id}`],
-    enabled: !!id,
+    enabled: !!_id,
   });
 
   // Load fridge data into form
@@ -104,7 +100,7 @@ export default function EditFridge() {
 
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-  const predefinedColors = [
+  const _predefinedColors = [
     '#3b82f6', '#ef4444', '#10b981', '#f59e0b', 
     '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'
   ];
@@ -146,8 +142,8 @@ export default function EditFridge() {
 
   // Update fridge mutation
   const updateMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await apiRequest('PATCH', `/api/fridge/${id}`, data);
+    mutationFn: async (_data: any) => {
+      const response = await apiRequest('PATCH', `/api/fridge/${id}`, _data);
       return response.json();
     },
     onSuccess: () => {
@@ -403,7 +399,7 @@ export default function EditFridge() {
                   id="name"
                   type="text"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => setName(e.target._value)}
                   placeholder="e.g., Main Vaccine Fridge"
                   required
                   data-testid="input-name"
@@ -416,7 +412,7 @@ export default function EditFridge() {
                   id="location"
                   type="text"
                   value={location}
-                  onChange={(e) => setFridgeLocation(e.target.value)}
+                  onChange={(e) => setFridgeLocation(e.target._value)}
                   placeholder="e.g., Room 101, Pharmacy"
                   data-testid="input-location"
                 />
@@ -427,7 +423,7 @@ export default function EditFridge() {
                 <Textarea
                   id="notes"
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={(e) => setNotes(e.target._value)}
                   placeholder="Any additional notes or instructions..."
                   rows={3}
                   data-testid="input-notes"
@@ -467,7 +463,7 @@ export default function EditFridge() {
                     type="number"
                     step="0.1"
                     value={minTemp}
-                    onChange={(e) => setMinTemp(e.target.value)}
+                    onChange={(e) => setMinTemp(e.target._value)}
                     placeholder="2.0"
                     required
                     data-testid="input-min-temp"
@@ -480,7 +476,7 @@ export default function EditFridge() {
                     type="number"
                     step="0.1"
                     value={maxTemp}
-                    onChange={(e) => setMaxTemp(e.target.value)}
+                    onChange={(e) => setMaxTemp(e.target._value)}
                     placeholder="8.0"
                     required
                     data-testid="input-max-temp"
@@ -507,7 +503,7 @@ export default function EditFridge() {
                     <Label className="text-base font-medium">Check Frequency</Label>
                     <RadioGroup
                       value={checkFrequency}
-                      onValueChange={(value) => setCheckFrequency(value as 'once' | 'twice' | 'multiple')}
+                      onValueChange={(_value) => setCheckFrequency(value as 'once' | 'twice' | 'multiple')}
                       className="mt-3"
                     >
                       <div className="flex items-center space-x-2">
@@ -547,7 +543,7 @@ export default function EditFridge() {
                             <div className="flex items-center justify-between">
                               <Input
                                 value={window.label}
-                                onChange={(e) => updateTimeWindow(index, 'label', e.target.value)}
+                                onChange={(e) => updateTimeWindow(index, 'label', e.target._value)}
                                 placeholder="Check label"
                                 className="flex-1 mr-4"
                                 data-testid={`time-window-label-${index}`}
@@ -570,7 +566,7 @@ export default function EditFridge() {
                                   id={`start-${index}`}
                                   type="time"
                                   value={window.startTime || ''}
-                                  onChange={(e) => updateTimeWindow(index, 'startTime', e.target.value)}
+                                  onChange={(e) => updateTimeWindow(index, 'startTime', e.target._value)}
                                   data-testid={`start-time-${index}`}
                                 />
                               </div>
@@ -580,7 +576,7 @@ export default function EditFridge() {
                                   id={`end-${index}`}
                                   type="time"
                                   value={window.endTime || ''}
-                                  onChange={(e) => updateTimeWindow(index, 'endTime', e.target.value)}
+                                  onChange={(e) => updateTimeWindow(index, 'endTime', e.target._value)}
                                   data-testid={`end-time-${index}`}
                                 />
                               </div>
@@ -682,7 +678,7 @@ export default function EditFridge() {
                           </p>
                           <Input
                             value={deleteConfirmName}
-                            onChange={(e) => setDeleteConfirmName(e.target.value)}
+                            onChange={(e) => setDeleteConfirmName(e.target._value)}
                             placeholder="Enter fridge name to confirm"
                             data-testid="input-delete-confirm"
                           />

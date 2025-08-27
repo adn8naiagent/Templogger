@@ -1,7 +1,6 @@
-import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -11,7 +10,6 @@ import {
   XCircle,
   AlertTriangle,
   FileText,
-  Calendar,
   User,
   BarChart3,
   Download,
@@ -22,8 +20,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 
 interface AuditCompletion {
-  id: string;
-  templateId: string;
+  _id: string;
+  _templateId: string;
   templateName: string;
   completedBy: string;
   completedAt: Date;
@@ -34,7 +32,7 @@ interface AuditCompletion {
 }
 
 interface AuditResponse {
-  id: string;
+  _id: string;
   sectionId: string;
   sectionTitle: string;
   itemId: string;
@@ -45,14 +43,14 @@ interface AuditResponse {
 }
 
 interface AuditTemplate {
-  id: string;
+  _id: string;
   name: string;
   description?: string;
   sections: AuditSection[];
 }
 
 interface AuditSection {
-  id: string;
+  _id: string;
   title: string;
   description?: string;
   orderIndex: number;
@@ -60,7 +58,7 @@ interface AuditSection {
 }
 
 interface AuditItem {
-  id: string;
+  _id: string;
   text: string;
   isRequired: boolean;
   orderIndex: number;
@@ -68,7 +66,7 @@ interface AuditItem {
 }
 
 export default function ViewAuditCompletion() {
-  const { completionId } = useParams<{ completionId: string }>();
+  const { completionId } = useParams<{ _completionId: string }>();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -90,7 +88,7 @@ export default function ViewAuditCompletion() {
 
   // Fetch completion details
   const { 
-    data: completion, 
+    _data: completion, 
     isLoading: completionLoading, 
     error: completionError 
   } = useQuery({
@@ -105,7 +103,7 @@ export default function ViewAuditCompletion() {
       }
       return response.json() as Promise<AuditCompletion>;
     },
-    enabled: isAuthenticated && !!completionId,
+    enabled: isAuthenticated && !!_completionId,
   });
 
   const getComplianceColor = (rate: number) => {

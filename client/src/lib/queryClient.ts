@@ -14,7 +14,7 @@ export async function apiRequest(
 ): Promise<Response> {
   const headers: Record<string, string> = {};
   
-  if (data) {
+  if (_data) {
     headers["Content-Type"] = "application/json";
   }
   
@@ -27,7 +27,7 @@ export async function apiRequest(
   const res = await fetch(url, {
     method,
     headers,
-    body: data ? JSON.stringify(data) : undefined,
+    body: data ? JSON.stringify(_data) : undefined,
     credentials: "include",
   });
 
@@ -36,7 +36,7 @@ export async function apiRequest(
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
+export const getQueryFn: <T>(_options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>

@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom';
+require('@testing-library/jest-dom');
 
 // Mock window.matchMedia for responsive hooks
 Object.defineProperty(window, 'matchMedia', {

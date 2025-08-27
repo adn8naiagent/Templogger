@@ -44,7 +44,7 @@ export class SchedulingUtils {
     for (let date = new Date(effectiveStart); date <= effectiveEnd; date.setUTCDate(date.getUTCDate() + 1)) {
       instances.push({
         checklistId: schedule.checklistId,
-        scheduleId: schedule.id,
+        scheduleId: schedule._id,
         targetDate: this.formatDateISO(new Date(date)),
         status: 'REQUIRED',
         createdAt: new Date(),
@@ -80,7 +80,7 @@ export class SchedulingUtils {
       if (schedule.daysOfWeek.includes(dayOfWeek)) {
         instances.push({
           checklistId: schedule.checklistId,
-          scheduleId: schedule.id,
+          scheduleId: schedule._id,
           targetDate: this.formatDateISO(new Date(date)),
           status: 'REQUIRED',
           createdAt: new Date(),
@@ -119,7 +119,7 @@ export class SchedulingUtils {
       if (currentWeek.endDate >= effectiveStart && currentWeek.startDate <= effectiveEnd) {
         instances.push({
           checklistId: schedule.checklistId,
-          scheduleId: schedule.id,
+          scheduleId: schedule._id,
           targetDate: currentWeek.identifier,
           status: 'REQUIRED',
           createdAt: new Date(),

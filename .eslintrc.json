@@ -2,11 +2,14 @@
   "env": {
     "browser": true,
     "es2021": true,
-    "node": true
+    "node": true,
+    "jest": true
   },
   "extends": [
     "eslint:recommended"
   ],
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
   "parserOptions": {
     "ecmaFeatures": {
       "jsx": true
@@ -18,12 +21,26 @@
     "no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
     "prefer-const": "error",
     "no-var": "error",
-    "no-console": "warn"
+    "no-console": "warn",
+    "no-undef": "off"
   },
+  "overrides": [
+    {
+      "files": ["**/*.test.{ts,tsx}", "**/__tests__/**/*"],
+      "env": {
+        "jest": true
+      },
+      "rules": {
+        "no-console": "off",
+        "no-unused-vars": "off"
+      }
+    }
+  ],
   "ignorePatterns": [
     "dist/",
     "node_modules/",
     "*.config.js",
-    "*.config.ts"
+    "*.config.cjs",
+    "jest.setup.js"
   ]
 }

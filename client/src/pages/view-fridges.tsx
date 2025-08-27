@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
@@ -30,7 +30,7 @@ export default function ViewFridges() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
 
-  const { data: fridges = [], isLoading } = useQuery<FridgeWithLogs[]>({
+  const { _data: fridges = [], isLoading } = useQuery<FridgeWithLogs[]>({
     queryKey: ['/api/fridges/all'],
     enabled: !!user,
   });

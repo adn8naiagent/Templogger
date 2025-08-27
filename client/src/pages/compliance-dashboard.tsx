@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -14,19 +14,19 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { 
-  Calendar,
+  // Calendar,
   Clock,
   AlertTriangle,
   CheckCircle2,
-  TrendingUp,
-  TrendingDown,
+  // TrendingUp,
+  // TrendingDown,
   Thermometer,
   Shield,
   Activity,
   BarChart3,
   RefreshCw,
   Download,
-  Filter,
+  // Filter,
   Eye,
   AlertCircle,
   Target,
@@ -52,7 +52,7 @@ interface ComplianceOverview {
     lateEntries: number;
   };
   complianceByFridge: {
-    fridgeId: string;
+    _fridgeId: string;
     fridgeName: string;
     complianceScore: number;
     lastReading: string;
@@ -66,7 +66,7 @@ interface ComplianceOverview {
 }
 
 interface DueChecklist {
-  id: string;
+  _id: string;
   title: string;
   frequency: string;
   fridgeName?: string;
@@ -77,11 +77,11 @@ interface DueChecklist {
 export default function ComplianceDashboard() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [selectedTimeframe, setSelectedTimeframe] = useState<'today' | 'week' | 'month'>('today');
+  const [_selectedTimeframe, _setSelectedTimeframe] = useState<'today' | 'week' | 'month'>('today');
   const [autoRefresh, setAutoRefresh] = useState(true);
 
   // Fetch compliance overview
-  const { data: overview, isLoading: overviewLoading, refetch: refetchOverview } = useQuery({
+  const { _data: overview, isLoading: overviewLoading, refetch: refetchOverview } = useQuery({
     queryKey: ["/api/compliance/overview"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/compliance/overview");
@@ -91,7 +91,7 @@ export default function ComplianceDashboard() {
   });
 
   // Fetch due checklists
-  const { data: dueChecklists = [], isLoading: checklistsLoading } = useQuery({
+  const { _data: dueChecklists = [], isLoading: _checklistsLoading } = useQuery({
     queryKey: ["/api/checklists/due"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/checklists/due");
@@ -101,7 +101,7 @@ export default function ComplianceDashboard() {
   });
 
   // Fetch unresolved events count
-  const { data: unresolvedCount = { count: 0 } } = useQuery({
+  const { _data: unresolvedCount = { count: 0 } } = useQuery({
     queryKey: ["/api/out-of-range-events/unresolved/count"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/out-of-range-events/unresolved/count");
@@ -120,9 +120,9 @@ export default function ComplianceDashboard() {
     }
   }, [autoRefresh, refetchOverview]);
 
-  const getComplianceColor = (score: number) => {
-    if (score > 90) return "text-green-600";
-    if (score >= 80) return "text-amber-600";
+  const _getComplianceColor = (_score: number) => {
+    if (_score > 90) return "text-green-600";
+    if (_score >= 80) return "text-amber-600";
     return "text-red-600";
   };
 
@@ -132,8 +132,8 @@ export default function ComplianceDashboard() {
     return <Badge className="bg-red-600 text-white">{score.toFixed(1)}%</Badge>;
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
+  const getStatusBadge = (_status: string) => {
+    switch (_status) {
       case 'compliant':
         return <Badge className="bg-green-600"><CheckCircle2 className="h-3 w-3 mr-1" />Compliant</Badge>;
       case 'warning':
@@ -419,7 +419,7 @@ export default function ComplianceDashboard() {
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <h4 className="font-medium">{fridge.fridgeName}</h4>
-                          {getStatusBadge(fridge.status)}
+                          {getStatusBadge(fridge._status)}
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <span>Compliance: {fridge.complianceScore}%</span>

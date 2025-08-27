@@ -16,7 +16,9 @@
       "Bash(snyk config get:*)",
       "Bash(snyk whoami:*)",
       "Bash(snyk:*)",
-      "Bash(npx snyk:*)"
+      "Bash(npx snyk:*)",
+      "Bash(npm test:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

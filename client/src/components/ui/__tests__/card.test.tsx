@@ -205,7 +205,7 @@ describe('Card Components', () => {
       render(
         <Card 
           className="valid-class" 
-          invalidProp={undefined as any}
+          {...({ invalidProp: undefined } as any)}
           data-testid="card"
         >
           Content

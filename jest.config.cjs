@@ -7,7 +7,11 @@ module.exports = {
     '**/*.(test|spec).+(ts|tsx|js)'
   ],
   transform: {
-    '^.+\\.(ts|tsx)$': 'ts-jest',
+    '^.+\\.(ts|tsx)$': ['ts-jest', {
+      tsconfig: {
+        jsx: 'react-jsx'
+      }
+    }],
   },
   collectCoverageFrom: [
     'client/src/**/*.{ts,tsx}',
@@ -15,9 +19,19 @@ module.exports = {
     'shared/**/*.{ts}',
     '!**/*.d.ts',
   ],
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/client/src/$1',
     '^@shared/(.*)$': '<rootDir>/shared/$1',
   },
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  transformIgnorePatterns: [
+    'node_modules/(?!(.*\\.mjs$))'
+  ],
+  globals: {
+    'ts-jest': {
+      tsconfig: {
+        jsx: 'react-jsx'
+      }
+    }
+  }
 };

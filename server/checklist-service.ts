@@ -48,20 +48,20 @@ export class ChecklistService {
   constructor(private storage: IStorage) {}
 
   // Create a new checklist with items
-  async createChecklist(userId: string, data: CreateChecklistRequest): Promise<ChecklistWithScheduleAndItems> {
+  async createChecklist(_userId: string, _data: CreateChecklistRequest): Promise<ChecklistWithScheduleAndItems> {
     try {
       // Map to existing schema format
       const checklistData: InsertChecklist = {
         title: data.name,
         description: data.description || null,
         frequency: 'custom', // We'll use custom for our enhanced scheduling
-        fridgeId: null, // Global checklists for now
-        createdBy: userId,
+        _fridgeId: null, // Global checklists for now
+        createdBy: _userId,
         isActive: true,
       };
 
       const itemsData: InsertChecklistItem[] = data.items.map((item, index) => ({
-        userId,
+        _userId,
         checklistId: '', // Will be set by storage method
         title: item.label,
         description: null,
@@ -79,9 +79,9 @@ export class ChecklistService {
   }
 
   // Update an existing checklist
-  async updateChecklist(userId: string, checklistId: string, data: CreateChecklistRequest): Promise<ChecklistWithScheduleAndItems> {
+  async updateChecklist(_userId: string, checklistId: string, _data: CreateChecklistRequest): Promise<ChecklistWithScheduleAndItems> {
     try {
-      const existing = await this.storage.getChecklist(checklistId, userId);
+      const existing = await this.storage.getChecklist(checklistId, _userId);
       if (!existing) {
         throw new ChecklistError('Checklist not found', 'NOT_FOUND', 404);
       }
@@ -92,7 +92,7 @@ export class ChecklistService {
         description: data.description || null,
       };
 
-      const updatedChecklist = await this.storage.updateChecklist(checklistId, userId, updates);
+      const updatedChecklist = await this.storage.updateChecklist(checklistId, _userId, _updates);
       if (!updatedChecklist) {
         throw new ChecklistError('Failed to update checklist', 'UPDATE_FAILED', 500);
       }
@@ -107,9 +107,9 @@ export class ChecklistService {
   }
 
   // Schedule a checklist with cadence
-  async createOrReplaceSchedule(userId: string, checklistId: string, data: ScheduleChecklistRequest): Promise<ChecklistSchedule> {
+  async createOrReplaceSchedule(_userId: string, checklistId: string, _data: ScheduleChecklistRequest): Promise<ChecklistSchedule> {
     try {
-      const existing = await this.storage.getChecklist(checklistId, userId);
+      const existing = await this.storage.getChecklist(checklistId, _userId);
       if (!existing) {
         throw new ScheduleError('Checklist not found');
       }
@@ -142,12 +142,12 @@ export class ChecklistService {
         schedule: scheduleMetadata,
       });
 
-      await this.storage.updateChecklist(checklistId, userId, {
+      await this.storage.updateChecklist(checklistId, _userId, {
         description: combinedDescription,
       });
 
       return {
-        id: `schedule_${checklistId}`,
+        _id: `schedule_${checklistId}`,
         checklistId,
         ...scheduleMetadata,
         createdAt: new Date(),
@@ -160,28 +160,28 @@ export class ChecklistService {
   }
 
   // Generate instances for a date range (idempotent)
-  async generateInstances(userId: string, from: string, to: string): Promise<void> {
+  async generateInstances(_userId: string, from: string, to: string): Promise<void> {
     try {
       const fromDate = new Date(from);
       const toDate = new Date(to);
 
       // Get all active scheduled checklists for user
-      const checklists = await this.storage.getChecklists(userId);
+      const checklists = await this.storage.getChecklists(_userId);
       const scheduledChecklists = checklists.filter(c => this.hasSchedule(c));
 
       for (const checklist of scheduledChecklists) {
         const schedule = this.extractScheduleFromChecklist(checklist);
         if (!schedule || !schedule.isActive) continue;
 
-        const instances = this.calculateRequiredInstances(schedule, checklist.id, fromDate, toDate);
+        const instances = this.calculateRequiredInstances(schedule, checklist._id, fromDate, toDate);
         
         // Check existing instances to avoid duplicates
-        const existingInstances = await this.getInstancesForChecklist(checklist.id, from, to);
+        const existingInstances = await this.getInstancesForChecklist(checklist._id, from, to);
         const existingTargetDates = new Set(existingInstances.map(i => i.targetDate));
 
         for (const instance of instances) {
           if (!existingTargetDates.has(instance.targetDate)) {
-            await this.createInstance(userId, instance);
+            await this.createInstance(_userId, instance);
           }
         }
       }
@@ -191,12 +191,12 @@ export class ChecklistService {
   }
 
   // Get calendar view data
-  async getCalendarInstances(userId: string, from: string, to: string): Promise<CalendarData> {
+  async getCalendarInstances(_userId: string, from: string, to: string): Promise<CalendarData> {
     try {
       // Ensure instances are generated for the requested period
-      await this.generateInstances(userId, from, to);
+      await this.generateInstances(_userId, from, to);
 
-      const checklists = await this.storage.getChecklists(userId);
+      const checklists = await this.storage.getChecklists(_userId);
       const scheduledChecklists = checklists.filter(c => this.hasSchedule(c));
 
       const calendarInstances: CalendarInstance[] = [];
@@ -205,15 +205,15 @@ export class ChecklistService {
         const schedule = this.extractScheduleFromChecklist(checklist);
         if (!schedule) continue;
 
-        const instances = await this.getInstancesForChecklist(checklist.id, from, to);
+        const instances = await this.getInstancesForChecklist(checklist._id, from, to);
         
         for (const instance of instances) {
           calendarInstances.push({
-            id: instance.id,
-            checklistId: checklist.id,
+            _id: instance._id,
+            checklistId: checklist._id,
             checklistName: checklist.title,
             targetDate: instance.targetDate,
-            status: instance.status,
+            status: instance._status,
             cadence: schedule.cadence,
             completedAt: instance.completedAt,
             completedBy: instance.completedBy,
@@ -232,9 +232,9 @@ export class ChecklistService {
 
   // Complete a checklist instance
   async completeInstance(
-    userId: string,
+    _userId: string,
     instanceId: string,
-    data: CompleteChecklistInstanceRequest
+    _data: CompleteChecklistInstanceRequest
   ): Promise<ChecklistInstance> {
     try {
       // Find the instance in completions table
@@ -246,7 +246,7 @@ export class ChecklistService {
       }
 
       // Validate required items are checked
-      const checklist = await this.storage.getChecklist(instance.checklistId, userId);
+      const checklist = await this.storage.getChecklist(instance.checklistId, _userId);
       if (!checklist) {
         throw new CompletionError('Checklist not found');
       }
@@ -261,10 +261,10 @@ export class ChecklistService {
       }
 
       // Create completion record
-      const completionData: InsertChecklistCompletion = {
+      const _completionData: InsertChecklistCompletion = {
         checklistId: instance.checklistId,
-        fridgeId: null,
-        completedBy: userId,
+        _fridgeId: null,
+        completedBy: _userId,
         completedItems: data.items.filter(i => i.checked).map(i => i.itemId),
         notes: JSON.stringify({
           instanceId,
@@ -277,16 +277,16 @@ export class ChecklistService {
         }),
       };
 
-      await this.storage.createChecklistCompletion(completionData);
+      await this.storage.createChecklistCompletion(_completionData);
 
       return {
-        id: instanceId,
+        _id: instanceId,
         checklistId: instance.checklistId,
         scheduleId: instance.scheduleId,
         targetDate: instance.targetDate,
         status: 'COMPLETED',
         completedAt: new Date(),
-        completedBy: userId,
+        completedBy: _userId,
         completedItems: completionData.completedItems || [],
         confirmationNote: data.confirmationNote,
         createdAt: instance.createdAt,
@@ -300,14 +300,14 @@ export class ChecklistService {
 
   // Get summary data for dashboard
   async getSummaries(
-    userId: string,
+    _userId: string,
     from: string,
     to: string,
     checklistId?: string,
     cadence?: 'DAILY' | 'DOW' | 'WEEKLY'
   ): Promise<ChecklistMetrics> {
     try {
-      const checklists = await this.storage.getChecklists(userId);
+      const checklists = await this.storage.getChecklists(_userId);
       let targetChecklists = checklists.filter(c => this.hasSchedule(c));
 
       if (checklistId) {
@@ -330,7 +330,7 @@ export class ChecklistService {
         const schedule = this.extractScheduleFromChecklist(checklist);
         if (!schedule) continue;
 
-        const instances = await this.getInstancesForChecklist(checklist.id, from, to);
+        const instances = await this.getInstancesForChecklist(checklist._id, from, to);
         const required = instances.length;
         const completed = instances.filter(i => i.status === 'COMPLETED').length;
         const onTime = this.calculateOnTimeInstances(instances, schedule.cadence);
@@ -340,7 +340,7 @@ export class ChecklistService {
         totalOnTime += onTime;
 
         summaries.push({
-          checklistId: checklist.id,
+          checklistId: checklist._id,
           checklistName: checklist.title,
           cadence: schedule.cadence,
           period: { start: from, end: to },
@@ -366,9 +366,9 @@ export class ChecklistService {
   }
 
   // Get checklists with active=true filter
-  async listChecklists(userId: string, activeOnly: boolean = true): Promise<ChecklistWithScheduleAndItems[]> {
+  async listChecklists(_userId: string, activeOnly: boolean = true): Promise<ChecklistWithScheduleAndItems[]> {
     try {
-      const checklists = await this.storage.getChecklists(userId);
+      const checklists = await this.storage.getChecklists(_userId);
       const filtered = activeOnly ? checklists.filter(c => c.isActive) : checklists;
       
       return filtered.map(c => this.transformToEnhancedChecklist(c, c.items));
@@ -378,9 +378,9 @@ export class ChecklistService {
   }
 
   // Export CSV data
-  async exportCSV(userId: string, from: string, to: string): Promise<ChecklistCSVRecord[]> {
+  async exportCSV(_userId: string, from: string, to: string): Promise<ChecklistCSVRecord[]> {
     try {
-      const calendarData = await this.getCalendarInstances(userId, from, to);
+      const calendarData = await this.getCalendarInstances(_userId, from, to);
       const records: ChecklistCSVRecord[] = [];
 
       for (const instance of calendarData.instances) {
@@ -433,19 +433,19 @@ export class ChecklistService {
     const schedule = this.extractScheduleFromChecklist({ ...checklist, items });
     
     return {
-      id: checklist.id,
+      _id: checklist._id,
       name: checklist.title,
       description: this.extractDescription(checklist.description),
       items: items.map(item => ({
-        id: item.id,
+        _id: item._id,
         label: item.title,
         required: item.isRequired,
         orderIndex: parseInt(item.sortOrder) || 0,
         note: item.description || undefined,
       })),
       schedule: schedule ? {
-        id: `schedule_${checklist.id}`,
-        checklistId: checklist.id,
+        _id: `schedule_${checklist.id}`,
+        checklistId: checklist._id,
         ...schedule,
         createdAt: checklist.createdAt || new Date(),
         updatedAt: checklist.createdAt || new Date(),
@@ -503,7 +503,7 @@ export class ChecklistService {
         const startWeek = this.getWeekIdentifier(start);
         const endWeek = this.getWeekIdentifier(end);
         
-        let currentDate = this.getDateFromWeekIdentifier(startWeek);
+        const currentDate = this.getDateFromWeekIdentifier(startWeek);
         while (this.getWeekIdentifier(currentDate) <= endWeek) {
           instances.push({
             checklistId,
@@ -557,19 +557,19 @@ export class ChecklistService {
     return [];
   }
 
-  private async createInstance(userId: string, instance: GeneratedInstance): Promise<void> {
+  private async createInstance(_userId: string, instance: GeneratedInstance): Promise<void> {
     // Store instance metadata in completions table with special status
     const instanceMetadata: InstanceMetadata = {
       instanceId: `instance_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       targetDate: instance.targetDate,
-      status: instance.status,
+      status: instance._status,
       scheduleId: instance.scheduleId,
     };
 
-    const completionData: InsertChecklistCompletion = {
+    const _completionData: InsertChecklistCompletion = {
       checklistId: instance.checklistId,
-      fridgeId: null,
-      completedBy: userId,
+      _fridgeId: null,
+      completedBy: _userId,
       completedItems: [],
       notes: JSON.stringify({
         ...instanceMetadata,
@@ -577,7 +577,7 @@ export class ChecklistService {
       }),
     };
 
-    await this.storage.createChecklistCompletion(completionData);
+    await this.storage.createChecklistCompletion(_completionData);
   }
 
   private findInstanceInCompletions(

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useLocation, Link } from 'wouter';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -14,15 +14,14 @@ import {
   AlertTriangle,
   CheckCircle,
   FileText,
-  Power,
+  // Power,
   PowerOff,
   Download,
   Refrigerator,
-  Wrench,
-  Award,
-  Plus,
-  Calendar,
-  Upload
+  // Wrench,
+  // Award,
+  // Plus,
+  // Upload
 } from 'lucide-react';
 import type { Fridge, TemperatureLog, CalibrationRecord, MaintenanceRecord, TimeWindow } from '@shared/schema';
 import CalibrationManager from '@/components/calibration/calibration-manager';
@@ -35,35 +34,35 @@ interface FridgeWithLogs extends Fridge {
 }
 
 export default function FridgeDetail() {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams<{ _id: string }>();
   const [, setLocation] = useLocation();
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const { data: fridge, isLoading } = useQuery<FridgeWithLogs>({
+  const { _data: fridge, isLoading } = useQuery<FridgeWithLogs>({
     queryKey: [`/api/fridge/${id}`],
-    enabled: !!id,
+    enabled: !!_id,
   });
 
-  const { data: timeWindows = [] } = useQuery<TimeWindow[]>({
+  const { _data: timeWindows = [] } = useQuery<TimeWindow[]>({
     queryKey: [`/api/fridges/${id}/time-windows`],
-    enabled: !!id,
+    enabled: !!_id,
   });
 
-  const { data: calibrationRecords = [] } = useQuery<CalibrationRecord[]>({
+  const { _data: _calibrationRecords = [] } = useQuery<CalibrationRecord[]>({
     queryKey: [`/api/fridges/${id}/calibrations`],
-    enabled: !!id,
+    enabled: !!_id,
   });
 
-  const { data: maintenanceRecords = [] } = useQuery<MaintenanceRecord[]>({
+  const { _data: _maintenanceRecords = [] } = useQuery<MaintenanceRecord[]>({
     queryKey: [`/api/fridges/${id}/maintenance`],
-    enabled: !!id,
+    enabled: !!_id,
   });
 
   const handleSort = () => {
     setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
   };
 
-  const getTemperatureStatus = (log: TemperatureLog, fridge: Fridge) => {
+  const getTemperatureStatus = (log: TemperatureLog, _fridge: Fridge) => {
     if (log.isAlert) {
       return <Badge variant="destructive" className="gap-1"><AlertTriangle className="h-3 w-3" />Out of Range</Badge>;
     }

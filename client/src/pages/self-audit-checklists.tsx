@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -50,7 +50,7 @@ import { Link } from "wouter";
 import Navigation from "@/components/layout/navigation";
 
 interface AuditTemplate {
-  id: string;
+  _id: string;
   name: string;
   description?: string;
   isDefault: boolean;
@@ -60,7 +60,7 @@ interface AuditTemplate {
 }
 
 interface AuditSection {
-  id: string;
+  _id: string;
   title: string;
   description?: string;
   orderIndex: number;
@@ -68,7 +68,7 @@ interface AuditSection {
 }
 
 interface AuditItem {
-  id: string;
+  _id: string;
   text: string;
   isRequired: boolean;
   orderIndex: number;
@@ -76,7 +76,7 @@ interface AuditItem {
 }
 
 interface AuditCompletion {
-  id: string;
+  _id: string;
   templateName: string;
   completedAt: Date;
   complianceRate: number;
@@ -110,7 +110,7 @@ export default function SelfAuditChecklists() {
 
   // Fetch audit templates
   const { 
-    data: templates = [], 
+    _data: templates = [], 
     isLoading: templatesLoading, 
     error: templatesError 
   } = useQuery({
@@ -131,7 +131,7 @@ export default function SelfAuditChecklists() {
   });
 
   // Fetch recent completions
-  const { data: recentCompletions = [] } = useQuery({
+  const { _data: recentCompletions = [] } = useQuery({
     queryKey: ['audit-completions-recent'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/audit-completions');
@@ -169,7 +169,7 @@ export default function SelfAuditChecklists() {
 
   // Delete template mutation
   const deleteTemplateMutation = useMutation({
-    mutationFn: async (templateId: string) => {
+    mutationFn: async (_templateId: string) => {
       const response = await apiRequest('DELETE', `/api/audit-templates/${templateId}`);
       if (!response.ok) {
         const errorText = await response.text();
@@ -208,9 +208,9 @@ export default function SelfAuditChecklists() {
     setIsTemplateEditorOpen(true);
   };
 
-  const handleDeleteTemplate = (templateId: string) => {
+  const handleDeleteTemplate = (_templateId: string) => {
     if (confirm("Are you sure you want to delete this template? This action cannot be undone.")) {
-      deleteTemplateMutation.mutate(templateId);
+      deleteTemplateMutation.mutate(_templateId);
     }
   };
 
@@ -242,81 +242,6 @@ export default function SelfAuditChecklists() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
-      {/* Header */}
-      <div className="border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <CheckSquare className="w-8 h-8 text-primary" />
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">Self-Audit Checklists</h1>
-                <p className="text-muted-foreground">Create and complete compliance self-audit checklists</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              {/* User Menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2">
-                    <div className="flex items-center space-x-2">
-                      {user?.role === 'admin' && <Crown className="w-4 h-4 text-yellow-500" />}
-                      {user?.role === 'manager' && <Shield className="w-4 h-4 text-blue-500" />}
-                      {user?.role === 'staff' && <Star className="w-4 h-4 text-green-500" />}
-                      <User className="w-4 h-4" />
-                      <span className="hidden sm:inline-block">{user?.firstName} {user?.lastName}</span>
-                    </div>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem asChild>
-                    <Link href="/account">
-                      <User className="w-4 h-4 mr-2" />
-                      Account
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings">
-                      <Settings className="w-4 h-4 mr-2" />
-                      Settings
-                    </Link>
-                  </DropdownMenuItem>
-                  {user?.role === 'admin' && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link href="/admin/dashboard">
-                          <Crown className="w-4 h-4 mr-2" />
-                          Admin Dashboard
-                        </Link>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout}>
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Sign out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <div className="flex items-center space-x-2">
-                <Button onClick={handleCreateDefaultTemplate} disabled={createDefaultMutation.isPending} variant="outline">
-                  <Star className="w-4 h-4 mr-2" />
-                  {createDefaultMutation.isPending ? 'Creating...' : 'Create Default Template'}
-                </Button>
-                <Button asChild>
-                  <Link to="/self-audit/create-template">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create New Template
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Tabs defaultValue="templates" className="w-full">
@@ -345,7 +270,7 @@ export default function SelfAuditChecklists() {
                   <Input
                     placeholder="Search templates..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => setSearchQuery(e.target._value)}
                     className="pl-10"
                   />
                 </div>
@@ -429,7 +354,7 @@ export default function SelfAuditChecklists() {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
-                              onClick={() => handleDeleteTemplate(template.id)}
+                              onClick={() => handleDeleteTemplate(template._id)}
                               className="text-destructive"
                             >
                               <Trash2 className="w-4 h-4 mr-2" />

@@ -21,7 +21,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   }
 
   const token = authHeader.substring(7);
-  let userId: string;
+  let _userId: string;
   
   try {
     // Decode the token (simple base64 decode for now)
@@ -44,7 +44,7 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
   }
 
   const token = authHeader.substring(7);
-  let userId: string;
+  let _userId: string;
   
   try {
     // Decode the token
@@ -54,7 +54,7 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
   }
   
   try {
-    const user = await storage.getUser(userId);
+    const user = await storage.getUser(_userId);
     if (!user || user.role !== "admin") {
       return res.status(403).json({ error: "Admin access required" });
     }
@@ -100,14 +100,14 @@ export async function signUp(req: Request, res: Response) {
 
     // Create default audit template for new user
     try {
-      await storage.createDefaultAuditTemplate(user.id);
+      await storage.createDefaultAuditTemplate(user._id);
     } catch (error: any) {
       console.error("Failed to create default audit template for new user:", error);
       // Don't fail user creation if template creation fails
     }
 
     // Create auth token for new user
-    const authToken = Buffer.from(user.id).toString('base64');
+    const authToken = Buffer.from(user._id).toString('base64');
     
     console.log("signUp - new user created:", user.email);
     
@@ -149,7 +149,7 @@ export async function signIn(req: Request, res: Response) {
     }
 
     // Create a simple token for the user (using userId as token for simplicity)
-    const authToken = Buffer.from(user.id).toString('base64');
+    const authToken = Buffer.from(user._id).toString('base64');
     
     console.log("signIn - user authenticated:", user.email);
     
@@ -184,7 +184,7 @@ export async function getCurrentUser(req: Request, res: Response) {
     }
 
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-    let userId: string;
+    let _userId: string;
     
     try {
       // Decode the token (simple base64 decode for now)
@@ -193,7 +193,7 @@ export async function getCurrentUser(req: Request, res: Response) {
       return res.status(401).json({ message: "Invalid token" });
     }
 
-    const user = await storage.getUser(userId);
+    const user = await storage.getUser(_userId);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }

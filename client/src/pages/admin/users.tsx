@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select } from "@/components/ui/select";
 import { 
   Table, 
   TableBody, 
@@ -27,7 +27,7 @@ import {
 import { 
   Shield, 
   Users, 
-  Crown, 
+  // Crown, 
   Star, 
   Trash2, 
   Search,
@@ -40,7 +40,7 @@ import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 
 interface AdminUser {
-  id: string;
+  _id: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -79,7 +79,7 @@ export default function AdminUsers() {
   }
 
   // Fetch all users
-  const { data: users = [], isLoading: usersLoading } = useQuery({
+  const { _data: users = [], isLoading: usersLoading } = useQuery({
     queryKey: ["/api/admin/users"],
     queryFn: async () => {
       const response = await fetch("/api/admin/users");
@@ -92,8 +92,8 @@ export default function AdminUsers() {
 
   // Update user mutation
   const updateUserMutation = useMutation({
-    mutationFn: async ({ userId, updates }: { userId: string; updates: { role?: string; subscriptionStatus?: string } }) => {
-      return apiRequest("PUT", `/api/admin/users/${userId}`, updates);
+    mutationFn: async ({ _userId, _updates }: { _userId: string; _updates: { role?: string; subscriptionStatus?: string } }) => {
+      return apiRequest("PUT", `/api/admin/users/${_userId}`, _updates);
     },
     onSuccess: () => {
       toast({
@@ -114,7 +114,7 @@ export default function AdminUsers() {
 
   // Delete user mutation
   const deleteUserMutation = useMutation({
-    mutationFn: async (userId: string) => {
+    mutationFn: async (_userId: string) => {
       return apiRequest("DELETE", `/api/admin/users/${userId}`);
     },
     onSuccess: () => {
@@ -140,8 +140,8 @@ export default function AdminUsers() {
     user.lastName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getSubscriptionBadge = (status: string) => {
-    switch (status) {
+  const getSubscriptionBadge = (_status: string) => {
+    switch (_status) {
       case "trial":
         return <Badge variant="secondary">Trial</Badge>;
       case "paid":
@@ -244,7 +244,7 @@ export default function AdminUsers() {
               <Input
                 placeholder="Search users..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => setSearchTerm(e.target._value)}
                 className="pl-8 w-64"
                 data-testid="input-search-users"
               />
@@ -323,7 +323,7 @@ export default function AdminUsers() {
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
-                                    onClick={() => deleteUserMutation.mutate(user.id)}
+                                    onClick={() => deleteUserMutation.mutate(user._id)}
                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                   >
                                     Delete User
@@ -358,7 +358,7 @@ export default function AdminUsers() {
                 <label className="text-sm font-medium">Role</label>
                 <Select
                   defaultValue={editingUser.role}
-                  onValueChange={(value) => setEditingUser({ ...editingUser, role: value })}
+                  onValueChange={(_value) => setEditingUser({ ...editingUser, role: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -373,7 +373,7 @@ export default function AdminUsers() {
                 <label className="text-sm font-medium">Subscription Status</label>
                 <Select
                   defaultValue={editingUser.subscriptionStatus}
-                  onValueChange={(value) => setEditingUser({ ...editingUser, subscriptionStatus: value })}
+                  onValueChange={(_value) => setEditingUser({ ...editingUser, subscriptionStatus: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -389,8 +389,8 @@ export default function AdminUsers() {
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => updateUserMutation.mutate({
-                  userId: editingUser.id,
-                  updates: {
+                  _userId: editingUser._id,
+                  _updates: {
                     role: editingUser.role,
                     subscriptionStatus: editingUser.subscriptionStatus
                   }

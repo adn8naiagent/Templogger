@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import TempLogger from "@/pages/temp-logger";

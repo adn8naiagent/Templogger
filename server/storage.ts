@@ -14,8 +14,8 @@ import {
   type AuditCompletion,
   type AuditResponse,
   type InsertAuditTemplate,
-  type InsertAuditSection,
-  type InsertAuditItem,
+  // type InsertAuditSection,
+  // type InsertAuditItem,
   type InsertAuditCompletion,
   type InsertAuditResponse,
   type ComplianceRecord,
@@ -63,48 +63,48 @@ import { eq, and, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
-  getUser(id: string): Promise<User | undefined>;
+  getUser(_id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
   createUser(userData: InsertUser): Promise<User>;
   upsertUser(userData: UpsertUser): Promise<User>;
-  updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
-  deleteUser(id: string): Promise<boolean>;
+  updateUser(_id: string, _updates: Partial<User>): Promise<User | undefined>;
+  deleteUser(_id: string): Promise<boolean>;
   
   // Fridge methods
-  getFridges(userId: string): Promise<Fridge[]>;
-  getFridge(id: string, userId: string): Promise<Fridge | undefined>;
+  getFridges(_userId: string): Promise<Fridge[]>;
+  getFridge(_id: string, _userId: string): Promise<Fridge | undefined>;
   createFridge(fridgeData: InsertFridge): Promise<Fridge>;
-  updateFridge(id: string, userId: string, updates: Partial<Fridge>): Promise<Fridge | undefined>;
-  deleteFridge(id: string, userId: string): Promise<boolean>;
+  updateFridge(_id: string, _userId: string, _updates: Partial<Fridge>): Promise<Fridge | undefined>;
+  deleteFridge(_id: string, _userId: string): Promise<boolean>;
   
   // Label methods
-  getLabels(userId: string): Promise<Label[]>;
-  getLabel(id: string, userId: string): Promise<Label | undefined>;
+  getLabels(_userId: string): Promise<Label[]>;
+  getLabel(_id: string, _userId: string): Promise<Label | undefined>;
   createLabel(labelData: InsertLabel): Promise<Label>;
-  updateLabel(id: string, userId: string, updates: Partial<Label>): Promise<Label | undefined>;
-  deleteLabel(id: string, userId: string): Promise<boolean>;
+  updateLabel(_id: string, _userId: string, _updates: Partial<Label>): Promise<Label | undefined>;
+  deleteLabel(_id: string, _userId: string): Promise<boolean>;
   
   // Temperature log methods
-  getTemperatureLogs(fridgeId: string, userId: string): Promise<TemperatureLog[]>;
-  getRecentTemperatureLog(fridgeId: string, userId: string): Promise<TemperatureLog | undefined>;
+  getTemperatureLogs(_fridgeId: string, _userId: string): Promise<TemperatureLog[]>;
+  getRecentTemperatureLog(_fridgeId: string, _userId: string): Promise<TemperatureLog | undefined>;
   createTemperatureLog(logData: InsertTemperatureLog): Promise<TemperatureLog>;
-  getAllTemperatureLogsForUser(userId: string): Promise<(TemperatureLog & { fridgeName: string })[]>;
+  getAllTemperatureLogsForUser(_userId: string): Promise<(TemperatureLog & { fridgeName: string })[]>;
   
   // Time Window methods
-  getTimeWindows(fridgeId: string, userId: string): Promise<TimeWindow[]>;
-  getTimeWindow(id: string, userId: string): Promise<TimeWindow | undefined>;
+  getTimeWindows(_fridgeId: string, _userId: string): Promise<TimeWindow[]>;
+  getTimeWindow(_id: string, _userId: string): Promise<TimeWindow | undefined>;
   createTimeWindow(timeWindowData: InsertTimeWindow): Promise<TimeWindow>;
-  updateTimeWindow(id: string, userId: string, updates: Partial<TimeWindow>): Promise<TimeWindow | undefined>;
-  deleteTimeWindow(id: string, userId: string): Promise<boolean>;
-  getCurrentTimeWindow(fridgeId: string): Promise<TimeWindow | undefined>;
+  updateTimeWindow(_id: string, _userId: string, _updates: Partial<TimeWindow>): Promise<TimeWindow | undefined>;
+  deleteTimeWindow(_id: string, _userId: string): Promise<boolean>;
+  getCurrentTimeWindow(_fridgeId: string): Promise<TimeWindow | undefined>;
   
   // Compliance Record methods
-  getComplianceRecords(fridgeId: string, startDate: Date, endDate: Date): Promise<ComplianceRecord[]>;
-  getComplianceRecord(id: string): Promise<ComplianceRecord | undefined>;
-  createComplianceRecord(userId: string, recordData: InsertComplianceRecord): Promise<ComplianceRecord>;
-  updateComplianceRecord(id: string, updates: Partial<ComplianceRecord>): Promise<ComplianceRecord | undefined>;
-  getComplianceOverview(userId: string, date?: Date): Promise<{
+  getComplianceRecords(_fridgeId: string, startDate: Date, endDate: Date): Promise<ComplianceRecord[]>;
+  getComplianceRecord(_id: string): Promise<ComplianceRecord | undefined>;
+  createComplianceRecord(_userId: string, _recordData: InsertComplianceRecord): Promise<ComplianceRecord>;
+  updateComplianceRecord(_id: string, _updates: Partial<ComplianceRecord>): Promise<ComplianceRecord | undefined>;
+  getComplianceOverview(_userId: string, date?: Date): Promise<{
     totalFridges: number;
     compliantFridges: number;
     overallComplianceRate: number;
@@ -117,7 +117,7 @@ export interface IStorage {
       lateEntries: number;
     };
     complianceByFridge: {
-      fridgeId: string;
+      _fridgeId: string;
       fridgeName: string;
       complianceScore: number;
       lastReading: string;
@@ -131,32 +131,32 @@ export interface IStorage {
   }>;
   
   // Checklist methods
-  getChecklists(userId: string, fridgeId?: string): Promise<(Checklist & { items: ChecklistItem[] })[]>;
-  getChecklist(id: string, userId: string): Promise<(Checklist & { items: ChecklistItem[] }) | undefined>;
-  createChecklist(checklistData: InsertChecklist, items: InsertChecklistItem[]): Promise<Checklist>;
-  updateChecklist(id: string, userId: string, updates: Partial<Checklist>): Promise<Checklist | undefined>;
-  deleteChecklist(id: string, userId: string): Promise<boolean>;
+  getChecklists(_userId: string, _fridgeId?: string): Promise<(Checklist & { items: ChecklistItem[] })[]>;
+  getChecklist(_id: string, _userId: string): Promise<(Checklist & { items: ChecklistItem[] }) | undefined>;
+  createChecklist(_checklistData: InsertChecklist, _items: InsertChecklistItem[]): Promise<Checklist>;
+  updateChecklist(_id: string, _userId: string, _updates: Partial<Checklist>): Promise<Checklist | undefined>;
+  deleteChecklist(_id: string, _userId: string): Promise<boolean>;
   
   // Checklist completion methods
-  getChecklistCompletions(checklistId: string, fridgeId?: string): Promise<ChecklistCompletion[]>;
-  createChecklistCompletion(completionData: InsertChecklistCompletion): Promise<ChecklistCompletion>;
-  getDueChecklists(userId: string): Promise<Checklist[]>;
+  getChecklistCompletions(_checklistId: string, _fridgeId?: string): Promise<ChecklistCompletion[]>;
+  createChecklistCompletion(_completionData: InsertChecklistCompletion): Promise<ChecklistCompletion>;
+  getDueChecklists(_userId: string): Promise<Checklist[]>;
   
   // Out-of-range event methods
-  getOutOfRangeEvents(fridgeId: string, resolved?: boolean): Promise<OutOfRangeEvent[]>;
-  createOutOfRangeEvent(eventData: InsertOutOfRangeEvent): Promise<OutOfRangeEvent>;
-  resolveOutOfRangeEvent(id: string, notes?: string): Promise<OutOfRangeEvent | undefined>;
-  getUnresolvedEventsCount(userId: string): Promise<number>;
+  getOutOfRangeEvents(_fridgeId: string, _resolved?: boolean): Promise<OutOfRangeEvent[]>;
+  createOutOfRangeEvent(_eventData: InsertOutOfRangeEvent): Promise<OutOfRangeEvent>;
+  resolveOutOfRangeEvent(_id: string, _notes?: string): Promise<OutOfRangeEvent | undefined>;
+  getUnresolvedEventsCount(_userId: string): Promise<number>;
   
   // Enhanced temperature log methods with compliance
-  getFridgesWithRecentTemps(userId: string): Promise<(Fridge & { 
+  getFridgesWithRecentTemps(_userId: string): Promise<(Fridge & { 
     recentLog?: TemperatureLog; 
     timeWindows: TimeWindow[];
     complianceStatus: string;
     latestCalibration?: CalibrationRecord;
     calibrationStatus: string;
   })[]>;
-  createTemperatureLogWithCompliance(logData: InsertTemperatureLog): Promise<{
+  createTemperatureLogWithCompliance(_logData: InsertTemperatureLog): Promise<{
     log: TemperatureLog;
     alert?: { message: string; severity: string };
     outOfRangeEvent?: OutOfRangeEvent;
@@ -166,38 +166,38 @@ export interface IStorage {
   getActiveAlertsCount(): Promise<number>;
   
   // Missed checks methods
-  getMissedChecks(fridgeId: string, userId: string): Promise<MissedCheck[]>;
-  createMissedCheck(missedCheckData: InsertMissedCheck): Promise<MissedCheck>;
-  overrideMissedCheck(id: string, userId: string, overrideReason: string): Promise<MissedCheck | undefined>;
-  getMissedChecksForDate(userId: string, date: Date): Promise<(MissedCheck & { fridgeName: string })[]>;
+  getMissedChecks(_fridgeId: string, _userId: string): Promise<MissedCheck[]>;
+  createMissedCheck(_missedCheckData: InsertMissedCheck): Promise<MissedCheck>;
+  overrideMissedCheck(_id: string, _userId: string, _overrideReason: string): Promise<MissedCheck | undefined>;
+  getMissedChecksForDate(_userId: string, _date: Date): Promise<(MissedCheck & { fridgeName: string })[]>;
 
   // New fridge management methods
-  getAllFridgesWithLogs(userId: string): Promise<any[]>;
-  getFridgeWithLogs(userId: string, fridgeId: string): Promise<any>;
-  deactivateFridge(userId: string, fridgeId: string): Promise<any>;
-  reactivateFridge(userId: string, fridgeId: string): Promise<any>;
+  getAllFridgesWithLogs(_userId: string): Promise<any[]>;
+  getFridgeWithLogs(_userId: string, _fridgeId: string): Promise<any>;
+  deactivateFridge(_userId: string, _fridgeId: string): Promise<any>;
+  reactivateFridge(_userId: string, _fridgeId: string): Promise<any>;
   
   // Self-audit methods
-  getAuditTemplates(userId: string): Promise<(AuditTemplate & { sections: (AuditSection & { items: AuditItem[] })[] })[]>;
-  getAuditTemplate(templateId: string, userId: string): Promise<(AuditTemplate & { sections: (AuditSection & { items: AuditItem[] })[] }) | undefined>;
-  createAuditTemplate(templateData: InsertAuditTemplate, sectionsData: { sections: Array<{ title: string; description?: string; orderIndex: number; items: Array<{ text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }): Promise<AuditTemplate>;
-  updateAuditTemplate(templateId: string, userId: string, templateData: Partial<AuditTemplate>, sectionsData?: { sections: Array<{ id?: string; title: string; description?: string; orderIndex: number; items: Array<{ id?: string; text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }): Promise<AuditTemplate | undefined>;
-  deleteAuditTemplate(templateId: string, userId: string): Promise<boolean>;
-  createDefaultAuditTemplate(userId: string): Promise<AuditTemplate>;
+  getAuditTemplates(_userId: string): Promise<(AuditTemplate & { sections: (AuditSection & { items: AuditItem[] })[] })[]>;
+  getAuditTemplate(_templateId: string, _userId: string): Promise<(AuditTemplate & { sections: (AuditSection & { items: AuditItem[] })[] }) | undefined>;
+  createAuditTemplate(_templateData: InsertAuditTemplate, _sectionsData: { sections: Array<{ title: string; description?: string; orderIndex: number; items: Array<{ text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }): Promise<AuditTemplate>;
+  updateAuditTemplate(_templateId: string, _userId: string, _templateData: Partial<AuditTemplate>, _sectionsData?: { sections: Array<{ id?: string; title: string; description?: string; orderIndex: number; items: Array<{ id?: string; text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }): Promise<AuditTemplate | undefined>;
+  deleteAuditTemplate(_templateId: string, _userId: string): Promise<boolean>;
+  createDefaultAuditTemplate(_userId: string): Promise<AuditTemplate>;
   
   // Self-audit completion methods
-  createAuditCompletion(completionData: InsertAuditCompletion, responsesData: InsertAuditResponse[]): Promise<AuditCompletion>;
-  getAuditCompletions(userId: string, filters?: { templateId?: string; startDate?: Date; endDate?: Date; completedBy?: string }): Promise<(AuditCompletion & { responses: AuditResponse[]; complianceRate: number })[]>;
-  getAuditCompletion(completionId: string, userId: string): Promise<(AuditCompletion & { responses: AuditResponse[]; template?: AuditTemplate }) | undefined>;
-  getAuditCompletionStats(userId: string): Promise<{ totalCompletions: number; averageCompliance: number; recentCompletions: AuditCompletion[] }>;
+  createAuditCompletion(_completionData: InsertAuditCompletion, _responsesData: InsertAuditResponse[]): Promise<AuditCompletion>;
+  getAuditCompletions(_userId: string, _filters?: { templateId?: string; startDate?: Date; endDate?: Date; completedBy?: string }): Promise<(AuditCompletion & { responses: AuditResponse[]; complianceRate: number })[]>;
+  getAuditCompletion(_completionId: string, _userId: string): Promise<(AuditCompletion & { responses: AuditResponse[]; template?: AuditTemplate }) | undefined>;
+  getAuditCompletionStats(_userId: string): Promise<{ totalCompletions: number; averageCompliance: number; recentCompletions: AuditCompletion[] }>;
 
   // Calibration record methods
-  getCalibrationRecords(fridgeId: string, userId: string): Promise<CalibrationRecord[]>;
-  getCalibrationRecord(id: string, userId: string): Promise<CalibrationRecord | undefined>;
-  createCalibrationRecord(recordData: InsertCalibrationRecord): Promise<CalibrationRecord>;
-  updateCalibrationRecord(id: string, userId: string, updates: Partial<CalibrationRecord>): Promise<CalibrationRecord | undefined>;
-  deleteCalibrationRecord(id: string, userId: string): Promise<boolean>;
-  getLatestCalibrationForFridge(fridgeId: string, userId: string): Promise<CalibrationRecord | undefined>;
+  getCalibrationRecords(_fridgeId: string, _userId: string): Promise<CalibrationRecord[]>;
+  getCalibrationRecord(_id: string, _userId: string): Promise<CalibrationRecord | undefined>;
+  createCalibrationRecord(_recordData: InsertCalibrationRecord): Promise<CalibrationRecord>;
+  updateCalibrationRecord(_id: string, _userId: string, _updates: Partial<CalibrationRecord>): Promise<CalibrationRecord | undefined>;
+  deleteCalibrationRecord(_id: string, _userId: string): Promise<boolean>;
+  getLatestCalibrationForFridge(_fridgeId: string, _userId: string): Promise<CalibrationRecord | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -208,8 +208,8 @@ export class DatabaseStorage implements IStorage {
     this.db = drizzle(sql);
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    const result = await this.db.select().from(users).where(eq(users.id, id)).limit(1);
+  async getUser(_id: string): Promise<User | undefined> {
+    const result = await this.db.select().from(users).where(eq(users._id, _id)).limit(1);
     return result[0];
   }
 
@@ -232,7 +232,7 @@ export class DatabaseStorage implements IStorage {
       .insert(users)
       .values(userData)
       .onConflictDoUpdate({
-        target: users.id,
+        target: users._id,
         set: {
           ...userData,
           updatedAt: new Date(),
@@ -242,17 +242,17 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async updateUser(id: string, updates: Partial<User>): Promise<User | undefined> {
+  async updateUser(_id: string, _updates: Partial<User>): Promise<User | undefined> {
     const result = await this.db.update(users).set({
-      ...updates,
+      ..._updates,
       updatedAt: new Date()
-    }).where(eq(users.id, id)).returning();
+    }).where(eq(users._id, _id)).returning();
     return result[0];
   }
 
-  async deleteUser(id: string): Promise<boolean> {
+  async deleteUser(_id: string): Promise<boolean> {
     try {
-      await this.db.delete(users).where(eq(users.id, id));
+      await this.db.delete(users).where(eq(users._id, _id));
       return true;
     } catch (error) {
       return false;
@@ -260,15 +260,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Fridge methods
-  async getFridges(userId: string): Promise<Fridge[]> {
-    const result = await this.db.select().from(fridges).where(eq(fridges.userId, userId)).orderBy(fridges.createdAt);
+  async getFridges(_userId: string): Promise<Fridge[]> {
+    const result = await this.db.select().from(fridges).where(eq(fridges._userId, _userId)).orderBy(fridges.createdAt);
+    // eslint-disable-next-line no-console
     console.log(`[getFridges] User ${userId}: Found ${result.length} fridges`);
     return result;
   }
 
-  async getFridge(id: string, userId: string): Promise<any | undefined> {
+  async getFridge(_id: string, _userId: string): Promise<any | undefined> {
     const result = await this.db.select().from(fridges)
-      .where(and(eq(fridges.id, id), eq(fridges.userId, userId)))
+      .where(and(eq(fridges._id, _id), eq(fridges._userId, _userId)))
       .limit(1);
     
     const fridge = result[0];
@@ -278,7 +279,7 @@ export class DatabaseStorage implements IStorage {
 
     // Get associated time windows
     const fridgeTimeWindows = await this.db.select().from(timeWindows)
-      .where(and(eq(timeWindows.fridgeId, id), eq(timeWindows.isActive, true)))
+      .where(and(eq(timeWindows._fridgeId, _id), eq(timeWindows.isActive, true)))
       .orderBy(timeWindows.createdAt);
 
     return {
@@ -288,13 +289,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createFridge(fridgeData: InsertFridge): Promise<Fridge> {
+    // eslint-disable-next-line no-console
     console.log(`[createFridge] Creating fridge for user: ${fridgeData.userId}`);
     const result = await this.db.insert(fridges).values(fridgeData).returning();
+    // eslint-disable-next-line no-console
     console.log(`[createFridge] Created fridge with ID: ${result[0].id}`);
     return result[0];
   }
 
-  async updateFridge(id: string, userId: string, updates: any): Promise<Fridge | undefined> {
+  async updateFridge(_id: string, _userId: string, _updates: any): Promise<Fridge | undefined> {
     // Extract time windows from updates
     const { timeWindows: newTimeWindows, ...fridgeUpdates } = updates;
     
@@ -302,7 +305,7 @@ export class DatabaseStorage implements IStorage {
     const result = await this.db.update(fridges).set({
       ...fridgeUpdates,
       updatedAt: new Date()
-    }).where(and(eq(fridges.id, id), eq(fridges.userId, userId))).returning();
+    }).where(and(eq(fridges._id, _id), eq(fridges._userId, _userId))).returning();
     
     if (!result[0]) {
       return undefined;
@@ -311,13 +314,13 @@ export class DatabaseStorage implements IStorage {
     // If time windows are provided, update them
     if (newTimeWindows !== undefined) {
       // Delete existing time windows for this fridge
-      await this.db.delete(timeWindows).where(eq(timeWindows.fridgeId, id));
+      await this.db.delete(timeWindows).where(eq(timeWindows._fridgeId, _id));
       
       // Insert new time windows if any
       if (Array.isArray(newTimeWindows) && newTimeWindows.length > 0) {
         const timeWindowInserts = newTimeWindows.map((tw: any) => ({
-          userId,
-          fridgeId: id,
+          _userId,
+          _fridgeId: _id,
           label: tw.label,
           checkType: tw.checkType,
           startTime: tw.startTime,
@@ -333,32 +336,33 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async deleteFridge(id: string, userId: string): Promise<boolean> {
+  async deleteFridge(_id: string, _userId: string): Promise<boolean> {
     try {
       // Delete all related data first (cascading delete)
-      await this.db.delete(temperatureLogs).where(eq(temperatureLogs.fridgeId, id));
-      await this.db.delete(timeWindows).where(eq(timeWindows.fridgeId, id));
-      await this.db.delete(missedChecks).where(eq(missedChecks.fridgeId, id));
+      await this.db.delete(temperatureLogs).where(eq(temperatureLogs._fridgeId, _id));
+      await this.db.delete(timeWindows).where(eq(timeWindows._fridgeId, _id));
+      await this.db.delete(missedChecks).where(eq(missedChecks._fridgeId, _id));
       
       // Delete the fridge
       const result = await this.db.delete(fridges)
-        .where(and(eq(fridges.id, id), eq(fridges.userId, userId)));
+        .where(and(eq(fridges._id, _id), eq(fridges._userId, _userId)));
       
       return result.length > 0;
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Error deleting fridge:", error);
       return false;
     }
   }
 
   // Label methods
-  async getLabels(userId: string): Promise<Label[]> {
-    return await this.db.select().from(labels).where(eq(labels.userId, userId)).orderBy(labels.createdAt);
+  async getLabels(_userId: string): Promise<Label[]> {
+    return await this.db.select().from(labels).where(eq(labels._userId, _userId)).orderBy(labels.createdAt);
   }
 
-  async getLabel(id: string, userId: string): Promise<Label | undefined> {
+  async getLabel(_id: string, _userId: string): Promise<Label | undefined> {
     const result = await this.db.select().from(labels)
-      .where(and(eq(labels.id, id), eq(labels.userId, userId)))
+      .where(and(eq(labels._id, _id), eq(labels._userId, _userId)))
       .limit(1);
     return result[0];
   }
@@ -368,16 +372,16 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async updateLabel(id: string, userId: string, updates: Partial<Label>): Promise<Label | undefined> {
-    const result = await this.db.update(labels).set(updates)
-      .where(and(eq(labels.id, id), eq(labels.userId, userId))).returning();
+  async updateLabel(_id: string, _userId: string, _updates: Partial<Label>): Promise<Label | undefined> {
+    const result = await this.db.update(labels).set(_updates)
+      .where(and(eq(labels._id, _id), eq(labels._userId, _userId))).returning();
     return result[0];
   }
 
-  async deleteLabel(id: string, userId: string): Promise<boolean> {
+  async deleteLabel(_id: string, _userId: string): Promise<boolean> {
     try {
       await this.db.delete(labels)
-        .where(and(eq(labels.id, id), eq(labels.userId, userId)));
+        .where(and(eq(labels._id, _id), eq(labels._userId, _userId)));
       return true;
     } catch (error) {
       return false;
@@ -385,18 +389,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Temperature log methods
-  async getTemperatureLogs(fridgeId: string, userId: string): Promise<TemperatureLog[]> {
+  async getTemperatureLogs(_fridgeId: string, _userId: string): Promise<TemperatureLog[]> {
     // First verify the fridge belongs to the user
-    const fridge = await this.getFridge(fridgeId, userId);
+    const fridge = await this.getFridge(_fridgeId, _userId);
     if (!fridge) return [];
     
     return await this.db.select().from(temperatureLogs)
-      .where(eq(temperatureLogs.fridgeId, fridgeId))
+      .where(eq(temperatureLogs._fridgeId, _fridgeId))
       .orderBy(desc(temperatureLogs.createdAt));
   }
 
-  async getRecentTemperatureLog(fridgeId: string, userId: string): Promise<TemperatureLog | undefined> {
-    const logs = await this.getTemperatureLogs(fridgeId, userId);
+  async getRecentTemperatureLog(_fridgeId: string, _userId: string): Promise<TemperatureLog | undefined> {
+    const logs = await this.getTemperatureLogs(_fridgeId, _userId);
     return logs[0];
   }
 
@@ -405,11 +409,11 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async getAllTemperatureLogsForUser(userId: string): Promise<(TemperatureLog & { fridgeName: string })[]> {
+  async getAllTemperatureLogsForUser(_userId: string): Promise<(TemperatureLog & { fridgeName: string })[]> {
     const result = await this.db.select({
-      id: temperatureLogs.id,
-      userId: temperatureLogs.userId,
-      fridgeId: temperatureLogs.fridgeId,
+      _id: temperatureLogs._id,
+      _userId: temperatureLogs._userId,
+      _fridgeId: temperatureLogs._fridgeId,
       timeWindowId: temperatureLogs.timeWindowId,
       temperature: temperatureLogs.currentTempReading,
       minTempReading: temperatureLogs.minTempReading,
@@ -424,26 +428,26 @@ export class DatabaseStorage implements IStorage {
       createdAt: temperatureLogs.createdAt,
       fridgeName: fridges.name,
     }).from(temperatureLogs)
-      .innerJoin(fridges, eq(temperatureLogs.fridgeId, fridges.id))
-      .where(eq(fridges.userId, userId))
+      .innerJoin(fridges, eq(temperatureLogs._fridgeId, fridges._id))
+      .where(eq(fridges._userId, _userId))
       .orderBy(desc(temperatureLogs.createdAt));
     
     return result;
   }
 
   // Time Window methods
-  async getTimeWindows(fridgeId: string, userId: string): Promise<TimeWindow[]> {
+  async getTimeWindows(_fridgeId: string, _userId: string): Promise<TimeWindow[]> {
     const result = await this.db.select().from(timeWindows)
-      .innerJoin(fridges, eq(timeWindows.fridgeId, fridges.id))
-      .where(and(eq(timeWindows.fridgeId, fridgeId), eq(fridges.userId, userId)))
+      .innerJoin(fridges, eq(timeWindows._fridgeId, fridges._id))
+      .where(and(eq(timeWindows._fridgeId, _fridgeId), eq(fridges._userId, _userId)))
       .orderBy(timeWindows.startTime);
     return result.map(r => r.time_windows);
   }
 
-  async getTimeWindow(id: string, userId: string): Promise<TimeWindow | undefined> {
+  async getTimeWindow(_id: string, _userId: string): Promise<TimeWindow | undefined> {
     const result = await this.db.select().from(timeWindows)
-      .innerJoin(fridges, eq(timeWindows.fridgeId, fridges.id))
-      .where(and(eq(timeWindows.id, id), eq(fridges.userId, userId)))
+      .innerJoin(fridges, eq(timeWindows._fridgeId, fridges._id))
+      .where(and(eq(timeWindows._id, _id), eq(fridges._userId, _userId)))
       .limit(1);
     return result[0]?.time_windows;
   }
@@ -453,33 +457,33 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async updateTimeWindow(id: string, userId: string, updates: Partial<TimeWindow>): Promise<TimeWindow | undefined> {
-    const timeWindow = await this.getTimeWindow(id, userId);
+  async updateTimeWindow(_id: string, _userId: string, _updates: Partial<TimeWindow>): Promise<TimeWindow | undefined> {
+    const timeWindow = await this.getTimeWindow(_id, _userId);
     if (!timeWindow) return undefined;
     
-    const result = await this.db.update(timeWindows).set(updates).where(eq(timeWindows.id, id)).returning();
+    const result = await this.db.update(timeWindows).set(_updates).where(eq(timeWindows._id, _id)).returning();
     return result[0];
   }
 
-  async deleteTimeWindow(id: string, userId: string): Promise<boolean> {
-    const timeWindow = await this.getTimeWindow(id, userId);
+  async deleteTimeWindow(_id: string, _userId: string): Promise<boolean> {
+    const timeWindow = await this.getTimeWindow(_id, _userId);
     if (!timeWindow) return false;
     
     try {
-      await this.db.delete(timeWindows).where(eq(timeWindows.id, id));
+      await this.db.delete(timeWindows).where(eq(timeWindows._id, _id));
       return true;
     } catch (error) {
       return false;
     }
   }
 
-  async getCurrentTimeWindow(fridgeId: string): Promise<TimeWindow | undefined> {
+  async getCurrentTimeWindow(_fridgeId: string): Promise<TimeWindow | undefined> {
     const now = new Date();
     const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
     
     const result = await this.db.select().from(timeWindows)
       .where(and(
-        eq(timeWindows.fridgeId, fridgeId),
+        eq(timeWindows._fridgeId, _fridgeId),
         eq(timeWindows.isActive, true)
       ));
     
@@ -492,10 +496,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Compliance Record methods
-  async getComplianceRecords(fridgeId: string, startDate: Date, endDate: Date): Promise<ComplianceRecord[]> {
+  async getComplianceRecords(_fridgeId: string, startDate: Date, endDate: Date): Promise<ComplianceRecord[]> {
     return await this.db.select().from(complianceRecords)
       .where(and(
-        eq(complianceRecords.fridgeId, fridgeId),
+        eq(complianceRecords._fridgeId, _fridgeId),
         and(
           sql`${complianceRecords.date} >= ${startDate}`,
           sql`${complianceRecords.date} <= ${endDate}`
@@ -504,27 +508,27 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(complianceRecords.date));
   }
 
-  async getComplianceRecord(id: string): Promise<ComplianceRecord | undefined> {
+  async getComplianceRecord(_id: string): Promise<ComplianceRecord | undefined> {
     const result = await this.db.select().from(complianceRecords)
-      .where(eq(complianceRecords.id, id))
+      .where(eq(complianceRecords._id, _id))
       .limit(1);
     return result[0];
   }
 
-  async createComplianceRecord(userId: string, recordData: InsertComplianceRecord): Promise<ComplianceRecord> {
-    const result = await this.db.insert(complianceRecords).values({ ...recordData, userId }).returning();
+  async createComplianceRecord(_userId: string, _recordData: InsertComplianceRecord): Promise<ComplianceRecord> {
+    const result = await this.db.insert(complianceRecords).values({ ..._recordData, userId }).returning();
     return result[0];
   }
 
-  async updateComplianceRecord(id: string, updates: Partial<ComplianceRecord>): Promise<ComplianceRecord | undefined> {
+  async updateComplianceRecord(_id: string, _updates: Partial<ComplianceRecord>): Promise<ComplianceRecord | undefined> {
     const result = await this.db.update(complianceRecords)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(complianceRecords.id, id))
+      .set({ ..._updates, updatedAt: new Date() })
+      .where(eq(complianceRecords._id, _id))
       .returning();
     return result[0];
   }
 
-  async getComplianceOverview(userId: string, date?: Date): Promise<{
+  async getComplianceOverview(_userId: string, date?: Date): Promise<{
     totalFridges: number;
     compliantFridges: number;
     overallComplianceRate: number;
@@ -537,7 +541,7 @@ export class DatabaseStorage implements IStorage {
       lateEntries: number;
     };
     complianceByFridge: {
-      fridgeId: string;
+      _fridgeId: string;
       fridgeName: string;
       complianceScore: number;
       lastReading: string;
@@ -551,34 +555,34 @@ export class DatabaseStorage implements IStorage {
   }> {
     const targetDate = date || new Date();
     const targetDateStr = targetDate.toISOString().split('T')[0]; // Convert to YYYY-MM-DD format
-    const userFridges = await this.getFridges(userId);
+    const userFridges = await this.getFridges(_userId);
     
     // Get today's temperature logs
     const todayLogs = await this.db.select().from(temperatureLogs)
-      .innerJoin(fridges, eq(temperatureLogs.fridgeId, fridges.id))
+      .innerJoin(fridges, eq(temperatureLogs._fridgeId, fridges._id))
       .where(and(
-        eq(fridges.userId, userId),
+        eq(fridges._userId, _userId),
         sql`DATE(${temperatureLogs.createdAt}) = ${targetDateStr}`
       ));
 
     // Get all temperature logs for user (for overall stats)
     const allUserLogs = await this.db.select().from(temperatureLogs)
-      .innerJoin(fridges, eq(temperatureLogs.fridgeId, fridges.id))
-      .where(eq(fridges.userId, userId));
+      .innerJoin(fridges, eq(temperatureLogs._fridgeId, fridges._id))
+      .where(eq(fridges._userId, _userId));
 
     // Calculate basic stats
     const lateEntries = todayLogs.filter(log => !log.temperature_logs.isOnTime).length;
     const compliantFridges = userFridges.filter(fridge => 
-      todayLogs.some(log => log.temperature_logs.fridgeId === fridge.id)
+      todayLogs.some(log => log.temperature_logs.fridgeId === fridge._id)
     ).length;
 
     // Get out-of-range events count
     const outOfRangeEventsCount = await this.db.select({ count: sql<number>`count(*)` })
       .from(outOfRangeEvents)
-      .innerJoin(fridges, eq(outOfRangeEvents.fridgeId, fridges.id))
-      .where(eq(fridges.userId, userId));
+      .innerJoin(fridges, eq(outOfRangeEvents._fridgeId, fridges._id))
+      .where(eq(fridges._userId, _userId));
     
-    const unresolvedEventsCount = await this.getUnresolvedEventsCount(userId);
+    const unresolvedEventsCount = await this.getUnresolvedEventsCount(_userId);
 
     // Calculate overall compliance rate
     const totalLogs = allUserLogs.length;
@@ -588,9 +592,9 @@ export class DatabaseStorage implements IStorage {
     // Get checklist completions for today
     const todayChecklistsCompleted = await this.db.select({ count: sql<number>`count(*)` })
       .from(checklistCompletions)
-      .innerJoin(checklists, eq(checklistCompletions.checklistId, checklists.id))
+      .innerJoin(checklists, eq(checklistCompletions.checklistId, checklists._id))
       .where(and(
-        eq(checklists.createdBy, userId),
+        eq(checklists.createdBy, _userId),
         sql`DATE(${checklistCompletions.completedAt}) = ${targetDateStr}`
       ));
 
@@ -599,7 +603,7 @@ export class DatabaseStorage implements IStorage {
       userFridges.map(async (fridge) => {
         // Get recent logs for this fridge
         const fridgeLogs = await this.db.select().from(temperatureLogs)
-          .where(eq(temperatureLogs.fridgeId, fridge.id))
+          .where(eq(temperatureLogs._fridgeId, fridge._id))
           .orderBy(desc(temperatureLogs.createdAt))
           .limit(10);
 
@@ -611,20 +615,20 @@ export class DatabaseStorage implements IStorage {
         const lastReading = fridgeLogs.length > 0 ? fridgeLogs[0].createdAt!.toISOString() : new Date().toISOString();
         
         // Determine status
-        let status: 'compliant' | 'warning' | 'critical' = 'compliant';
-        if (complianceScore < 70) status = 'critical';
-        else if (complianceScore < 90) status = 'warning';
+        let _status: 'compliant' | 'warning' | 'critical' = 'compliant';
+        if (complianceScore < 70) _status = 'critical';
+        else if (complianceScore < 90) _status = 'warning';
 
         // Count missed readings (fridges that should have had readings today but didn't)
-        const todayFridgeLogs = todayLogs.filter(log => log.temperature_logs.fridgeId === fridge.id);
+        const todayFridgeLogs = todayLogs.filter(log => log.temperature_logs.fridgeId === fridge._id);
         const missedReadings = todayFridgeLogs.length === 0 ? 1 : 0; // Simple logic for now
 
         return {
-          fridgeId: fridge.id,
+          _fridgeId: fridge._id,
           fridgeName: fridge.name,
           complianceScore: Math.round(complianceScore),
           lastReading,
-          status,
+          _status,
           missedReadings,
         };
       })
@@ -660,10 +664,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Checklist methods
-  async getChecklists(userId: string, fridgeId?: string): Promise<(Checklist & { items: ChecklistItem[] })[]> {
-    const whereConditions = [eq(checklists.createdBy, userId)];
-    if (fridgeId) {
-      whereConditions.push(eq(checklists.fridgeId, fridgeId));
+  async getChecklists(_userId: string, _fridgeId?: string): Promise<(Checklist & { items: ChecklistItem[] })[]> {
+    const whereConditions = [eq(checklists.createdBy, _userId)];
+    if (_fridgeId) {
+      whereConditions.push(eq(checklists._fridgeId, _fridgeId));
     }
 
     const checklistsResult = await this.db.select().from(checklists)
@@ -673,7 +677,7 @@ export class DatabaseStorage implements IStorage {
     const checklistsWithItems = await Promise.all(
       checklistsResult.map(async (checklist) => {
         const items = await this.db.select().from(checklistItems)
-          .where(eq(checklistItems.checklistId, checklist.id))
+          .where(eq(checklistItems.checklistId, checklist._id))
           .orderBy(checklistItems.sortOrder);
         return { ...checklist, items };
       })
@@ -682,15 +686,15 @@ export class DatabaseStorage implements IStorage {
     return checklistsWithItems;
   }
 
-  async getChecklist(id: string, userId: string): Promise<(Checklist & { items: ChecklistItem[] }) | undefined> {
+  async getChecklist(_id: string, _userId: string): Promise<(Checklist & { items: ChecklistItem[] }) | undefined> {
     const result = await this.db.select().from(checklists)
-      .where(and(eq(checklists.id, id), eq(checklists.createdBy, userId)))
+      .where(and(eq(checklists._id, _id), eq(checklists.createdBy, _userId)))
       .limit(1);
     
     if (!result[0]) return undefined;
 
     const items = await this.db.select().from(checklistItems)
-      .where(eq(checklistItems.checklistId, id))
+      .where(eq(checklistItems.checklistId, _id))
       .orderBy(checklistItems.sortOrder);
 
     return { ...result[0], items };
@@ -704,8 +708,8 @@ export class DatabaseStorage implements IStorage {
     if (items.length > 0) {
       const itemsWithChecklistId = items.map((item, index) => ({
         ...item,
-        userId: checklist.createdBy,
-        checklistId: checklist.id,
+        _userId: checklist.createdBy,
+        checklistId: checklist._id,
         sortOrder: index.toString(),
       }));
       await this.db.insert(checklistItems).values(itemsWithChecklistId);
@@ -714,26 +718,26 @@ export class DatabaseStorage implements IStorage {
     return checklist;
   }
 
-  async updateChecklist(id: string, userId: string, updates: Partial<Checklist>): Promise<Checklist | undefined> {
-    const existing = await this.getChecklist(id, userId);
+  async updateChecklist(_id: string, _userId: string, _updates: Partial<Checklist>): Promise<Checklist | undefined> {
+    const existing = await this.getChecklist(_id, _userId);
     if (!existing) return undefined;
 
     const result = await this.db.update(checklists)
-      .set(updates)
-      .where(eq(checklists.id, id))
+      .set(_updates)
+      .where(eq(checklists._id, _id))
       .returning();
     return result[0];
   }
 
-  async deleteChecklist(id: string, userId: string): Promise<boolean> {
-    const existing = await this.getChecklist(id, userId);
+  async deleteChecklist(_id: string, _userId: string): Promise<boolean> {
+    const existing = await this.getChecklist(_id, _userId);
     if (!existing) return false;
 
     try {
       // Delete checklist items first
-      await this.db.delete(checklistItems).where(eq(checklistItems.checklistId, id));
+      await this.db.delete(checklistItems).where(eq(checklistItems.checklistId, _id));
       // Delete checklist
-      await this.db.delete(checklists).where(eq(checklists.id, id));
+      await this.db.delete(checklists).where(eq(checklists._id, _id));
       return true;
     } catch (error) {
       return false;
@@ -741,10 +745,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Checklist completion methods
-  async getChecklistCompletions(checklistId: string, fridgeId?: string): Promise<ChecklistCompletion[]> {
-    const whereConditions = [eq(checklistCompletions.checklistId, checklistId)];
-    if (fridgeId) {
-      whereConditions.push(eq(checklistCompletions.fridgeId, fridgeId));
+  async getChecklistCompletions(_checklistId: string, _fridgeId?: string): Promise<ChecklistCompletion[]> {
+    const whereConditions = [eq(checklistCompletions.checklistId, _checklistId)];
+    if (_fridgeId) {
+      whereConditions.push(eq(checklistCompletions._fridgeId, _fridgeId));
     }
 
     return await this.db.select().from(checklistCompletions)
@@ -752,15 +756,15 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(checklistCompletions.completedAt));
   }
 
-  async createChecklistCompletion(completionData: InsertChecklistCompletion): Promise<ChecklistCompletion> {
-    const result = await this.db.insert(checklistCompletions).values({ ...completionData, userId: completionData.completedBy }).returning();
+  async createChecklistCompletion(_completionData: InsertChecklistCompletion): Promise<ChecklistCompletion> {
+    const result = await this.db.insert(checklistCompletions).values({ ..._completionData, _userId: completionData.completedBy }).returning();
     return result[0];
   }
 
-  async getDueChecklists(userId: string): Promise<Checklist[]> {
+  async getDueChecklists(_userId: string): Promise<Checklist[]> {
     // Get all active checklists for user
     const userChecklists = await this.db.select().from(checklists)
-      .where(and(eq(checklists.createdBy, userId), eq(checklists.isActive, true)));
+      .where(and(eq(checklists.createdBy, _userId), eq(checklists.isActive, true)));
 
     // Filter based on frequency and last completion
     const dueChecklists = [];
@@ -768,7 +772,7 @@ export class DatabaseStorage implements IStorage {
 
     for (const checklist of userChecklists) {
       const lastCompletion = await this.db.select().from(checklistCompletions)
-        .where(eq(checklistCompletions.checklistId, checklist.id))
+        .where(eq(checklistCompletions.checklistId, checklist._id))
         .orderBy(desc(checklistCompletions.completedAt))
         .limit(1);
 
@@ -801,8 +805,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Out-of-range event methods
-  async getOutOfRangeEvents(fridgeId: string, resolved?: boolean): Promise<OutOfRangeEvent[]> {
-    const whereConditions = [eq(outOfRangeEvents.fridgeId, fridgeId)];
+  async getOutOfRangeEvents(_fridgeId: string, resolved?: boolean): Promise<OutOfRangeEvent[]> {
+    const whereConditions = [eq(outOfRangeEvents._fridgeId, _fridgeId)];
     
     if (resolved !== undefined) {
       if (resolved) {
@@ -819,55 +823,55 @@ export class DatabaseStorage implements IStorage {
 
   async createOutOfRangeEvent(eventData: InsertOutOfRangeEvent): Promise<OutOfRangeEvent> {
     // Get the userId from the fridge associated with this event
-    const fridge = await this.db.select({ userId: fridges.userId })
+    const fridge = await this.db.select({ _userId: fridges.userId })
       .from(fridges)
-      .where(eq(fridges.id, eventData.fridgeId))
+      .where(eq(fridges._id, eventData._fridgeId))
       .limit(1);
     
     if (!fridge[0]) {
       throw new Error(`Fridge not found: ${eventData.fridgeId}`);
     }
     
-    const result = await this.db.insert(outOfRangeEvents).values({ ...eventData, userId: fridge[0].userId }).returning();
+    const result = await this.db.insert(outOfRangeEvents).values({ ...eventData, _userId: fridge[0].userId }).returning();
     return result[0];
   }
 
-  async resolveOutOfRangeEvent(id: string, notes?: string): Promise<OutOfRangeEvent | undefined> {
+  async resolveOutOfRangeEvent(_id: string, notes?: string): Promise<OutOfRangeEvent | undefined> {
     const result = await this.db.update(outOfRangeEvents)
       .set({ 
         resolvedAt: new Date(),
         notes: notes || outOfRangeEvents.notes
       })
-      .where(eq(outOfRangeEvents.id, id))
+      .where(eq(outOfRangeEvents._id, _id))
       .returning();
     return result[0];
   }
 
-  async getUnresolvedEventsCount(userId: string): Promise<number> {
+  async getUnresolvedEventsCount(_userId: string): Promise<number> {
     const result = await this.db.select().from(outOfRangeEvents)
-      .innerJoin(fridges, eq(outOfRangeEvents.fridgeId, fridges.id))
+      .innerJoin(fridges, eq(outOfRangeEvents._fridgeId, fridges._id))
       .where(and(
-        eq(fridges.userId, userId),
+        eq(fridges._userId, _userId),
         sql`${outOfRangeEvents.resolvedAt} IS NULL`
       ));
     return result.length;
   }
 
   // Enhanced temperature log methods with compliance
-  async getFridgesWithRecentTemps(userId: string): Promise<(Fridge & { 
+  async getFridgesWithRecentTemps(_userId: string): Promise<(Fridge & { 
     recentLog?: TemperatureLog; 
     timeWindows: TimeWindow[];
     complianceStatus: string;
     latestCalibration?: CalibrationRecord;
     calibrationStatus: string;
   })[]> {
-    const userFridges = await this.getFridges(userId);
+    const userFridges = await this.getFridges(_userId);
     
     const fridgesWithData = await Promise.all(
       userFridges.map(async (fridge) => {
-        const recentLog = await this.getRecentTemperatureLog(fridge.id, userId);
-        const fridgeTimeWindows = await this.getTimeWindows(fridge.id, userId);
-        const latestCalibration = await this.getLatestCalibrationForFridge(fridge.id, userId);
+        const recentLog = await this.getRecentTemperatureLog(fridge._id, _userId);
+        const fridgeTimeWindows = await this.getTimeWindows(fridge._id, _userId);
+        const latestCalibration = await this.getLatestCalibrationForFridge(fridge._id, _userId);
         
         // Calculate calibration status
         let calibrationStatus = 'no-calibration';
@@ -885,7 +889,7 @@ export class DatabaseStorage implements IStorage {
           }
         }
         
-        // Calculate compliance status, considering active status
+        // Calculate compliance _status, considering active status
         let complianceStatus = 'compliant';
         if (!fridge.isActive) {
           complianceStatus = 'inactive';
@@ -936,7 +940,7 @@ export class DatabaseStorage implements IStorage {
     
     // Get fridge to check temperature ranges
     const fridge = await this.db.select().from(fridges)
-      .where(eq(fridges.id, logData.fridgeId))
+      .where(eq(fridges._id, logData._fridgeId))
       .limit(1);
     
     if (!fridge[0]) {
@@ -963,8 +967,8 @@ export class DatabaseStorage implements IStorage {
 
       // Create out-of-range event
       const eventData: InsertOutOfRangeEvent = {
-        temperatureLogId: log.id,
-        fridgeId: log.fridgeId,
+        temperatureLogId: log._id,
+        _fridgeId: log._fridgeId,
         violationType: "current", // TODO: Determine violation type based on which reading is out of range
         minTempReading: log.minTempReading,
         maxTempReading: log.maxTempReading,
@@ -991,7 +995,7 @@ export class DatabaseStorage implements IStorage {
         maxTemp: fridges.maxTemp
       })
       .from(temperatureLogs)
-      .innerJoin(fridges, eq(temperatureLogs.fridgeId, fridges.id))
+      .innerJoin(fridges, eq(temperatureLogs._fridgeId, fridges._id))
       .orderBy(desc(temperatureLogs.createdAt))
       .limit(100); // Check recent logs
 
@@ -1006,15 +1010,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Missed checks methods implementation
-  async getMissedChecks(fridgeId: string, userId: string): Promise<MissedCheck[]> {
+  async getMissedChecks(_fridgeId: string, _userId: string): Promise<MissedCheck[]> {
     // Verify fridge ownership
-    const fridge = await this.getFridge(fridgeId, userId);
+    const fridge = await this.getFridge(_fridgeId, _userId);
     if (!fridge) return [];
     
     return await this.db
       .select()
       .from(missedChecks)
-      .where(eq(missedChecks.fridgeId, fridgeId))
+      .where(eq(missedChecks._fridgeId, _fridgeId))
       .orderBy(desc(missedChecks.missedDate));
   }
 
@@ -1023,7 +1027,7 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async overrideMissedCheck(id: string, userId: string, overrideReason: string): Promise<MissedCheck | undefined> {
+  async overrideMissedCheck(_id: string, _userId: string, overrideReason: string): Promise<MissedCheck | undefined> {
     // Verify the missed check belongs to a fridge owned by the user
     const result = await this.db
       .select({
@@ -1031,8 +1035,8 @@ export class DatabaseStorage implements IStorage {
         fridge: fridges
       })
       .from(missedChecks)
-      .leftJoin(fridges, eq(missedChecks.fridgeId, fridges.id))
-      .where(and(eq(missedChecks.id, id), eq(fridges.userId, userId)))
+      .leftJoin(fridges, eq(missedChecks._fridgeId, fridges._id))
+      .where(and(eq(missedChecks._id, _id), eq(fridges._userId, _userId)))
       .limit(1);
 
     if (!result[0]) return undefined;
@@ -1042,16 +1046,16 @@ export class DatabaseStorage implements IStorage {
       .set({
         isOverridden: true,
         overrideReason,
-        overriddenBy: userId,
+        overriddenBy: _userId,
         overriddenAt: new Date(),
       })
-      .where(eq(missedChecks.id, id))
+      .where(eq(missedChecks._id, _id))
       .returning();
 
     return updated[0];
   }
 
-  async getMissedChecksForDate(userId: string, date: Date): Promise<(MissedCheck & { fridgeName: string })[]> {
+  async getMissedChecksForDate(_userId: string, date: Date): Promise<(MissedCheck & { fridgeName: string })[]> {
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
     
@@ -1060,9 +1064,9 @@ export class DatabaseStorage implements IStorage {
 
     return await this.db
       .select({
-        id: missedChecks.id,
-        userId: missedChecks.userId,
-        fridgeId: missedChecks.fridgeId,
+        _id: missedChecks._id,
+        _userId: missedChecks._userId,
+        _fridgeId: missedChecks._fridgeId,
         timeWindowId: missedChecks.timeWindowId,
         missedDate: missedChecks.missedDate,
         checkType: missedChecks.checkType,
@@ -1075,10 +1079,10 @@ export class DatabaseStorage implements IStorage {
         fridgeName: fridges.name
       })
       .from(missedChecks)
-      .innerJoin(fridges, eq(missedChecks.fridgeId, fridges.id))
+      .innerJoin(fridges, eq(missedChecks._fridgeId, fridges._id))
       .where(
         and(
-          eq(fridges.userId, userId),
+          eq(fridges._userId, _userId),
           sql`${missedChecks.missedDate} >= ${startOfDay}`,
           sql`${missedChecks.missedDate} <= ${endOfDay}`
         )
@@ -1087,11 +1091,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   // New fridge management methods implementation
-  async getAllFridgesWithLogs(userId: string): Promise<any[]> {
+  async getAllFridgesWithLogs(_userId: string): Promise<any[]> {
     try {
       return await this.db
         .select({
-          id: fridges.id,
+          _id: fridges._id,
           name: fridges.name,
           location: fridges.location,
           notes: fridges.notes,
@@ -1119,20 +1123,21 @@ export class DatabaseStorage implements IStorage {
              ORDER BY created_at DESC LIMIT 1)`
         })
         .from(fridges)
-        .where(eq(fridges.userId, userId))
+        .where(eq(fridges._userId, _userId))
         .orderBy(desc(fridges.isActive), fridges.name);
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Error getting all fridges with logs:", error);
       throw error;
     }
   }
 
-  async getFridgeWithLogs(userId: string, fridgeId: string): Promise<any> {
+  async getFridgeWithLogs(_userId: string, _fridgeId: string): Promise<any> {
     try {
       const [fridge] = await this.db
         .select()
         .from(fridges)
-        .where(and(eq(fridges.id, fridgeId), eq(fridges.userId, userId)));
+        .where(and(eq(fridges._id, _fridgeId), eq(fridges._userId, _userId)));
 
       if (!fridge) {
         return null;
@@ -1140,7 +1145,7 @@ export class DatabaseStorage implements IStorage {
 
       const logs = await this.db
         .select({
-          id: temperatureLogs.id,
+          _id: temperatureLogs._id,
           temperature: temperatureLogs.currentTempReading,
           minTempReading: temperatureLogs.minTempReading,
           maxTempReading: temperatureLogs.maxTempReading,
@@ -1155,8 +1160,8 @@ export class DatabaseStorage implements IStorage {
           fridgeName: fridges.name
         })
         .from(temperatureLogs)
-        .innerJoin(fridges, eq(temperatureLogs.fridgeId, fridges.id))
-        .where(eq(temperatureLogs.fridgeId, fridgeId))
+        .innerJoin(fridges, eq(temperatureLogs._fridgeId, fridges._id))
+        .where(eq(temperatureLogs._fridgeId, _fridgeId))
         .orderBy(desc(temperatureLogs.createdAt));
 
       const lastLog = logs[0];
@@ -1169,12 +1174,13 @@ export class DatabaseStorage implements IStorage {
         recentAlert: lastLog?.isAlert || false
       };
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Error getting fridge with logs:", error);
       throw error;
     }
   }
 
-  async deactivateFridge(userId: string, fridgeId: string): Promise<any> {
+  async deactivateFridge(_userId: string, _fridgeId: string): Promise<any> {
     try {
       const [updated] = await this.db
         .update(fridges)
@@ -1182,17 +1188,18 @@ export class DatabaseStorage implements IStorage {
           isActive: false,
           updatedAt: new Date()
         })
-        .where(and(eq(fridges.id, fridgeId), eq(fridges.userId, userId)))
+        .where(and(eq(fridges._id, _fridgeId), eq(fridges._userId, _userId)))
         .returning();
 
       return updated;
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Error deactivating fridge:", error);
       throw error;
     }
   }
 
-  async reactivateFridge(userId: string, fridgeId: string): Promise<any> {
+  async reactivateFridge(_userId: string, _fridgeId: string): Promise<any> {
     try {
       const [updated] = await this.db
         .update(fridges)
@@ -1200,32 +1207,33 @@ export class DatabaseStorage implements IStorage {
           isActive: true,
           updatedAt: new Date()
         })
-        .where(and(eq(fridges.id, fridgeId), eq(fridges.userId, userId)))
+        .where(and(eq(fridges._id, _fridgeId), eq(fridges._userId, _userId)))
         .returning();
 
       return updated;
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Error reactivating fridge:", error);
       throw error;
     }
   }
 
   // Self-audit template methods
-  async getAuditTemplates(userId: string): Promise<(AuditTemplate & { sections: (AuditSection & { items: AuditItem[] })[] })[]> {
+  async getAuditTemplates(_userId: string): Promise<(AuditTemplate & { sections: (AuditSection & { items: AuditItem[] })[] })[]> {
     const templates = await this.db.select().from(auditTemplates)
-      .where(eq(auditTemplates.userId, userId))
+      .where(eq(auditTemplates._userId, _userId))
       .orderBy(auditTemplates.name);
 
     const templatesWithSections = await Promise.all(
       templates.map(async (template) => {
         const sections = await this.db.select().from(auditSections)
-          .where(eq(auditSections.templateId, template.id))
+          .where(eq(auditSections._templateId, template._id))
           .orderBy(auditSections.orderIndex);
 
         const sectionsWithItems = await Promise.all(
           sections.map(async (section) => {
             const items = await this.db.select().from(auditItems)
-              .where(eq(auditItems.sectionId, section.id))
+              .where(eq(auditItems.sectionId, section._id))
               .orderBy(auditItems.orderIndex);
             return { ...section, items };
           })
@@ -1238,21 +1246,21 @@ export class DatabaseStorage implements IStorage {
     return templatesWithSections;
   }
 
-  async getAuditTemplate(templateId: string, userId: string): Promise<(AuditTemplate & { sections: (AuditSection & { items: AuditItem[] })[] }) | undefined> {
+  async getAuditTemplate(_templateId: string, _userId: string): Promise<(AuditTemplate & { sections: (AuditSection & { items: AuditItem[] })[] }) | undefined> {
     const template = await this.db.select().from(auditTemplates)
-      .where(and(eq(auditTemplates.id, templateId), eq(auditTemplates.userId, userId)))
+      .where(and(eq(auditTemplates._id, _templateId), eq(auditTemplates._userId, _userId)))
       .limit(1);
 
     if (!template[0]) return undefined;
 
     const sections = await this.db.select().from(auditSections)
-      .where(eq(auditSections.templateId, templateId))
+      .where(eq(auditSections._templateId, _templateId))
       .orderBy(auditSections.orderIndex);
 
     const sectionsWithItems = await Promise.all(
       sections.map(async (section) => {
         const items = await this.db.select().from(auditItems)
-          .where(eq(auditItems.sectionId, section.id))
+          .where(eq(auditItems.sectionId, section._id))
           .orderBy(auditItems.orderIndex);
         return { ...section, items };
       })
@@ -1262,14 +1270,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createAuditTemplate(
-    templateData: InsertAuditTemplate, 
-    sectionsData: { sections: Array<{ title: string; description?: string; orderIndex: number; items: Array<{ text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }
+    _templateData: InsertAuditTemplate, 
+    _sectionsData: { sections: Array<{ title: string; description?: string; orderIndex: number; items: Array<{ text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }
   ): Promise<AuditTemplate> {
-    const [template] = await this.db.insert(auditTemplates).values(templateData).returning();
+    const [template] = await this.db.insert(auditTemplates).values(_templateData).returning();
 
     for (const sectionData of sectionsData.sections) {
       const [section] = await this.db.insert(auditSections).values({
-        templateId: template.id,
+        _templateId: template._id,
         title: sectionData.title,
         description: sectionData.description,
         orderIndex: sectionData.orderIndex.toString()
@@ -1277,7 +1285,7 @@ export class DatabaseStorage implements IStorage {
 
       for (const itemData of sectionData.items) {
         await this.db.insert(auditItems).values({
-          sectionId: section.id,
+          sectionId: section._id,
           text: itemData.text,
           isRequired: itemData.isRequired,
           orderIndex: itemData.orderIndex.toString(),
@@ -1290,26 +1298,26 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateAuditTemplate(
-    templateId: string, 
-    userId: string, 
-    templateData: Partial<AuditTemplate>, 
+    _templateId: string, 
+    _userId: string, 
+    _templateData: Partial<AuditTemplate>, 
     sectionsData?: { sections: Array<{ id?: string; title: string; description?: string; orderIndex: number; items: Array<{ id?: string; text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }
   ): Promise<AuditTemplate | undefined> {
     const [updated] = await this.db.update(auditTemplates)
-      .set({ ...templateData, updatedAt: new Date() })
-      .where(and(eq(auditTemplates.id, templateId), eq(auditTemplates.userId, userId)))
+      .set({ ..._templateData, updatedAt: new Date() })
+      .where(and(eq(auditTemplates._id, _templateId), eq(auditTemplates._userId, _userId)))
       .returning();
 
     if (!updated) return undefined;
 
-    if (sectionsData) {
+    if (_sectionsData) {
       // Delete existing sections and items (cascade will handle items)
-      await this.db.delete(auditSections).where(eq(auditSections.templateId, templateId));
+      await this.db.delete(auditSections).where(eq(auditSections._templateId, _templateId));
 
       // Create new sections and items
       for (const sectionData of sectionsData.sections) {
         const [section] = await this.db.insert(auditSections).values({
-          templateId: templateId,
+          _templateId: _templateId,
           title: sectionData.title,
           description: sectionData.description,
           orderIndex: sectionData.orderIndex.toString()
@@ -1317,7 +1325,7 @@ export class DatabaseStorage implements IStorage {
 
         for (const itemData of sectionData.items) {
           await this.db.insert(auditItems).values({
-            sectionId: section.id,
+            sectionId: section._id,
             text: itemData.text,
             isRequired: itemData.isRequired,
             orderIndex: itemData.orderIndex.toString(),
@@ -1330,46 +1338,46 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  async deleteAuditTemplate(templateId: string, userId: string): Promise<boolean> {
+  async deleteAuditTemplate(_templateId: string, _userId: string): Promise<boolean> {
     const result = await this.db.delete(auditTemplates)
-      .where(and(eq(auditTemplates.id, templateId), eq(auditTemplates.userId, userId)));
+      .where(and(eq(auditTemplates._id, _templateId), eq(auditTemplates._userId, _userId)));
     return result.length > 0;
   }
 
-  async createDefaultAuditTemplate(userId: string): Promise<AuditTemplate> {
+  async createDefaultAuditTemplate(_userId: string): Promise<AuditTemplate> {
     // Import the default checklist structure
     const { DEFAULT_COMPLIANCE_CHECKLIST } = await import("@shared/self-audit-types");
     
-    const templateData: InsertAuditTemplate = {
-      userId,
+    const _templateData: InsertAuditTemplate = {
+      _userId,
       name: "FridgeSafe Self Audit Checklist 🧾",
       description: "Cold Chain Self-Audit Checklist for healthcare facilities to ensure compliance with temperature monitoring, documentation, and staff training requirements for vaccine and medicine storage.",
       isDefault: true
     };
 
-    return await this.createAuditTemplate(templateData, DEFAULT_COMPLIANCE_CHECKLIST);
+    return await this.createAuditTemplate(_templateData, DEFAULT_COMPLIANCE_CHECKLIST);
   }
 
   // Self-audit completion methods
-  async createAuditCompletion(completionData: InsertAuditCompletion, responsesData: InsertAuditResponse[]): Promise<AuditCompletion> {
-    const [completion] = await this.db.insert(auditCompletions).values(completionData).returning();
+  async createAuditCompletion(_completionData: InsertAuditCompletion, _responsesData: InsertAuditResponse[]): Promise<AuditCompletion> {
+    const [completion] = await this.db.insert(auditCompletions).values(_completionData).returning();
 
-    for (const responseData of responsesData) {
+    for (const responseData of _responsesData) {
       await this.db.insert(auditResponses).values({
         ...responseData,
-        completionId: completion.id
+        _completionId: completion.id
       });
     }
 
     return completion;
   }
 
-  async getAuditCompletions(userId: string, filters?: { templateId?: string; startDate?: Date; endDate?: Date; completedBy?: string }): Promise<(AuditCompletion & { responses: AuditResponse[]; complianceRate: number })[]> {
+  async getAuditCompletions(_userId: string, filters?: { templateId?: string; startDate?: Date; endDate?: Date; completedBy?: string }): Promise<(AuditCompletion & { responses: AuditResponse[]; complianceRate: number })[]> {
     // Build where conditions
-    const whereConditions = [eq(auditCompletions.userId, userId)];
+    const whereConditions = [eq(auditCompletions._userId, _userId)];
     
-    if (filters?.templateId) {
-      whereConditions.push(eq(auditCompletions.templateId, filters.templateId));
+    if (filters?._templateId) {
+      whereConditions.push(eq(auditCompletions._templateId, filters._templateId));
     }
     if (filters?.startDate) {
       whereConditions.push(sql`${auditCompletions.completedAt} >= ${filters.startDate}`);
@@ -1389,7 +1397,7 @@ export class DatabaseStorage implements IStorage {
     const completionsWithResponses = await Promise.all(
       completions.map(async (completion) => {
         const responses = await this.db.select().from(auditResponses)
-          .where(eq(auditResponses.completionId, completion.id));
+          .where(eq(auditResponses._completionId, completion._id));
         
         const complianceRate = responses.length > 0 
           ? Math.round((responses.filter(r => r.isCompliant).length / responses.length) * 100)
@@ -1402,18 +1410,18 @@ export class DatabaseStorage implements IStorage {
     return completionsWithResponses;
   }
 
-  async getAuditCompletion(completionId: string, userId: string): Promise<(AuditCompletion & { responses: AuditResponse[]; template?: AuditTemplate }) | undefined> {
+  async getAuditCompletion(_completionId: string, _userId: string): Promise<(AuditCompletion & { responses: AuditResponse[]; template?: AuditTemplate }) | undefined> {
     const completion = await this.db.select().from(auditCompletions)
-      .where(and(eq(auditCompletions.id, completionId), eq(auditCompletions.userId, userId)))
+      .where(and(eq(auditCompletions._id, _completionId), eq(auditCompletions._userId, _userId)))
       .limit(1);
 
     if (!completion[0]) return undefined;
 
     const responses = await this.db.select().from(auditResponses)
-      .where(eq(auditResponses.completionId, completionId));
+      .where(eq(auditResponses._completionId, _completionId));
 
     const template = await this.db.select().from(auditTemplates)
-      .where(eq(auditTemplates.id, completion[0].templateId))
+      .where(eq(auditTemplates._id, completion[0]._templateId))
       .limit(1);
 
     return { 
@@ -1423,9 +1431,9 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getAuditCompletionStats(userId: string): Promise<{ totalCompletions: number; averageCompliance: number; recentCompletions: AuditCompletion[] }> {
+  async getAuditCompletionStats(_userId: string): Promise<{ totalCompletions: number; averageCompliance: number; recentCompletions: AuditCompletion[] }> {
     const completions = await this.db.select().from(auditCompletions)
-      .where(eq(auditCompletions.userId, userId))
+      .where(eq(auditCompletions._userId, _userId))
       .orderBy(desc(auditCompletions.completedAt));
 
     const totalCompletions = completions.length;
@@ -1439,47 +1447,47 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Calibration record methods implementation
-  async getCalibrationRecords(fridgeId: string, userId: string): Promise<CalibrationRecord[]> {
+  async getCalibrationRecords(_fridgeId: string, _userId: string): Promise<CalibrationRecord[]> {
     // First verify the user owns this fridge
-    const fridge = await this.getFridge(fridgeId, userId);
+    const fridge = await this.getFridge(_fridgeId, _userId);
     if (!fridge) {
       return [];
     }
 
     return await this.db.select().from(calibrationRecords)
-      .where(and(eq(calibrationRecords.fridgeId, fridgeId), eq(calibrationRecords.userId, userId)))
+      .where(and(eq(calibrationRecords._fridgeId, _fridgeId), eq(calibrationRecords._userId, _userId)))
       .orderBy(desc(calibrationRecords.calibrationDate));
   }
 
-  async getCalibrationRecord(id: string, userId: string): Promise<CalibrationRecord | undefined> {
+  async getCalibrationRecord(_id: string, _userId: string): Promise<CalibrationRecord | undefined> {
     const result = await this.db.select().from(calibrationRecords)
-      .where(and(eq(calibrationRecords.id, id), eq(calibrationRecords.userId, userId)))
+      .where(and(eq(calibrationRecords._id, _id), eq(calibrationRecords._userId, _userId)))
       .limit(1);
     return result[0];
   }
 
-  async createCalibrationRecord(recordData: InsertCalibrationRecord): Promise<CalibrationRecord> {
-    const [record] = await this.db.insert(calibrationRecords).values(recordData).returning();
+  async createCalibrationRecord(_recordData: InsertCalibrationRecord): Promise<CalibrationRecord> {
+    const [record] = await this.db.insert(calibrationRecords).values(_recordData).returning();
     return record;
   }
 
-  async updateCalibrationRecord(id: string, userId: string, updates: Partial<CalibrationRecord>): Promise<CalibrationRecord | undefined> {
+  async updateCalibrationRecord(_id: string, _userId: string, _updates: Partial<CalibrationRecord>): Promise<CalibrationRecord | undefined> {
     const [updated] = await this.db.update(calibrationRecords)
-      .set(updates)
-      .where(and(eq(calibrationRecords.id, id), eq(calibrationRecords.userId, userId)))
+      .set(_updates)
+      .where(and(eq(calibrationRecords._id, _id), eq(calibrationRecords._userId, _userId)))
       .returning();
     return updated;
   }
 
-  async deleteCalibrationRecord(id: string, userId: string): Promise<boolean> {
+  async deleteCalibrationRecord(_id: string, _userId: string): Promise<boolean> {
     const result = await this.db.delete(calibrationRecords)
-      .where(and(eq(calibrationRecords.id, id), eq(calibrationRecords.userId, userId)));
+      .where(and(eq(calibrationRecords._id, _id), eq(calibrationRecords._userId, _userId)));
     return result.length > 0;
   }
 
-  async getLatestCalibrationForFridge(fridgeId: string, userId: string): Promise<CalibrationRecord | undefined> {
+  async getLatestCalibrationForFridge(_fridgeId: string, _userId: string): Promise<CalibrationRecord | undefined> {
     const result = await this.db.select().from(calibrationRecords)
-      .where(and(eq(calibrationRecords.fridgeId, fridgeId), eq(calibrationRecords.userId, userId)))
+      .where(and(eq(calibrationRecords._fridgeId, _fridgeId), eq(calibrationRecords._userId, _userId)))
       .orderBy(desc(calibrationRecords.calibrationDate))
       .limit(1);
     return result[0];

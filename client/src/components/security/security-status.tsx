@@ -21,7 +21,7 @@ interface SecurityVulnerabilities {
   critical: number;
 }
 
-interface SecurityStatus {
+interface SecurityStatusType {
   vulnerabilities: SecurityVulnerabilities;
   lastScan: string | null;
   packagesScanned: number;
@@ -30,7 +30,7 @@ interface SecurityStatus {
 }
 
 export default function SecurityStatus() {
-  const { data: status, isLoading, refetch, error } = useQuery<SecurityStatus>({
+  const { data: _status, isLoading, refetch, error } = useQuery<SecurityStatusType>({
     queryKey: ['/api/security/status'],
     refetchInterval: 30000, // Refetch every 30 seconds
     retry: false

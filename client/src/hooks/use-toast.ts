@@ -9,7 +9,7 @@ const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
 
 type ToasterToast = ToastProps & {
-  id: string
+  _id: string
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
@@ -75,13 +75,13 @@ export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
       return {
-        ...state,
+        ..._state,
         toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
       }
 
     case "UPDATE_TOAST":
       return {
-        ...state,
+        ..._state,
         toasts: state.toasts.map((t) =>
           t.id === action.toast.id ? { ...t, ...action.toast } : t
         ),
@@ -96,17 +96,17 @@ export const reducer = (state: State, action: Action): State => {
         addToRemoveQueue(toastId)
       } else {
         state.toasts.forEach((toast) => {
-          addToRemoveQueue(toast.id)
+          addToRemoveQueue(toast._id)
         })
       }
 
       return {
-        ...state,
+        ..._state,
         toasts: state.toasts.map((t) =>
           t.id === toastId || toastId === undefined
             ? {
                 ...t,
-                open: false,
+                _open: false,
               }
             : t
         ),
@@ -115,18 +115,18 @@ export const reducer = (state: State, action: Action): State => {
     case "REMOVE_TOAST":
       if (action.toastId === undefined) {
         return {
-          ...state,
+          ..._state,
           toasts: [],
         }
       }
       return {
-        ...state,
+        ..._state,
         toasts: state.toasts.filter((t) => t.id !== action.toastId),
       }
   }
 }
 
-const listeners: Array<(state: State) => void> = []
+const listeners: Array<(_state: State) => void> = []
 
 let memoryState: State = { toasts: [] }
 
@@ -153,23 +153,23 @@ function toast({ ...props }: Toast) {
     type: "ADD_TOAST",
     toast: {
       ...props,
-      id,
-      open: true,
-      onOpenChange: (open) => {
-        if (!open) dismiss()
+      _id,
+      _open: true,
+      onOpenChange: (_open) => {
+        if (!_open) dismiss()
       },
     },
   })
 
   return {
-    id: id,
+    _id: _id,
     dismiss,
     update,
   }
 }
 
 function useToast() {
-  const [state, setState] = React.useState<State>(memoryState)
+  const [_state, setState] = React.useState<State>(memoryState)
 
   React.useEffect(() => {
     listeners.push(setState)
@@ -179,10 +179,10 @@ function useToast() {
         listeners.splice(index, 1)
       }
     }
-  }, [state])
+  }, [_state])
 
   return {
-    ...state,
+    ..._state,
     toast,
     dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
   }

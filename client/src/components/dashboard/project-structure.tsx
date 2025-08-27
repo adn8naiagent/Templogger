@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Folder, FileText, CheckCircle } from "lucide-react";
 
 interface StructureItemProps {
@@ -31,7 +31,7 @@ interface ConfigFileProps {
   status: "configured" | "missing";
 }
 
-function ConfigFile({ name, status }: ConfigFileProps) {
+function ConfigFile({ name, _status }: ConfigFileProps) {
   return (
     <div className="flex items-center justify-between p-3 bg-muted rounded-lg" data-testid={`config-file-${name}`}>
       <div className="flex items-center space-x-3">

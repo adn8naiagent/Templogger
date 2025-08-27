@@ -1,11 +1,10 @@
-import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+// import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Users, CreditCard, Activity, DollarSign, UserPlus, AlertTriangle } from "lucide-react";
+import { Users, CreditCard, Activity, DollarSign, AlertTriangle } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -36,7 +35,7 @@ export default function AdminDashboard() {
     }
   }, [user, isLoading, toast]);
 
-  const { data: stats, isLoading: statsLoading } = useQuery<AdminStats>({
+  const { _data: stats, isLoading: statsLoading } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
     enabled: (user as any)?.role === "admin",
   });

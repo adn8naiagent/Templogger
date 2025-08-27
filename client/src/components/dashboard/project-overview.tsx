@@ -42,9 +42,9 @@ interface EnvStatus {
   };
 }
 
-function StatusCard({ title, description, icon, status, details }: StatusCardProps) {
-  const getStatusColor = (status: string) => {
-    switch (status) {
+function StatusCard({ title, description, icon, _status, details }: StatusCardProps) {
+  const getStatusColor = (_status: string) => {
+    switch (_status) {
       case "online":
       case "clean": 
       case "loaded":
@@ -55,8 +55,8 @@ function StatusCard({ title, description, icon, status, details }: StatusCardPro
     }
   };
 
-  const getDetailIcon = (status: "success" | "error" | "active") => {
-    switch (status) {
+  const getDetailIcon = (_status: "success" | "error" | "active") => {
+    switch (_status) {
       case "success":
         return "✓";
       case "active":
@@ -66,8 +66,8 @@ function StatusCard({ title, description, icon, status, details }: StatusCardPro
     }
   };
 
-  const getDetailColor = (status: "success" | "error" | "active") => {
-    switch (status) {
+  const getDetailColor = (_status: "success" | "error" | "active") => {
+    switch (_status) {
       case "success":
       case "active":
         return "text-green-600 dark:text-green-400";
@@ -83,7 +83,7 @@ function StatusCard({ title, description, icon, status, details }: StatusCardPro
           <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
             {icon}
           </div>
-          <Badge className={getStatusColor(status)} data-testid={`status-${status}`}>
+          <Badge className={getStatusColor(_status)} data-testid={`status-${status}`}>
             {status.charAt(0).toUpperCase() + status.slice(1)}
           </Badge>
         </div>
@@ -97,8 +97,8 @@ function StatusCard({ title, description, icon, status, details }: StatusCardPro
           {details.map((detail, index) => (
             <div key={index} className="flex justify-between text-sm" data-testid={`detail-${index}`}>
               <span>{detail.label}</span>
-              <span className={getDetailColor(detail.status)}>
-                {getDetailIcon(detail.status)}
+              <span className={getDetailColor(detail._status)}>
+                {getDetailIcon(detail._status)}
               </span>
             </div>
           ))}
@@ -109,15 +109,15 @@ function StatusCard({ title, description, icon, status, details }: StatusCardPro
 }
 
 export default function ProjectOverview() {
-  const { data: devStatus } = useQuery<DevStatus>({
+  const { _data: devStatus } = useQuery<DevStatus>({
     queryKey: ["/api/dev-status"],
   });
 
-  const { data: tsStatus } = useQuery<TsStatus>({
+  const { _data: tsStatus } = useQuery<TsStatus>({
     queryKey: ["/api/typescript-status"], 
   });
 
-  const { data: envStatus } = useQuery<EnvStatus>({
+  const { _data: envStatus } = useQuery<EnvStatus>({
     queryKey: ["/api/env-status"],
   });
 

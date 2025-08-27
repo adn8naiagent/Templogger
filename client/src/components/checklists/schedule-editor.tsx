@@ -3,41 +3,29 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DialogTitle } from "@/components/ui/dialog";
+// import {
+//   Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
-  Calendar,
   Clock,
   Save,
   X,
   AlertCircle,
-  CheckCircle2,
-  Play,
-  Square,
-} from "lucide-react";
+  CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 
 interface ChecklistSchedule {
-  id: string;
+  _id: string;
   checklistId: string;
   cadence: 'DAILY' | 'DOW' | 'WEEKLY';
   daysOfWeek?: number[];
@@ -50,7 +38,7 @@ interface ChecklistSchedule {
 }
 
 interface ChecklistWithScheduleAndItems {
-  id: string;
+  _id: string;
   name: string;
   description?: string;
   schedule?: ChecklistSchedule;
@@ -59,7 +47,7 @@ interface ChecklistWithScheduleAndItems {
 
 interface ScheduleEditorProps {
   isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange: (_open: boolean) => void;
   checklist?: ChecklistWithScheduleAndItems | null;
 }
 
@@ -77,25 +65,21 @@ const CADENCE_OPTIONS = [
   {
     value: 'DAILY',
     label: 'Daily',
-    description: 'Required every day within the date range',
-  },
+    description: 'Required every day within the date range' },
   {
     value: 'DOW',
     label: 'Days of Week',
-    description: 'Required on specific days of the week',
-  },
+    description: 'Required on specific days of the week' },
   {
     value: 'WEEKLY',
     label: 'Weekly',
-    description: 'Required once per week (any day within the week)',
-  },
+    description: 'Required once per week (any day within the week)' },
 ];
 
 export default function ScheduleEditor({
   isOpen,
   onOpenChange,
-  checklist,
-}: ScheduleEditorProps) {
+  checklist }: ScheduleEditorProps) {
   const { toast } = useToast();
   const { logout } = useAuth();
   const queryClient = useQueryClient();
@@ -124,7 +108,7 @@ export default function ScheduleEditor({
 
   // Create/Update schedule mutation
   const scheduleChecklistMutation = useMutation({
-    mutationFn: async (data: {
+    mutationFn: async (_data: {
       cadence: 'DAILY' | 'DOW' | 'WEEKLY';
       daysOfWeek?: number[];
       startDate: string;
@@ -136,7 +120,7 @@ export default function ScheduleEditor({
       const response = await apiRequest(
         'POST',
         `/api/v2/checklists/${checklist.id}/schedule`,
-        data
+        _data
       );
 
       if (!response.ok) {
@@ -154,17 +138,14 @@ export default function ScheduleEditor({
       onOpenChange(false);
       toast({
         title: "Success",
-        description: "Checklist schedule updated successfully",
-      });
+        description: "Checklist schedule updated successfully" });
     },
     onError: (error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to update schedule",
-        variant: "destructive",
-      });
-    },
-  });
+        variant: "destructive" });
+    } });
 
   // Toggle day selection for DOW cadence
   const toggleDay = (dayValue: number) => {
@@ -181,8 +162,7 @@ export default function ScheduleEditor({
       toast({
         title: "Validation Error",
         description: "Start date is required",
-        variant: "destructive",
-      });
+        variant: "destructive" });
       return false;
     }
 
@@ -190,8 +170,7 @@ export default function ScheduleEditor({
       toast({
         title: "Validation Error",
         description: "End date must be after start date",
-        variant: "destructive",
-      });
+        variant: "destructive" });
       return false;
     }
 
@@ -199,8 +178,7 @@ export default function ScheduleEditor({
       toast({
         title: "Validation Error",
         description: "Please select at least one day of the week",
-        variant: "destructive",
-      });
+        variant: "destructive" });
       return false;
     }
 
@@ -216,7 +194,7 @@ export default function ScheduleEditor({
     const end = endDate ? new Date(endDate) : new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from start
     
     const today = new Date();
-    let current = new Date(Math.max(start.getTime(), today.getTime()));
+    const current = new Date(Math.max(start.getTime(), today.getTime()));
     const maxPreview = 10;
     let count = 0;
 
@@ -228,8 +206,7 @@ export default function ScheduleEditor({
             weekday: 'short', 
             month: 'short', 
             day: 'numeric' 
-          }),
-        });
+          }) });
         current.setDate(current.getDate() + 1);
         count++;
       } else if (cadence === 'DOW') {
@@ -240,8 +217,7 @@ export default function ScheduleEditor({
               weekday: 'short', 
               month: 'short', 
               day: 'numeric' 
-            }),
-          });
+            }) });
           count++;
         }
         current.setDate(current.getDate() + 1);
@@ -255,8 +231,7 @@ export default function ScheduleEditor({
         
         preview.push({
           date: `Week of ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
-          display: `Week ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
-        });
+          display: `Week ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` });
         current.setDate(current.getDate() + 7);
         count++;
       }
@@ -274,8 +249,7 @@ export default function ScheduleEditor({
       daysOfWeek: cadence === 'DOW' ? selectedDays : undefined,
       startDate,
       endDate: endDate || undefined,
-      timezone,
-    };
+      timezone };
 
     scheduleChecklistMutation.mutate(saveData);
   };
@@ -343,9 +317,9 @@ export default function ScheduleEditor({
                   <Button
                     key={day.value}
                     type="button"
-                    variant={selectedDays.includes(day.value) ? "default" : "outline"}
+                    variant={selectedDays.includes(day._value) ? "default" : "outline"}
                     size="sm"
-                    onClick={() => toggleDay(day.value)}
+                    onClick={() => toggleDay(day._value)}
                     className="flex-shrink-0"
                   >
                     {day.short}
@@ -368,7 +342,7 @@ export default function ScheduleEditor({
                 id="startDate"
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e) => setStartDate(e.target._value)}
                 min={new Date().toISOString().split('T')[0]}
                 className="mt-1"
               />
@@ -379,7 +353,7 @@ export default function ScheduleEditor({
                 id="endDate"
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(e) => setEndDate(e.target._value)}
                 min={startDate || new Date().toISOString().split('T')[0]}
                 className="mt-1"
               />

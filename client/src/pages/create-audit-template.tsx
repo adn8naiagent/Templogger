@@ -1,12 +1,12 @@
-import { useState } from "react";
+// import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+// import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
@@ -22,9 +22,9 @@ import {
   ArrowLeft,
   Plus,
   Trash2,
-  GripVertical,
+  // GripVertical,
   FileText,
-  CheckSquare,
+  // CheckSquare,
   Save,
   X
 } from "lucide-react";
@@ -87,12 +87,12 @@ export default function CreateAuditTemplate() {
 
   // Create template mutation
   const createTemplateMutation = useMutation({
-    mutationFn: async (data: CreateTemplateForm) => {
+    mutationFn: async (_data: CreateTemplateForm) => {
       // Transform data to match API structure
-      const templateData = {
-        name: data.name,
-        description: data.description,
-        sections: data.sections.map((section, sectionIndex) => ({
+      const _templateData = {
+        name: _data.name,
+        description: _data.description,
+        sections: _data.sections.map((section, sectionIndex) => ({
           title: section.title,
           description: section.description,
           orderIndex: sectionIndex,
@@ -105,7 +105,7 @@ export default function CreateAuditTemplate() {
         })),
       };
 
-      const response = await apiRequest('POST', '/api/audit-templates', templateData);
+      const response = await apiRequest('POST', '/api/audit-templates', _templateData);
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to create template: ${response.status} - ${errorText}`);
@@ -129,8 +129,8 @@ export default function CreateAuditTemplate() {
     },
   });
 
-  const onSubmit = (data: CreateTemplateForm) => {
-    createTemplateMutation.mutate(data);
+  const onSubmit = (_data: CreateTemplateForm) => {
+    createTemplateMutation.mutate(_data);
   };
 
   const addSection = () => {
