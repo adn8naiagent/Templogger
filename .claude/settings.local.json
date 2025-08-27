@@ -21,7 +21,8 @@
       "Bash(node:*)",
       "Bash(npx eslint:*)",
       "Bash(perl:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(awk:*)"
     ],
     "deny": [],
     "ask": []

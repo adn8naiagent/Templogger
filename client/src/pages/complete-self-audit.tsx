@@ -137,7 +137,12 @@ export default function CompleteSelfAudit() {
     },
   });
 
-  const handleResponseChange = (sectionId: string, itemId: string, field: keyof AuditResponse, value: any) => {
+  const handleResponseChange = (
+    sectionId: string, 
+    itemId: string, 
+    field: keyof AuditResponse, 
+    value: string | boolean
+  ) => {
     const key = `${sectionId}-${itemId}`;
     setResponses(prev => ({
       ...prev,
@@ -160,7 +165,7 @@ export default function CompleteSelfAudit() {
   const calculateComplianceRate = (): number => {
     if (!template) return 0;
     
-    const totalItems = template.sections.reduce((total: number, section: any) => 
+    const totalItems = template.sections.reduce((total: number, section: AuditSection) => 
       total + section.items.length, 0);
     
     if (totalItems === 0) return 100;
@@ -172,7 +177,7 @@ export default function CompleteSelfAudit() {
   const getTotalProgress = (): number => {
     if (!template) return 0;
     
-    const totalItems = template.sections.reduce((total: number, section: any) => 
+    const totalItems = template.sections.reduce((total: number, section: AuditSection) => 
       total + section.items.length, 0);
     
     if (totalItems === 0) return 100;
@@ -338,8 +343,8 @@ export default function CompleteSelfAudit() {
         {/* Audit Sections */}
         <div className="space-y-6">
           {template.sections
-            .sort((a: any, b: any) => a.orderIndex - b.orderIndex)
-            .map((section: any, sectionIndex: number) => (
+            .sort((a: AuditSection, b: AuditSection) => a.orderIndex - b.orderIndex)
+            .map((section: AuditSection, sectionIndex: number) => (
               <Card key={section._id}>
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -361,8 +366,8 @@ export default function CompleteSelfAudit() {
                 <CardContent>
                   <div className="space-y-4">
                     {section.items
-                      .sort((a: any, b: any) => a.orderIndex - b.orderIndex)
-                      .map((item: any, itemIndex: number) => {
+                      .sort((a: AuditItem, b: AuditItem) => a.orderIndex - b.orderIndex)
+                      .map((item: AuditItem, itemIndex: number) => {
                         const response = getResponse(section._id, item._id);
                         const isCompliant = response?.isCompliant;
                         
@@ -528,12 +533,16 @@ export default function CompleteSelfAudit() {
       </div>
 
       {/* Confirmation Dialog */}
-      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+      <Dialog 
+        open={showConfirmDialog} 
+        onOpenChange={setShowConfirmDialog}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirm Audit Submission</DialogTitle>
             <DialogDescription>
-              Are you sure you want to submit this audit? You won&apos;t be able to make changes after submission.
+              Are you sure you want to submit this audit? You won&apos;t be able
+              to make changes after submission.
             </DialogDescription>
           </DialogHeader>
           

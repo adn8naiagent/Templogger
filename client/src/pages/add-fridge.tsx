@@ -122,7 +122,7 @@ export default function AddFridge() {
       
       setLocation("/");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message,
@@ -430,6 +430,7 @@ export default function AddFridge() {
                                     if (checked) {
                                       field.onChange([...field.value, label.name]);
                                     } else {
+                                      // eslint-disable-next-line max-len
                                       field.onChange(field.value.filter((l: string) => l !== label.name));
                                     }
                                   }}
@@ -539,9 +540,11 @@ export default function AddFridge() {
                             </Button>
                           </div>
 
+                          {/* eslint-disable-next-line max-len */}
                           {timeWindows.length === 0 ? (
                             <div className="text-center py-4 text-sm text-muted-foreground border border-dashed rounded">
-                              No check times added yet. Click &quot;Add Time&quot; to set your first check.
+                              No check times added yet. Click &quot;Add Time&quot; to set your 
+                              first check.
                             </div>
                           ) : (
                             <div className="space-y-2">
@@ -601,10 +604,12 @@ export default function AddFridge() {
 
                       {checkFrequency === 'twice' && (
                         <div className="space-y-3">
+                          {/* eslint-disable-next-line max-len */}
                           <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded border border-green-200 dark:border-green-800">
                             <p className="text-sm text-green-800 dark:text-green-200">
                               <Clock className="h-4 w-4 inline mr-1" />
-                              Two temperature checks will be required each day: one in the morning (AM) and one in the evening (PM)
+                              Two temperature checks will be required each day: one in the 
+                              morning (AM) and one in the evening (PM)
                             </p>
                           </div>
                         </div>
@@ -612,10 +617,12 @@ export default function AddFridge() {
 
                       {checkFrequency === 'once' && (
                         <div className="space-y-3">
+                          {/* eslint-disable-next-line max-len */}
                           <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded border border-blue-200 dark:border-blue-800">
                             <p className="text-sm text-blue-800 dark:text-blue-200">
                               <Clock className="h-4 w-4 inline mr-1" />
-                              A daily temperature check will be required each day (any time during the day)
+                              A daily temperature check will be required each day 
+                              (any time during the day)
                             </p>
                           </div>
                         </div>

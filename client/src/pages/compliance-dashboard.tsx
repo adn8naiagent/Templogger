@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import type { ChecklistWithScheduleAndItems } from "@shared/checklist-types";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -91,7 +92,7 @@ export default function ComplianceDashboard() {
   });
 
   // Fetch due checklists
-  const { data: dueChecklists = [], isLoading: checklistsLoading } = useQuery({
+  const { data: dueChecklists = [], isLoading: _checklistsLoading } = useQuery({
     queryKey: ["/api/checklists/due"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/checklists/due");
@@ -171,7 +172,7 @@ export default function ComplianceDashboard() {
         title: "Export successful!",
         description: "Compliance report has been downloaded.",
       });
-    } catch (_) {
+    } catch {
       toast({
         title: "Export failed",
         description: "Failed to export compliance report.",
@@ -192,7 +193,9 @@ export default function ComplianceDashboard() {
     );
   }
 
-  const overdueChecklists = dueChecklists.filter((checklist: any) => checklist.overdue);
+  const overdueChecklists = dueChecklists.filter(
+    (checklist: ChecklistWithScheduleAndItems & { overdue?: boolean }) => checklist.overdue
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
@@ -252,17 +255,17 @@ export default function ComplianceDashboard() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="default" className="border border-slate-300 dark:border-slate-600">
                     <Users className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">{(user as any)?.firstName || (user as any)?.username || 'User'}</span>
+                    <span className="hidden sm:inline">{user?.firstName || user?.email || 'User'}</span>
                     <span className="sm:hidden">Menu</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <div className="px-2 py-1.5 text-sm font-medium">
                     <div className="flex items-center gap-2">
-                      {(user as any)?.role === 'admin' && <Shield className="h-3 w-3 text-yellow-500" />}
-                      {(user as any)?.role === 'manager' && <Shield className="h-3 w-3 text-blue-500" />}
-                      {(user as any)?.role === 'staff' && <Users className="h-3 w-3 text-green-500" />}
-                      <span className="capitalize">{(user as any)?.role}</span>
+                      {user?.role === 'admin' && <Shield className="h-3 w-3 text-yellow-500" />}
+                      {user?.role === 'manager' && <Shield className="h-3 w-3 text-blue-500" />}
+                      {user?.role === 'staff' && <Users className="h-3 w-3 text-green-500" />}
+                      <span className="capitalize">{(user as { role?: string })?.role}</span>
                     </div>
                   </div>
                   <DropdownMenuSeparator />
@@ -279,7 +282,7 @@ export default function ComplianceDashboard() {
                     </DropdownMenuItem>
                   </Link>
                   <DropdownMenuSeparator />
-                  {(user as any)?.role === 'admin' && (
+                  {user?.role === 'admin' && (
                     <Link to="/admin">
                       <DropdownMenuItem>
                         <Shield className="h-4 w-4 mr-2" />
@@ -415,7 +418,9 @@ export default function ComplianceDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {overview?.complianceByFridge?.map((fridge: any) => (
+                  {overview?.complianceByFridge?.map((
+                    fridge: { name: string; compliance: number; _id: string }
+                  ) => (
                     <div key={fridge.fridgeId} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
@@ -465,7 +470,12 @@ export default function ComplianceDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {dueChecklists.map((checklist: any) => (
+                  {dueChecklists.map((
+                    checklist: ChecklistWithScheduleAndItems & {
+                      overdue?: boolean;
+                      dueDate?: string;
+                    }
+                  ) => (
                     <div key={checklist.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">

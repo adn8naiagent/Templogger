@@ -8,13 +8,13 @@ const originalEnv = process.env;
 
 // Mock lucide-react icons
 jest.mock('lucide-react', () => ({
-  Shield: ({ className, ...props }: any) => <div className={className} data-testid="shield-icon" {...props} />,
-  ShieldAlert: ({ className, ...props }: any) => <div className={className} data-testid="shield-alert-icon" {...props} />,
-  ShieldCheck: ({ className, ...props }: any) => <div className={className} data-testid="shield-check-icon" {...props} />,
-  AlertTriangle: ({ className, ...props }: any) => <div className={className} data-testid="alert-triangle-icon" {...props} />,
-  Clock: ({ className, ...props }: any) => <div className={className} data-testid="clock-icon" {...props} />,
-  Package: ({ className, ...props }: any) => <div className={className} data-testid="package-icon" {...props} />,
-  RefreshCw: ({ className, ...props }: any) => <div className={className} data-testid="refresh-icon" {...props} />,
+  Shield: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="shield-icon" {...props} />,
+  ShieldAlert: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="shield-alert-icon" {...props} />,
+  ShieldCheck: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="shield-check-icon" {...props} />,
+  AlertTriangle: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="alert-triangle-icon" {...props} />,
+  Clock: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="clock-icon" {...props} />,
+  Package: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="package-icon" {...props} />,
+  RefreshCw: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="refresh-icon" {...props} />,
 }));
 
 const mockSecurityStatus = {

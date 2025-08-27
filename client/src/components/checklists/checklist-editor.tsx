@@ -300,7 +300,10 @@ export default function ChecklistEditor({
                                   <div className="flex items-center mt-2">
                                     <button
                                       type="button"
-                                      onClick={() => updateItem(item._id, { required: !item.required })}
+                                      onClick={() => updateItem(
+                                        item._id,
+                                        { required: !item.required }
+                                      )}
                                       className="text-muted-foreground hover:text-foreground"
                                     >
                                       {item.required ? (
@@ -317,7 +320,10 @@ export default function ChecklistEditor({
                                       <Input
                                         placeholder="Item label..."
                                         value={item.label}
-                                        onChange={(e) => updateItem(item._id, { label: e.target.value })}
+                                        onChange={(e) => updateItem(
+                                          item._id,
+                                          { label: e.target.value }
+                                        )}
                                         className="flex-1"
                                       />
                                       <Badge variant={item.required ? "default" : "secondary"}>
@@ -329,7 +335,10 @@ export default function ChecklistEditor({
                                       <Textarea
                                         placeholder="Optional notes for this item..."
                                         value={item.note || ""}
-                                        onChange={(e) => updateItem(item._id, { note: e.target.value })}
+                                        onChange={(e) => updateItem(
+                                          item._id,
+                                          { note: e.target.value }
+                                        )}
                                         rows={2}
                                       />
                                     )}

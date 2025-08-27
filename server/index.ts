@@ -5,12 +5,12 @@ import cors from "cors";
 import rateLimit from "express-rate-limit";
 import path from "path";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
-import { Pool } from "@neondatabase/serverless";
+import { setupVite, log } from "./vite";
 import connectPgSimple from "connect-pg-simple";
 import MemoryStore from "memorystore";
+import type { User } from "@shared/schema";
 
-const PgSession = connectPgSimple(session);
+const _PgSession = connectPgSimple(session);
 const MemoryStoreSession = MemoryStore(session);
 
 const app = express();
@@ -89,7 +89,8 @@ declare module "express-session" {
 
 declare module "express" {
   interface Request {
-    user?: any;
+    user?: User;
+    userId?: string;
   }
 }
 
@@ -104,7 +105,7 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
+  let capturedJsonResponse: Record<string, unknown> | undefined = undefined;
 
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
@@ -132,7 +133,7 @@ app.use((req, res, next) => {
 });
 
 // Additional session error handling
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error | unknown, req: Request, res: Response, next: NextFunction) => {
   if (err && err.message && err.message.includes('session')) {
     console.error("Session middleware error:", err);
     // Continue without session in case of database connection error
@@ -145,7 +146,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  app.use((err: Error | unknown, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 

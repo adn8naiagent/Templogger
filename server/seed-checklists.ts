@@ -70,7 +70,11 @@ export async function seedChecklists(options: SeedChecklistsOptions): Promise<vo
     };
 
     console.log("Scheduling daily safety checklist...");
-    await checklistService.createOrReplaceSchedule(_userId, createdDailyChecklist._id, dailySchedule);
+    await checklistService.createOrReplaceSchedule(
+      _userId, 
+      createdDailyChecklist._id, 
+      dailySchedule
+    );
 
     // Sample checklist 2: Weekly Maintenance
     const weeklyChecklist: CreateChecklistRequest = {
@@ -127,7 +131,11 @@ export async function seedChecklists(options: SeedChecklistsOptions): Promise<vo
     };
 
     console.log("Scheduling weekly maintenance checklist...");
-    await checklistService.createOrReplaceSchedule(_userId, createdWeeklyChecklist._id, weeklySchedule);
+    await checklistService.createOrReplaceSchedule(
+      _userId, 
+      createdWeeklyChecklist._id, 
+      weeklySchedule
+    );
 
     // Sample checklist 3: Monday/Wednesday/Friday Equipment Check
     const equipmentChecklist: CreateChecklistRequest = {
@@ -163,7 +171,10 @@ export async function seedChecklists(options: SeedChecklistsOptions): Promise<vo
     };
 
     console.log("Creating equipment check checklist...");
-    const createdEquipmentChecklist = await checklistService.createChecklist(_userId, equipmentChecklist);
+    const createdEquipmentChecklist = await checklistService.createChecklist(
+      _userId, 
+      equipmentChecklist
+    );
 
     // Schedule for Monday, Wednesday, Friday (1, 3, 5)
     const equipmentSchedule: ScheduleChecklistRequest = {
@@ -175,7 +186,11 @@ export async function seedChecklists(options: SeedChecklistsOptions): Promise<vo
     };
 
     console.log("Scheduling equipment check checklist...");
-    await checklistService.createOrReplaceSchedule(_userId, createdEquipmentChecklist._id, equipmentSchedule);
+    await checklistService.createOrReplaceSchedule(
+      _userId, 
+      createdEquipmentChecklist._id, 
+      equipmentSchedule
+    );
 
     // Generate instances if requested
     if (generateInstances) {
@@ -200,7 +215,10 @@ export async function seedChecklists(options: SeedChecklistsOptions): Promise<vo
   }
 }
 
-async function simulateCompletions(checklistService: ChecklistService, _userId: string): Promise<void> {
+async function simulateCompletions(
+  _checklistService: ChecklistService, 
+  _userId: string
+): Promise<void> {
   // This would simulate completing some instances
   // For now, we'll just log that it would happen
   console.log("Would simulate completions for past instances...");
@@ -232,7 +250,9 @@ async function simulateCompletions(checklistService: ChecklistService, _userId: 
       items: checklist.items.map(item => ({
         itemId: item._id,
         checked: item.required || Math.random() < 0.5,
-        note: item.required ? undefined : (Math.random() < 0.3 ? "Completed during routine check" : undefined)
+        note: item.required 
+          ? undefined 
+          : (Math.random() < 0.3 ? "Completed during routine check" : undefined)
       })),
       confirmationNote: "Automated completion during seed data generation"
     };

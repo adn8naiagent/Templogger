@@ -1,20 +1,21 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import "./types";
 import { requireAuth, requireAdmin, signUp, signIn, signOut, getCurrentUser } from "./auth";
-import { body, validationResult } from "express-validator";
+import { body as _body, validationResult } from "express-validator";
 import { 
   updateProfileSchema, 
-  changePasswordSchema,
+  changePasswordSchema as _changePasswordSchema,
   createFridgeSchema,
   createLabelSchema,
   logTemperatureSchema,
   createTimeWindowSchema,
   createChecklistSchema,
   completeChecklistSchema,
-  insertOutOfRangeEventSchema,
-  userRoles,
-  type User 
+  insertOutOfRangeEventSchema as _insertOutOfRangeEventSchema,
+  userRoles as _userRoles,
+  type User as _User 
 } from "@shared/schema";
 import { ChecklistService } from "./checklist-service";
 import { 
@@ -39,7 +40,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 // Note: requireAdmin is now imported from ./auth
 
 // Input validation helper
-function handleValidationErrors(req: Request, res: Response, next: NextFunction): void | Response {
+function _handleValidationErrors(req: Request, res: Response, next: NextFunction): void | Response {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ 
@@ -61,7 +62,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/auth/user', getCurrentUser);
 
   // Get current user profile
-  app.get("/api/user/profile", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/user/profile", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const user = await storage.getUser(userId);
@@ -72,14 +73,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Return user without password
       const { password: _, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Get profile error:", error);
       res.status(500).json({ error: "Failed to get user profile" });
     }
   });
 
   // Update user profile
-  app.put("/api/user/profile", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.put("/api/user/profile", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const result = updateProfileSchema.safeParse(req.body);
       if (!result.success) {
@@ -110,14 +111,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Profile updated successfully", 
         user: updatedUser 
       });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Update profile error:", error);
       res.status(500).json({ error: "Failed to update profile" });
     }
   });
 
   // Settings update (dark mode, etc)
-  app.put("/api/user/settings", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.put("/api/user/settings", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const { darkMode } = req.body;
       const userId = req.userId;
@@ -131,14 +132,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Settings updated successfully", 
         user: updatedUser 
       });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Update settings error:", error);
       res.status(500).json({ error: "Failed to update settings" });
     }
   });
 
   // Reset password (no current password required)
-  app.put("/api/user/reset-password", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.put("/api/user/reset-password", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const { newPassword } = req.body;
@@ -155,14 +156,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({ message: "Password updated successfully" });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Reset password error:", error);
       res.status(500).json({ error: "Failed to update password" });
     }
   });
 
   // Delete account
-  app.delete("/api/user/account", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.delete("/api/user/account", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const deleted = await storage.deleteUser(userId);
@@ -171,14 +172,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({ message: "Account deleted successfully" });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Delete account error:", error);
       res.status(500).json({ error: "Failed to delete account" });
     }
   });
 
   // Export user data
-  app.get("/api/user/export", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/user/export", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const user = await storage.getUser(userId);
@@ -206,7 +207,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       res.send(csvContent);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Export data error:", error);
       res.status(500).json({ error: "Failed to export user data" });
     }
@@ -215,7 +216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stripe subscription endpoints
   
   // Create subscription for trial users
-  app.post('/api/create-subscription', requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.post('/api/create-subscription', requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const user = await storage.getUser(userId);
@@ -272,19 +273,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         stripeSubscriptionId: subscription.id,
       });
 
-      const latestInvoice = subscription.latest_invoice as any;
+      const latestInvoice = subscription.latest_invoice as Stripe.Invoice;
       res.json({
         subscriptionId: subscription.id,
         clientSecret: latestInvoice?.payment_intent?.client_secret,
       });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Create subscription error:", error);
       res.status(500).json({ error: "Failed to create subscription" });
     }
   });
 
   // Handle successful subscription payment
-  app.post('/api/subscription-success', requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.post('/api/subscription-success', requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const { subscriptionId } = req.body;
@@ -308,14 +309,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: subscription.status
         });
       }
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Subscription success error:", error);
       res.status(500).json({ error: "Failed to activate subscription" });
     }
   });
 
   // Get subscription status
-  app.get('/api/subscription-status', requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get('/api/subscription-status', requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const user = await storage.getUser(userId);
@@ -331,7 +332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           stripeStatus = {
             id: subscription.id,
             status: subscription.status,
-            currentPeriodEnd: (subscription as any).current_period_end,
+            currentPeriodEnd: subscription.current_period_end,
             cancelAtPeriodEnd: subscription.cancel_at_period_end,
           };
         } catch (error) {
@@ -344,25 +345,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         trialEndDate: user.trialEndDate,
         stripeStatus,
       });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Get subscription status error:", error);
       res.status(500).json({ error: "Failed to get subscription status" });
     }
   });
 
   // Admin: Get all users
-  app.get("/api/admin/users", requireAdmin, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/admin/users", requireAdmin, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const users = await storage.getAllUsers();
       res.json(users);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Admin get users error:", error);
       res.status(500).json({ error: "Failed to get users" });
     }
   });
 
   // Admin: Update user role/subscription
-  app.put("/api/admin/users/:userId", requireAdmin, async (req: any, res: Response): Promise<void | Response> => {
+  app.put("/api/admin/users/:userId", requireAdmin, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const { userId } = req.params;
       const { role, subscriptionStatus } = req.body;
@@ -376,14 +377,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "User updated successfully", 
         user: updatedUser 
       });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Admin update user error:", error);
       res.status(500).json({ error: "Failed to update user" });
     }
   });
 
   // Admin: Delete user
-  app.delete("/api/admin/users/:userId", requireAdmin, async (req: any, res: Response): Promise<void | Response> => {
+  app.delete("/api/admin/users/:userId", requireAdmin, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const { userId } = req.params;
       const deleted = await storage.deleteUser(userId);
@@ -392,7 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({ message: "User deleted successfully" });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Admin delete user error:", error);
       res.status(500).json({ error: "Failed to delete user" });
     }
@@ -401,19 +402,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Temperature Logging API Endpoints
   
   // Get user's fridges
-  app.get("/api/fridges", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/fridges", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const fridges = await storage.getFridges(userId);
       res.json(fridges);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Get fridges error:", error);
       res.status(500).json({ error: "Failed to get fridges" });
     }
   });
 
   // Create new fridge
-  app.post("/api/fridges", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.post("/api/fridges", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const result = createFridgeSchema.safeParse(req.body);
       if (!result.success) {
@@ -441,14 +442,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Fridge created successfully", 
         fridge: newFridge 
       });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Create fridge error:", error);
       res.status(500).json({ error: "Failed to create fridge" });
     }
   });
 
   // Enhanced temperature logging with compliance tracking
-  app.post("/api/temperature-logs", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.post("/api/temperature-logs", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const result = logTemperatureSchema.safeParse(req.body);
       if (!result.success) {
@@ -459,7 +460,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.userId;
-      const { _fridgeId, timeWindowId, minTempReading, maxTempReading, currentTempReading, personName, isOnTime = true, lateReason, correctiveAction, correctiveNotes } = result.data;
+      const {
+        _fridgeId,
+        timeWindowId,
+        minTempReading,
+        maxTempReading,
+        currentTempReading,
+        personName,
+        isOnTime = true,
+        lateReason,
+        correctiveAction,
+        correctiveNotes
+      } = result.data;
       
       // Verify fridge ownership
       const fridge = await storage.getFridge(_fridgeId, userId);
@@ -500,53 +512,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result_log = await storage.createTemperatureLogWithCompliance(logData);
 
       res.json(result_log);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Create temperature log error:", error);
       res.status(500).json({ error: "Failed to log temperature" });
     }
   });
 
   // Get temperature logs for a fridge
-  app.get("/api/fridges/:fridgeId/logs", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/fridges/:fridgeId/logs", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const { fridgeId } = req.params;
       const userId = req.userId;
       const logs = await storage.getTemperatureLogs(fridgeId, userId);
       res.json(logs);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Get temperature logs error:", error);
       res.status(500).json({ error: "Failed to get temperature logs" });
     }
   });
 
   // Enhanced fridges with compliance data
-  app.get("/api/fridges/recent-temps", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/fridges/recent-temps", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       console.log(`[API] getFridgesWithRecentTemps called for user: ${userId}`);
       const fridgesWithData = await storage.getFridgesWithRecentTemps(userId);
       console.log(`[API] Returning ${fridgesWithData.length} fridges`);
       res.json(fridgesWithData);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Get fridges with compliance data error:", error);
       res.status(500).json({ error: "Failed to get fridges with compliance data" });
     }
   });
 
   // Get all fridges for view fridges page
-  app.get("/api/fridges/all", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/fridges/all", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const fridges = await storage.getAllFridgesWithLogs(userId);
       res.json(fridges);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Error fetching all fridges:", error);
       res.status(500).json({ error: "Failed to fetch fridges" });
     }
   });
 
   // Get single fridge with detailed logs
-  app.get("/api/fridge/:id", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/fridge/:id", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const fridge = await storage.getFridgeWithLogs(userId, req.params.id);
@@ -554,14 +566,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Fridge not found" });
       }
       res.json(fridge);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Error fetching fridge:", error);
       res.status(500).json({ error: "Failed to fetch fridge" });
     }
   });
 
   // Update fridge
-  app.patch("/api/fridge/:id", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.patch("/api/fridge/:id", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const fridge = await storage.updateFridge(req.params.id, userId, req.body);
@@ -569,14 +581,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Fridge not found" });
       }
       res.json(fridge);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Error updating fridge:", error);
       res.status(500).json({ error: "Failed to update fridge" });
     }
   });
 
   // Soft delete (deactivate) fridge
-  app.patch("/api/fridge/:id/deactivate", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.patch("/api/fridge/:id/deactivate", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const fridge = await storage.deactivateFridge(userId, req.params.id);
@@ -584,14 +596,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Fridge not found" });
       }
       res.json(fridge);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Error deactivating fridge:", error);
       res.status(500).json({ error: "Failed to deactivate fridge" });
     }
   });
 
   // Reactivate fridge
-  app.patch("/api/fridge/:id/activate", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.patch("/api/fridge/:id/activate", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const fridge = await storage.reactivateFridge(userId, req.params.id);
@@ -599,14 +611,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Fridge not found" });
       }
       res.json(fridge);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Error reactivating fridge:", error);
       res.status(500).json({ error: "Failed to reactivate fridge" });
     }
   });
 
   // Hard delete fridge
-  app.delete("/api/fridge/:id", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.delete("/api/fridge/:id", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const success = await storage.deleteFridge(req.params.id, userId);
@@ -614,7 +626,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Fridge not found" });
       }
       res.json({ success: true });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Error deleting fridge:", error);
       res.status(500).json({ error: "Failed to delete fridge" });
     }
@@ -623,19 +635,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Label management endpoints
   
   // Get user's labels
-  app.get("/api/labels", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/labels", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const labels = await storage.getLabels(userId);
       res.json(labels);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Get labels error:", error);
       res.status(500).json({ error: "Failed to get labels" });
     }
   });
 
   // Create new label
-  app.post("/api/labels", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.post("/api/labels", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const result = createLabelSchema.safeParse(req.body);
       if (!result.success) {
@@ -652,14 +664,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.status(201).json(newLabel);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Create label error:", error);
       res.status(500).json({ error: "Failed to create label" });
     }
   });
 
   // Update label
-  app.put("/api/labels/:labelId", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.put("/api/labels/:labelId", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const { labelId } = req.params;
       const userId = req.userId;
@@ -678,14 +690,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(updatedLabel);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Update label error:", error);
       res.status(500).json({ error: "Failed to update label" });
     }
   });
 
   // Delete label
-  app.delete("/api/labels/:labelId", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.delete("/api/labels/:labelId", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const { labelId } = req.params;
       const userId = req.userId;
@@ -696,14 +708,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({ message: "Label deleted successfully" });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Delete label error:", error);
       res.status(500).json({ error: "Failed to delete label" });
     }
   });
 
   // Export all temperature logs as CSV
-  app.get("/api/export/temperature-logs", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/export/temperature-logs", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const logs = await storage.getAllTemperatureLogsForUser(userId);
@@ -735,7 +747,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const csvContent = csvRows.join('\n');
       res.send(csvContent);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Export temperature logs error:", error);
       res.status(500).json({ error: "Failed to export temperature logs" });
     }
@@ -752,7 +764,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           server: "running"
         }
       });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       res.status(500).json({ 
         status: "error", 
         message: error.message 
@@ -782,7 +794,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: configuredVars === totalVars ? "complete" : "partial"
         }
       });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       res.status(500).json({ 
         status: "error", 
         message: error.message 
@@ -809,7 +821,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           nodemon: "active"
         }
       });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       res.status(500).json({ 
         status: "error", 
         message: error.message 
@@ -837,7 +849,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           warnings: 0
         }
       });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       res.status(500).json({ 
         status: "error", 
         message: error.message 
@@ -882,7 +894,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       res.json(services);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       res.status(500).json({ 
         status: "error", 
         message: error.message 
@@ -936,7 +948,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       res.json(tiers);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       res.status(500).json({ 
         status: "error", 
         message: error.message 
@@ -961,7 +973,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           monorepoStrategy: { status: "configured", description: "Workspace setup" }
         }
       });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       res.status(500).json({ 
         status: "error", 
         message: error.message 
@@ -970,7 +982,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin Stats API
-  app.get("/api/admin/stats", requireAdmin, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/admin/stats", requireAdmin, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const users = await storage.getAllUsers();
       const totalUsers = users.length;
@@ -1007,14 +1019,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userGrowth,
         subscriptionBreakdown
       });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Admin stats error:", error);
       res.status(500).json({ error: "Failed to get admin statistics" });
     }
   });
 
   // Update user by admin
-  app.put("/api/admin/users/:userId", requireAdmin, async (req: any, res: Response): Promise<void | Response> => {
+  app.put("/api/admin/users/:userId", requireAdmin, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const { userId } = req.params;
       const { role, subscriptionStatus } = req.body;
@@ -1025,14 +1037,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({ message: "User updated successfully", user: updatedUser });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Update user error:", error);
       res.status(500).json({ error: "Failed to update user" });
     }
   });
 
   // Delete user by admin
-  app.delete("/api/admin/users/:userId", requireAdmin, async (req: any, res: Response): Promise<void | Response> => {
+  app.delete("/api/admin/users/:userId", requireAdmin, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const { userId } = req.params;
       
@@ -1042,7 +1054,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({ message: "User deleted successfully" });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Delete user error:", error);
       res.status(500).json({ error: "Failed to delete user" });
     }
@@ -1093,7 +1105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         default:
           res.status(400).json({ status: "error", message: "Unknown service" });
       }
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       res.status(500).json({ 
         status: "error", 
         message: error.message 
@@ -1106,21 +1118,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =========================
 
   // Get time windows for a fridge
-  app.get("/api/fridges/:fridgeId/time-windows", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/fridges/:fridgeId/time-windows", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const { fridgeId } = req.params;
       const userId = req.userId;
       
       const timeWindows = await storage.getTimeWindows(fridgeId, userId);
       res.json(timeWindows);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Get time windows error:", error);
       res.status(500).json({ error: "Failed to get time windows" });
     }
   });
 
   // Create time window
-  app.post("/api/time-windows", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.post("/api/time-windows", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const result = createTimeWindowSchema.safeParse(req.body);
       if (!result.success) {
@@ -1149,7 +1161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.json(timeWindow);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Create time window error:", error);
       res.status(500).json({ error: "Failed to create time window" });
     }
@@ -1160,26 +1172,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =========================
 
   // Get compliance overview
-  app.get("/api/compliance/overview", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/compliance/overview", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const date = req.query.date ? new Date(req.query.date as string) : undefined;
       
       const overview = await storage.getComplianceOverview(userId, date);
       res.json(overview);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Get compliance overview error:", error);
       res.status(500).json({ error: "Failed to get compliance overview" });
     }
   });
 
   // Get unresolved out-of-range events count
-  app.get("/api/out-of-range-events/unresolved/count", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/out-of-range-events/unresolved/count", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const count = await storage.getUnresolvedEventsCount(userId);
       res.json({ count });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Get unresolved events count error:", error);
       res.status(500).json({ error: "Failed to get unresolved events count" });
     }
@@ -1190,33 +1202,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =========================
 
   // Get checklists
-  app.get("/api/checklists", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/checklists", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const { fridgeId } = req.query;
       
       const checklists = await storage.getChecklists(userId, fridgeId as string);
       res.json(checklists);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Get checklists error:", error);
       res.status(500).json({ error: "Failed to get checklists" });
     }
   });
 
   // Get due checklists
-  app.get("/api/checklists/due", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/checklists/due", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const dueChecklists = await storage.getDueChecklists(userId);
       res.json(dueChecklists);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Get due checklists error:", error);
       res.status(500).json({ error: "Failed to get due checklists" });
     }
   });
 
   // Create checklist (Admin/Manager only)
-  app.post("/api/checklists", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.post("/api/checklists", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const result = createChecklistSchema.safeParse(req.body);
       if (!result.success) {
@@ -1255,14 +1267,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const checklist = await storage.createChecklist(checklistData, itemsData);
       res.json(checklist);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Create checklist error:", error);
       res.status(500).json({ error: "Failed to create checklist" });
     }
   });
 
   // Complete checklist
-  app.post("/api/checklists/:id/complete", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.post("/api/checklists/:id/complete", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const { id } = req.params;
       const userId = req.userId;
@@ -1287,7 +1299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const completion = await storage.createChecklistCompletion(completionData);
       res.json(completion);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Complete checklist error:", error);
       res.status(500).json({ error: "Failed to complete checklist" });
     }
@@ -1298,7 +1310,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =========================
 
   // Get enhanced checklists with scheduling
-  app.get("/api/v2/checklists", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/v2/checklists", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const { active } = req.query;
@@ -1306,14 +1318,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const checklists = await checklistService.listChecklists(userId, activeOnly);
       res.json(checklists);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Get enhanced checklists error:", error);
       res.status(500).json({ error: error.message || "Failed to get checklists" });
     }
   });
 
   // Create enhanced checklist
-  app.post("/api/v2/checklists", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.post("/api/v2/checklists", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const result = createChecklistRequestSchema.safeParse(req.body);
       if (!result.success) {
@@ -1326,14 +1338,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.userId;
       const checklist = await checklistService.createChecklist(userId, result.data);
       res.status(201).json(checklist);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Create enhanced checklist error:", error);
       res.status(error.statusCode || 500).json({ error: error.message || "Failed to create checklist" });
     }
   });
 
   // Update enhanced checklist
-  app.put("/api/v2/checklists/:id", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.put("/api/v2/checklists/:id", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const { id } = req.params;
       const result = createChecklistRequestSchema.safeParse(req.body);
@@ -1347,14 +1359,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.userId;
       const checklist = await checklistService.updateChecklist(userId, id, result.data);
       res.json(checklist);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Update enhanced checklist error:", error);
       res.status(error.statusCode || 500).json({ error: error.message || "Failed to update checklist" });
     }
   });
 
   // Schedule checklist
-  app.post("/api/v2/checklists/:id/schedule", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.post("/api/v2/checklists/:id/schedule", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const { id } = req.params;
       const result = scheduleChecklistRequestSchema.safeParse(req.body);
@@ -1368,14 +1380,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.userId;
       const schedule = await checklistService.createOrReplaceSchedule(userId, id, result.data);
       res.json(schedule);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Schedule checklist error:", error);
       res.status(error.statusCode || 500).json({ error: error.message || "Failed to schedule checklist" });
     }
   });
 
   // Get calendar view
-  app.get("/api/v2/calendar", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/v2/calendar", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const result = calendarRequestSchema.safeParse(req.query);
       if (!result.success) {
@@ -1389,14 +1401,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { from, to } = result.data;
       const calendarData = await checklistService.getCalendarInstances(userId, from, to);
       res.json(calendarData);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Get calendar error:", error);
       res.status(error.statusCode || 500).json({ error: error.message || "Failed to get calendar data" });
     }
   });
 
   // Generate instances
-  app.post("/api/v2/instances/generate", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.post("/api/v2/instances/generate", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const result = generateInstancesRequestSchema.safeParse(req.query);
       if (!result.success) {
@@ -1410,14 +1422,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { from, to } = result.data;
       await checklistService.generateInstances(userId, from, to);
       res.json({ message: "Instances generated successfully" });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Generate instances error:", error);
       res.status(error.statusCode || 500).json({ error: error.message || "Failed to generate instances" });
     }
   });
 
   // Complete checklist instance
-  app.post("/api/v2/instances/:instanceId/complete", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.post("/api/v2/instances/:instanceId/complete", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const { instanceId } = req.params;
       const result = completeChecklistInstanceRequestSchema.safeParse(req.body);
@@ -1431,14 +1443,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.userId;
       const instance = await checklistService.completeInstance(userId, instanceId, result.data);
       res.json(instance);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Complete instance error:", error);
       res.status(error.statusCode || 500).json({ error: error.message || "Failed to complete instance" });
     }
   });
 
   // Get summaries for dashboard
-  app.get("/api/v2/summaries", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/v2/summaries", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const result = summariesRequestSchema.safeParse(req.query);
       if (!result.success) {
@@ -1452,14 +1464,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { from, to, checklistId, cadence } = result.data;
       const summaries = await checklistService.getSummaries(userId, from, to, checklistId, cadence);
       res.json(summaries);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Get summaries error:", error);
       res.status(error.statusCode || 500).json({ error: error.message || "Failed to get summaries" });
     }
   });
 
   // Export checklist CSV
-  app.get("/api/v2/export/checklists", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/v2/export/checklists", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const result = summariesRequestSchema.safeParse(req.query);
       if (!result.success) {
@@ -1497,7 +1509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const csvContent = csvRows.join('\n');
       res.send(csvContent);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Export checklists error:", error);
       res.status(error.statusCode || 500).json({ error: error.message || "Failed to export checklists" });
     }
@@ -1508,21 +1520,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =========================
 
   // Get calibration records for a fridge
-  app.get("/api/fridges/:fridgeId/calibrations", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/fridges/:fridgeId/calibrations", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const { fridgeId } = req.params;
       const userId = req.userId;
       
       const records = await storage.getCalibrationRecords(fridgeId, userId);
       res.json(records);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Get calibration records error:", error);
       res.status(500).json({ error: "Failed to get calibration records" });
     }
   });
 
   // Create calibration record
-  app.post("/api/calibration-records", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.post(
+    "/api/calibration-records",
+    requireAuth,
+    async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const { createCalibrationRecordSchema } = await import("@shared/schema");
       const result = createCalibrationRecordSchema.safeParse(req.body);
@@ -1534,7 +1549,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.userId;
-      const { _fridgeId, calibrationDate, performedBy, calibrationStandard, beforeCalibrationReading, afterCalibrationReading, accuracy, notes } = result.data;
+      const {
+        _fridgeId,
+        calibrationDate,
+        performedBy,
+        calibrationStandard,
+        beforeCalibrationReading,
+        afterCalibrationReading,
+        accuracy,
+        notes
+      } = result.data;
       
       // Verify fridge ownership
       const fridge = await storage.getFridge(_fridgeId, userId);
@@ -1563,14 +1587,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const record = await storage.createCalibrationRecord(recordData);
       res.status(201).json(record);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Create calibration record error:", error);
       return res.status(500).json({ error: "Failed to create calibration record" });
     }
-  });
+    }
+  );
 
   // Update calibration record
-  app.put("/api/calibration-records/:recordId", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.put(
+    "/api/calibration-records/:recordId",
+    requireAuth,
+    async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const { recordId } = req.params;
       const userId = req.userId;
@@ -1584,7 +1612,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { calibrationDate, performedBy, calibrationStandard, beforeCalibrationReading, afterCalibrationReading, accuracy, notes } = result.data;
+      const {
+        calibrationDate,
+        performedBy,
+        calibrationStandard,
+        beforeCalibrationReading,
+        afterCalibrationReading,
+        accuracy,
+        notes
+      } = result.data;
       
       // Calculate next calibration due (1 year from calibration date)
       const nextDue = new Date(calibrationDate);
@@ -1607,14 +1643,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(record);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Update calibration record error:", error);
       return res.status(500).json({ error: "Failed to update calibration record" });
     }
-  });
+    }
+  );
 
   // Delete calibration record
-  app.delete("/api/calibration-records/:recordId", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.delete("/api/calibration-records/:recordId", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const { recordId } = req.params;
       const userId = req.userId;
@@ -1625,14 +1662,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({ message: "Calibration record deleted successfully" });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Delete calibration record error:", error);
       res.status(500).json({ error: "Failed to delete calibration record" });
     }
   });
 
   // Export compliance report as CSV
-  app.get("/api/export/compliance-report", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/export/compliance-report", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       
@@ -1767,7 +1804,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const csvContent = csvRows.join('\n');
       res.send(csvContent);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Export compliance report error:", error);
       res.status(500).json({ error: "Failed to export compliance report" });
     }
@@ -1778,19 +1815,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =========================
   
   // Get audit templates
-  app.get("/api/audit-templates", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/audit-templates", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const templates = await storage.getAuditTemplates(userId);
       res.json(templates);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Get audit templates error:", error);
       res.status(500).json({ error: "Failed to get audit templates" });
     }
   });
 
   // Get specific audit template
-  app.get("/api/audit-templates/:templateId", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/audit-templates/:templateId", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const { templateId } = req.params;
@@ -1801,14 +1838,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json(template);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Get audit template error:", error);
       return res.status(500).json({ error: "Failed to get audit template" });
     }
   });
 
   // Create audit template
-  app.post("/api/audit-templates", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.post("/api/audit-templates", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const { createAuditTemplateSchema } = await import("@shared/self-audit-types");
@@ -1830,14 +1867,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const template = await storage.createAuditTemplate(templateData, result.data);
       res.status(201).json(template);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Create audit template error:", error);
       return res.status(500).json({ error: "Failed to create audit template" });
     }
   });
 
   // Update audit template
-  app.put("/api/audit-templates/:templateId", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.put(
+    "/api/audit-templates/:templateId",
+    requireAuth,
+    async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const { templateId } = req.params;
@@ -1854,20 +1894,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { _id, sections, ...templateData } = result.data;
       const sectionsData = sections ? { sections } : undefined;
 
-      const template = await storage.updateAuditTemplate(templateId, userId, templateData, sectionsData);
+      const template = await storage.updateAuditTemplate(
+        templateId,
+        userId,
+        templateData,
+        sectionsData
+      );
       if (!template) {
         return res.status(404).json({ error: "Template not found" });
       }
       
       res.json(template);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Update audit template error:", error);
       return res.status(500).json({ error: "Failed to update audit template" });
     }
   });
 
   // Delete audit template
-  app.delete("/api/audit-templates/:templateId", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.delete("/api/audit-templates/:templateId", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const { templateId } = req.params;
@@ -1878,26 +1923,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json({ message: "Template deleted successfully" });
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Delete audit template error:", error);
       return res.status(500).json({ error: "Failed to delete audit template" });
     }
   });
 
   // Create default audit template
-  app.post("/api/audit-templates/default", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.post("/api/audit-templates/default", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const template = await storage.createDefaultAuditTemplate(userId);
       res.status(201).json(template);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Create default audit template error:", error);
       return res.status(500).json({ error: "Failed to create default audit template" });
     }
   });
 
   // Complete audit checklist
-  app.post("/api/audit-completions", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.post("/api/audit-completions", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const { completeAuditSchema, calculateComplianceRate } = await import("@shared/self-audit-types");
@@ -1918,8 +1963,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Map responses to include section and item details first
       const responsesData = result.data.responses.map(response => {
-        const section = template.sections.find((s: any) => s._id === response.sectionId);
-        const item = section?.items.find((i: any) => i._id === response.itemId);
+        const section = template.sections.find(
+          (s: { _id: string; items: { _id: string }[] }) => s._id === response.sectionId
+        );
+        const item = section?.items.find((i: { _id: string }) => i._id === response.itemId);
         
         return {
           _id: '', // Will be set by storage method
@@ -1948,19 +1995,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const completion = await storage.createAuditCompletion(completionData, responsesData);
       res.status(201).json(completion);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Complete audit error:", error);
       res.status(500).json({ error: "Failed to complete audit" });
     }
   });
 
   // Get audit completions
-  app.get("/api/audit-completions", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/audit-completions", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
-      const { auditFiltersSchema } = await import("@shared/self-audit-types");
+      const { auditFiltersSchema: _auditFiltersSchema } = await import("@shared/self-audit-types");
       
-      const filters: any = {};
+      const filters: Record<string, unknown> = {};
       if (req.query._templateId) filters._templateId = req.query._templateId as string;
       if (req.query.startDate) filters.startDate = new Date(req.query.startDate as string);
       if (req.query.endDate) filters.endDate = new Date(req.query.endDate as string);
@@ -1968,44 +2015,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const completions = await storage.getAuditCompletions(userId, filters);
       res.json(completions);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Get audit completions error:", error);
       res.status(500).json({ error: "Failed to get audit completions" });
     }
   });
 
   // Get specific audit completion
-  app.get("/api/audit-completions/:completionId", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/audit-completions/:completionId", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const { completionId } = req.params;
       
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const completion = await storage.getAuditCompletion(completionId, userId);
       if (!completion) {
         return res.status(404).json({ error: "Completion not found" });
       }
       
       res.json(completion);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Get audit completion error:", error);
       return res.status(500).json({ error: "Failed to get audit completion" });
     }
   });
 
   // Get audit completion statistics
-  app.get("/api/audit-stats", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/audit-stats", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const stats = await storage.getAuditCompletionStats(userId);
       res.json(stats);
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Get audit stats error:", error);
       res.status(500).json({ error: "Failed to get audit statistics" });
     }
   });
 
   // Security status endpoint (development only)
-  app.get("/api/security/status", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
+  app.get("/api/security/status", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
     try {
       // Only allow in development environment
       if (process.env.NODE_ENV !== 'development') {
@@ -2021,7 +2071,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const statusContent = await fs.readFile(statusFile, 'utf-8');
         const status = JSON.parse(statusContent);
         res.json(status);
-      } catch (fileError) {
+      } catch {
         // If no status file exists, return default status
         res.json({
           vulnerabilities: { low: 0, medium: 0, high: 0, critical: 0 },
@@ -2031,7 +2081,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: "No security scan has been run yet"
         });
       }
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Get security status error:", error);
       res.status(500).json({ error: "Failed to get security status" });
     }

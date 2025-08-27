@@ -32,7 +32,7 @@ export default function Settings() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
     },
-    onError: (error: any) => {
+    onError: (error: Error | { message: string }) => {
       toast({
         title: "Error",
         description: error.message,

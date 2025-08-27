@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable max-len */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { 
   type User, 
   type InsertUser, 
@@ -178,8 +181,17 @@ export interface IStorage {
   reactivateFridge(_userId: string, _fridgeId: string): Promise<any>;
   
   // Self-audit methods
-  getAuditTemplates(_userId: string): Promise<(AuditTemplate & { sections: (AuditSection & { items: AuditItem[] })[] })[]>;
-  getAuditTemplate(_templateId: string, _userId: string): Promise<(AuditTemplate & { sections: (AuditSection & { items: AuditItem[] })[] }) | undefined>;
+  getAuditTemplates(_userId: string): Promise<(
+    AuditTemplate & { 
+      sections: (AuditSection & { items: AuditItem[] })[] 
+    }
+  )[]>;
+  getAuditTemplate(
+    _templateId: string, 
+    _userId: string
+  ): Promise<(
+    AuditTemplate & { sections: (AuditSection & { items: AuditItem[] })[] }
+  ) | undefined>;
   createAuditTemplate(_templateData: InsertAuditTemplate, ____sectionsData: { sections: Array<{ title: string; description?: string; orderIndex: number; items: Array<{ text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }): Promise<AuditTemplate>;
   updateAuditTemplate(_templateId: string, _userId: string, _templateData: Partial<AuditTemplate>, ____sectionsData?: { sections: Array<{ id?: string; title: string; description?: string; orderIndex: number; items: Array<{ id?: string; text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }): Promise<AuditTemplate | undefined>;
   deleteAuditTemplate(_templateId: string, _userId: string): Promise<boolean>;

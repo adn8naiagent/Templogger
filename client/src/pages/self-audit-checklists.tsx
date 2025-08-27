@@ -4,15 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+// import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+  // Dialog, 
+  // DialogContent, 
+  // DialogDescription, 
+  // DialogHeader, 
+  // DialogTitle, 
+  // DialogTrigger 
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -24,21 +24,21 @@ import {
 import {
   CheckSquare,
   Plus,
-  Settings,
+  // Settings,
   Eye,
   Edit,
   MoreHorizontal,
   Search,
-  Filter,
-  Download,
+  // Filter,
+  // Download,
   BarChart3,
-  User,
-  LogOut,
-  Shield,
-  Crown,
+  // User,
+  // LogOut,
+  // Shield,
+  // Crown,
   Star,
   FileText,
-  Copy,
+  // Copy,
   Trash2,
   PlayCircle,
   History
@@ -85,13 +85,13 @@ interface AuditCompletion {
 
 export default function SelfAuditChecklists() {
   const { toast } = useToast();
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { user: _user, isAuthenticated, isLoading, logout: _logout } = useAuth();
   const queryClient = useQueryClient();
   
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTemplate, setSelectedTemplate] = useState<AuditTemplate | null>(null);
-  const [isTemplateEditorOpen, setIsTemplateEditorOpen] = useState(false);
-  const [isCompletionViewOpen, setIsCompletionViewOpen] = useState(false);
+  const [_selectedTemplate, _setSelectedTemplate] = useState<AuditTemplate | null>(null);
+  const [_isTemplateEditorOpen, _setIsTemplateEditorOpen] = useState(false);
+  const [_isCompletionViewOpen, _setIsCompletionViewOpen] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -112,7 +112,7 @@ export default function SelfAuditChecklists() {
   const { 
     data: templates = [], 
     isLoading: templatesLoading, 
-    error: templatesError 
+    error: _templatesError 
   } = useQuery({
     queryKey: ['audit-templates'],
     queryFn: async () => {
@@ -377,7 +377,7 @@ export default function SelfAuditChecklists() {
                         {/* Section Preview */}
                         <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2 max-h-20 overflow-hidden">
                           <div className="font-medium mb-1">Sections:</div>
-                          {template.sections.slice(0, 3).map((section, idx) => (
+                          {template.sections.slice(0, 3).map((section, _idx) => (
                             <div key={section._id}>• {section.title}</div>
                           ))}
                           {template.sections.length > 3 && (
@@ -442,7 +442,9 @@ export default function SelfAuditChecklists() {
                         <div className="flex-1">
                           <h4 className="font-medium">{completion.templateName}</h4>
                           <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                            <span>Completed: {new Date(completion.completedAt).toLocaleDateString()}</span>
+                            <span>
+                              Completed: {new Date(completion.completedAt).toLocaleDateString()}
+                            </span>
                             <Badge variant={completion.complianceRate >= 90 ? "default" : completion.complianceRate >= 70 ? "secondary" : "destructive"}>
                               {completion.complianceRate}% Compliant
                             </Badge>
@@ -492,7 +494,12 @@ export default function SelfAuditChecklists() {
                 <CardContent>
                   <div className="text-2xl font-bold">
                     {recentCompletions.length > 0 
-                      ? Math.round(recentCompletions.reduce((sum: number, c: AuditCompletion) => sum + c.complianceRate, 0) / recentCompletions.length)
+                      ? Math.round(
+                          recentCompletions.reduce(
+                            (sum: number, c: AuditCompletion) => sum + c.complianceRate, 
+                            0
+                          ) / recentCompletions.length
+                        )
                       : 0
                     }%
                   </div>
@@ -509,7 +516,8 @@ export default function SelfAuditChecklists() {
                     {recentCompletions.filter((c: AuditCompletion) => {
                       const completedDate = new Date(c.completedAt);
                       const now = new Date();
-                      return completedDate.getMonth() === now.getMonth() && completedDate.getFullYear() === now.getFullYear();
+                      return completedDate.getMonth() === now.getMonth() && 
+                             completedDate.getFullYear() === now.getFullYear();
                     }).length}
                   </div>
                 </CardContent>

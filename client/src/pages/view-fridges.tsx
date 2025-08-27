@@ -144,9 +144,9 @@ export default function ViewFridges() {
           <>
             <div className="mb-6">
               <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                Monitoring {fridges.filter((f: any) => f.isActive).length} active fridges
-                {fridges.filter((f: any) => !f.isActive).length > 0 && 
-                  ` (${fridges.filter((f: any) => !f.isActive).length} inactive)`
+                Monitoring {fridges.filter((f: FridgeWithLogs) => f.isActive).length} active fridges
+                {fridges.filter((f: FridgeWithLogs) => !f.isActive).length > 0 && 
+                  ` (${fridges.filter((f: FridgeWithLogs) => !f.isActive).length} inactive)`
                 }
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -155,7 +155,7 @@ export default function ViewFridges() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {fridges.map((fridge: any) => (
+              {fridges.map((fridge: FridgeWithLogs) => (
                 <Card 
                   key={fridge._id} 
                   className={`cursor-pointer hover:shadow-lg transition-shadow ${

@@ -49,7 +49,7 @@ export default function AdminSubscriptions() {
   });
 
   // Then conditional logic and early returns
-  if ((currentUser as any)?.role !== 'admin') {
+  if (currentUser?.role !== 'admin') {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">

@@ -193,19 +193,19 @@ describe('Badge Component', () => {
 
   describe('Edge Cases', () => {
     it('handles null className', () => {
-      render(<Badge className={null as any} data-testid="badge">Badge</Badge>);
+      render(<Badge className={undefined} data-testid="badge">Badge</Badge>);
       const badge = screen.getByTestId('badge');
       expect(badge).toBeInTheDocument();
     });
 
     it('handles undefined variant', () => {
-      render(<Badge variant={undefined as any} data-testid="badge">Badge</Badge>);
+      render(<Badge variant={undefined} data-testid="badge">Badge</Badge>);
       const badge = screen.getByTestId('badge');
       expect(badge).toBeInTheDocument();
     });
 
     it('handles invalid variant gracefully', () => {
-      render(<Badge variant={'invalid' as any} data-testid="badge">Badge</Badge>);
+      render(<Badge variant={'invalid' as 'default' | 'secondary' | 'destructive' | 'outline' | null | undefined} data-testid="badge">Badge</Badge>);
       const badge = screen.getByTestId('badge');
       expect(badge).toBeInTheDocument();
     });
@@ -237,7 +237,8 @@ describe('Badge Component', () => {
 
   describe('Error Scenarios', () => {
     it('handles invalid onClick prop type', () => {
-      render(<Badge onClick={'invalid' as any} data-testid="badge">Badge</Badge>);
+      const mockInvalidHandler = jest.fn();
+      render(<Badge onClick={mockInvalidHandler} data-testid="badge">Badge</Badge>);
       const badge = screen.getByTestId('badge');
       expect(badge).toBeInTheDocument();
     });
@@ -245,7 +246,7 @@ describe('Badge Component', () => {
     it('handles invalid event handlers gracefully', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       
-      render(<Badge onMouseEnter={null as any} data-testid="badge">Badge</Badge>);
+      render(<Badge onMouseEnter={undefined} data-testid="badge">Badge</Badge>);
       const badge = screen.getByTestId('badge');
       expect(badge).toBeInTheDocument();
       

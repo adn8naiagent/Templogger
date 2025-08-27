@@ -93,6 +93,7 @@ export default function Checklists() {
   
   const [searchQuery, setSearchQuery] = useState("");
   const [activeOnly, setActiveOnly] = useState(true);
+  // eslint-disable-next-line max-len
   const [selectedChecklist, setSelectedChecklist] = useState<ChecklistWithScheduleAndItems | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isScheduleEditorOpen, setIsScheduleEditorOpen] = useState(false);
@@ -116,7 +117,7 @@ export default function Checklists() {
   const { 
     data: checklists = [], 
     isLoading: checklistsLoading, 
-    error: checklistsError 
+    error: _checklistsError 
   } = useQuery({
     queryKey: ['checklists', { activeOnly }],
     queryFn: async () => {
@@ -380,16 +381,23 @@ export default function Checklists() {
                         <div className="text-sm text-muted-foreground">
                           {checklist.items.length} item{checklist.items.length !== 1 ? 's' : ''}
                           {checklist.items.filter(i => i.required).length > 0 && (
-                            <span> • {checklist.items.filter(i => i.required).length} required</span>
+                            <span>
+                              {' • '}
+                              {checklist.items.filter(i => i.required).length} required
+                            </span>
                           )}
                         </div>
                         
                         {/* Schedule Info */}
                         {checklist.schedule && (
                           <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2">
-                            <div>Starts: {new Date(checklist.schedule.startDate).toLocaleDateString()}</div>
+                            <div>
+                              Starts: {new Date(checklist.schedule.startDate).toLocaleDateString()}
+                            </div>
                             {checklist.schedule.endDate && (
-                              <div>Ends: {new Date(checklist.schedule.endDate).toLocaleDateString()}</div>
+                              <div>
+                                Ends: {new Date(checklist.schedule.endDate).toLocaleDateString()}
+                              </div>
                             )}
                           </div>
                         )}

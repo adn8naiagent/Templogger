@@ -4,10 +4,10 @@ import Navigation from '../navigation';
 
 // Mock lucide-react icons
 jest.mock('lucide-react', () => ({
-  Zap: ({ className, ...props }: any) => <div className={className} data-testid="zap-icon" {...props} />,
-  Settings: ({ className, ...props }: any) => <div className={className} data-testid="settings-icon" {...props} />,
-  Sun: ({ className, ...props }: any) => <div className={className} data-testid="sun-icon" {...props} />,
-  RefreshCw: ({ className, ...props }: any) => <div className={className} data-testid="refresh-icon" {...props} />,
+  Zap: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="zap-icon" {...props} />,
+  Settings: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="settings-icon" {...props} />,
+  Sun: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="sun-icon" {...props} />,
+  RefreshCw: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="refresh-icon" {...props} />,
 }));
 
 describe('Navigation Component', () => {
@@ -162,7 +162,7 @@ describe('Navigation Component', () => {
     });
 
     it('handles null onRefresh prop', () => {
-      render(<Navigation onRefresh={null as any} />);
+      render(<Navigation onRefresh={undefined} />);
       expect(screen.getByTestId('button-refresh')).toBeInTheDocument();
     });
   });

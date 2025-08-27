@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -82,7 +83,7 @@ export default function AdminUsers() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       setEditingUser(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message,
@@ -103,7 +104,7 @@ export default function AdminUsers() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message,
@@ -113,7 +114,7 @@ export default function AdminUsers() {
   });
 
   // Then conditional logic and early returns
-  if ((currentUser as any)?.role !== 'admin') {
+  if (currentUser?.role !== 'admin') {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
@@ -300,7 +301,7 @@ export default function AdminUsers() {
                             <Edit className="h-4 w-4" />
                           </Button>
                           
-                          {user._id !== (currentUser as any)?._id && (
+                          {user._id !== currentUser?._id && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button 

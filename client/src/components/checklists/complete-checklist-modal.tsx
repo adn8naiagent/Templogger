@@ -198,7 +198,8 @@ export default function CompleteChecklistModal({
             Complete Checklist
           </DialogTitle>
           <DialogDescription>
-            Complete &quot;{instance.checklistName}&quot; for {formatTargetDate(instance.targetDate, instance.cadence)}
+            Complete &quot;{instance.checklistName}&quot; for{' '}
+            {formatTargetDate(instance.targetDate, instance.cadence)}
           </DialogDescription>
         </DialogHeader>
 
@@ -407,8 +408,10 @@ export default function CompleteChecklistModal({
                   <div className="text-sm text-amber-800">
                     <div className="font-medium mb-1">Complete Required Items</div>
                     <div>
-                      You must complete all {requiredItems.length} required items before submitting this checklist.
-                      Currently {completedRequiredCount} of {requiredItems.length} required items are completed.
+                      You must complete all {requiredItems.length} required items before
+                      submitting this checklist.
+                      Currently {completedRequiredCount} of {requiredItems.length} required
+                      items are completed.
                     </div>
                   </div>
                 </div>

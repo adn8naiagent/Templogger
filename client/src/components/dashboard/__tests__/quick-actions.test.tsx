@@ -12,10 +12,10 @@ jest.mock('@/hooks/use-toast', () => ({
 
 // Mock lucide-react icons
 jest.mock('lucide-react', () => ({
-  Play: ({ className, ...props }: any) => <div className={className} data-testid="play-icon" {...props} />,
-  Terminal: ({ className, ...props }: any) => <div className={className} data-testid="terminal-icon" {...props} />,
-  Package: ({ className, ...props }: any) => <div className={className} data-testid="package-icon" {...props} />,
-  Upload: ({ className, ...props }: any) => <div className={className} data-testid="upload-icon" {...props} />,
+  Play: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="play-icon" {...props} />,
+  Terminal: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="terminal-icon" {...props} />,
+  Package: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="package-icon" {...props} />,
+  Upload: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="upload-icon" {...props} />,
 }));
 
 describe('QuickActions Component', () => {

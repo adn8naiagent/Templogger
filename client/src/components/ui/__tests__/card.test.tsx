@@ -190,7 +190,7 @@ describe('Card Components', () => {
 
   describe('Error Scenarios', () => {
     it('handles null className gracefully', () => {
-      render(<Card className={null as any} data-testid="card">Content</Card>);
+      render(<Card className={undefined} data-testid="card">Content</Card>);
       const card = screen.getByTestId('card');
       expect(card).toBeInTheDocument();
     });
@@ -205,7 +205,7 @@ describe('Card Components', () => {
       render(
         <Card 
           className="valid-class" 
-          {...({ invalidProp: undefined } as any)}
+          {...({ invalidProp: undefined } as Record<string, unknown>)}
           data-testid="card"
         >
           Content

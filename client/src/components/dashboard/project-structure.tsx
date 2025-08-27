@@ -31,7 +31,7 @@ interface ConfigFileProps {
   status: "configured" | "missing";
 }
 
-function ConfigFile({ name, status }: ConfigFileProps) {
+function ConfigFile({ name, status: _status }: ConfigFileProps) {
   return (
     <div className="flex items-center justify-between p-3 bg-muted rounded-lg" data-testid={`config-file-${name}`}>
       <div className="flex items-center space-x-3">

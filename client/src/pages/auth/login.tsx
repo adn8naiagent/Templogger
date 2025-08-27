@@ -48,7 +48,7 @@ export default function Login() {
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       setLocation("/");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Sign in failed",
         description: error.message || "Invalid email or password",

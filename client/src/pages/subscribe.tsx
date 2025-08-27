@@ -3,7 +3,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { useEffect, useState } from 'react';
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle, Star } from "lucide-react";
 import { Link, useLocation } from "wouter";
@@ -18,7 +18,7 @@ const SubscribeForm = () => {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
-  const [_, setLocation] = useLocation();
+  const [_location, _setLocation] = useLocation();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,7 +45,7 @@ const SubscribeForm = () => {
           variant: "destructive",
         });
       }
-    } catch (_: any) {
+    } catch {
       toast({
         title: "Payment Error",
         description: "An unexpected error occurred during payment.",

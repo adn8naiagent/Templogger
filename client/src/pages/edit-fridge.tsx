@@ -142,7 +142,7 @@ export default function EditFridge() {
 
   // Update fridge mutation
   const updateMutation = useMutation({
-    mutationFn: async (_data: any) => {
+    mutationFn: async (_data: Partial<Fridge>) => {
       const response = await apiRequest('PATCH', `/api/fridge/${id}`, _data);
       return response.json();
     },
@@ -155,7 +155,7 @@ export default function EditFridge() {
       queryClient.invalidateQueries({ queryKey: ['/api/fridges/all'] });
       setLocation(`/fridge/${id}`);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Update Failed",
         description: error.message || "Failed to update fridge settings.",
@@ -178,7 +178,7 @@ export default function EditFridge() {
       queryClient.invalidateQueries({ queryKey: ['/api/fridges/all'] });
       setLocation('/fridges');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Remove Failed",
         description: error.message || "Failed to remove fridge.",
@@ -201,7 +201,7 @@ export default function EditFridge() {
       queryClient.invalidateQueries({ queryKey: [`/api/fridge/${id}`] });
       queryClient.invalidateQueries({ queryKey: ['/api/fridges/all'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Reactivation Failed",
         description: error.message || "Failed to reactivate fridge.",
@@ -224,7 +224,7 @@ export default function EditFridge() {
       queryClient.invalidateQueries({ queryKey: ['/api/fridges/all'] });
       setLocation('/fridges');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Delete Failed",
         description: error.message || "Failed to delete fridge.",
@@ -632,7 +632,9 @@ export default function EditFridge() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Remove Fridge</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will make the fridge inactive. All data will be preserved and the fridge will still appear in compliance reports. You can reactivate it later if needed.
+                        This will make the fridge inactive. All data will be preserved and the
+                        fridge will still appear in compliance reports. You can reactivate it later
+                        if needed.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -670,11 +672,13 @@ export default function EditFridge() {
                         <AlertDialogTitle>Permanently Delete Fridge</AlertDialogTitle>
                         <AlertDialogDescription className="space-y-3">
                           <p>
-                            This will permanently delete the fridge and ALL its data including temperature logs, 
-                            compliance records, and history. This action cannot be undone.
+                            This will permanently delete the fridge and ALL its data including
+                            temperature logs, compliance records, and history. This action cannot be
+                            undone.
                           </p>
                           <p>
-                            To confirm, please type the fridge name exactly: <strong>{fridge.name}</strong>
+                            To confirm, please type the fridge name exactly:
+                            <strong>{fridge.name}</strong>
                           </p>
                           <Input
                             value={deleteConfirmName}

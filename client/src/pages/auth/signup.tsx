@@ -48,7 +48,7 @@ export default function Signup() {
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       setLocation("/");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Sign up failed",
         description: error.message || "Failed to create account",

@@ -26,12 +26,12 @@ export default function AdminDashboard() {
   // All hooks must come first, before any conditional logic
   const { data: stats, isLoading: statsLoading } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
-    enabled: (user as any)?.role === "admin",
+    enabled: user?.role === "admin",
   });
 
   // Then effects and other hooks
   useEffect(() => {
-    if (!isLoading && (!user || (user as any).role !== "admin")) {
+    if (!isLoading && (!user || user.role !== "admin")) {
       toast({
         title: "Access Denied",
         description: "You need admin privileges to access this page.",
@@ -42,7 +42,7 @@ export default function AdminDashboard() {
     }
   }, [user, isLoading, toast]);
 
-  if (isLoading || !user || (user as any).role !== "admin") {
+  if (isLoading || !user || user.role !== "admin") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -183,7 +183,10 @@ export default function AdminDashboard() {
                           dataKey="count"
                           label={({ tier, count }) => `${tier}: ${count}`}
                         >
-                          {(stats?.subscriptionBreakdown || []).map((entry: any, index: number) => (
+                          {(stats?.subscriptionBreakdown || []).map((
+                            entry: { tier: string; count: number; color: string }, 
+                            index: number
+                          ) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
@@ -191,7 +194,10 @@ export default function AdminDashboard() {
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="space-y-2">
-                      {(stats?.subscriptionBreakdown || []).map((item: any, index: number) => (
+                      {(stats?.subscriptionBreakdown || []).map((
+                        item: { tier: string; count: number; color: string }, 
+                        index: number
+                      ) => (
                         <div key={index} className="flex items-center gap-2">
                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
                           <span className="text-sm">{item.tier}: {item.count}</span>

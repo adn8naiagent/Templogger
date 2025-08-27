@@ -165,7 +165,7 @@ describe('Input Component', () => {
     });
 
     it('handles null className', () => {
-      render(<Input className={null as any} data-testid="input" />);
+      render(<Input className={undefined} data-testid="input" />);
       const input = screen.getByTestId('input');
       expect(input).toBeInTheDocument();
     });
@@ -184,13 +184,13 @@ describe('Input Component', () => {
 
   describe('Error Scenarios', () => {
     it('handles invalid onChange prop gracefully', () => {
-      render(<Input onChange={null as any} data-testid="input" />);
+      render(<Input onChange={undefined} data-testid="input" />);
       const input = screen.getByTestId('input');
       expect(input).toBeInTheDocument();
     });
 
     it('handles invalid ref gracefully', () => {
-      render(<Input ref={null as any} data-testid="input" />);
+      render(<Input ref={null as React.Ref<HTMLInputElement> | undefined} data-testid="input" />);
       const input = screen.getByTestId('input');
       expect(input).toBeInTheDocument();
     });

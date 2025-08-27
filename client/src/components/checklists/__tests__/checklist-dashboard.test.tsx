@@ -22,7 +22,7 @@ jest.mock('@/hooks/useAuth', () => ({
 }));
 
 jest.mock('@/lib/queryClient', () => ({
-  apiRequest: (...args: any[]) => mockApiRequest(...args),
+  apiRequest: (...args: unknown[]) => mockApiRequest(...args),
 }));
 
 jest.mock('@/lib/authUtils', () => ({
@@ -31,17 +31,17 @@ jest.mock('@/lib/authUtils', () => ({
 
 // Mock lucide-react icons
 jest.mock('lucide-react', () => ({
-  BarChart3: ({ className, ...props }: any) => <div className={className} data-testid="bar-chart-icon" {...props} />,
-  Download: ({ className, ...props }: any) => <div className={className} data-testid="download-icon" {...props} />,
-  Calendar: ({ className, ...props }: any) => <div className={className} data-testid="calendar-icon" {...props} />,
-  CheckCircle2: ({ className, ...props }: any) => <div className={className} data-testid="check-circle-icon" {...props} />,
-  XCircle: ({ className, ...props }: any) => <div className={className} data-testid="x-circle-icon" {...props} />,
-  Clock: ({ className, ...props }: any) => <div className={className} data-testid="clock-icon" {...props} />,
-  TrendingUp: ({ className, ...props }: any) => <div className={className} data-testid="trending-up-icon" {...props} />,
-  TrendingDown: ({ className, ...props }: any) => <div className={className} data-testid="trending-down-icon" {...props} />,
-  Minus: ({ className, ...props }: any) => <div className={className} data-testid="minus-icon" {...props} />,
-  AlertTriangle: ({ className, ...props }: any) => <div className={className} data-testid="alert-triangle-icon" {...props} />,
-  FileText: ({ className, ...props }: any) => <div className={className} data-testid="file-text-icon" {...props} />,
+  BarChart3: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="bar-chart-icon" {...props} />,
+  Download: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="download-icon" {...props} />,
+  Calendar: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="calendar-icon" {...props} />,
+  CheckCircle2: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="check-circle-icon" {...props} />,
+  XCircle: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="x-circle-icon" {...props} />,
+  Clock: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="clock-icon" {...props} />,
+  TrendingUp: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="trending-up-icon" {...props} />,
+  TrendingDown: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="trending-down-icon" {...props} />,
+  Minus: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="minus-icon" {...props} />,
+  AlertTriangle: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="alert-triangle-icon" {...props} />,
+  FileText: ({ className, ...props }: { className?: string; [key: string]: unknown }) => <div className={className} data-testid="file-text-icon" {...props} />,
 }));
 
 // Mock window.URL and document methods for file download
@@ -224,9 +224,9 @@ describe('ChecklistDashboard Component', () => {
         download: '',
         click: jest.fn(),
       };
-      jest.spyOn(document, 'createElement').mockReturnValue(mockAnchor as any);
-      jest.spyOn(document.body, 'appendChild').mockImplementation(() => mockAnchor as any);
-      jest.spyOn(document.body, 'removeChild').mockImplementation(() => mockAnchor as any);
+      jest.spyOn(document, 'createElement').mockReturnValue(mockAnchor as unknown as HTMLAnchorElement);
+      jest.spyOn(document.body, 'appendChild').mockImplementation(() => mockAnchor as unknown as HTMLAnchorElement);
+      jest.spyOn(document.body, 'removeChild').mockImplementation(() => mockAnchor as unknown as HTMLAnchorElement);
     });
 
     it('handles successful CSV export', async () => {

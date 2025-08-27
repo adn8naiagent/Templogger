@@ -47,8 +47,10 @@ export default function Account() {
   
   // Calculate trial days remaining
   const trialDaysRemaining = user?.trialEndDate ? 
-    Math.max(0, Math.ceil((new Date(user.trialEndDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
-    : 0;
+    Math.max(0, Math.ceil(
+      (new Date(user.trialEndDate).getTime() - new Date().getTime()) / 
+      (1000 * 60 * 60 * 24)
+    )) : 0;
 
   // Profile form
   const profileForm = useForm<UpdateProfileData>({
@@ -81,7 +83,7 @@ export default function Account() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message,
@@ -102,7 +104,7 @@ export default function Account() {
       });
       passwordForm.reset();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message,
@@ -123,7 +125,7 @@ export default function Account() {
       });
       window.location.href = "/api/logout";
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message,
@@ -152,7 +154,7 @@ export default function Account() {
         title: "Export successful!",
         description: "Your data has been downloaded.",
       });
-    } catch (_) {
+    } catch {
       toast({
         title: "Export failed",
         description: "Failed to export your data.",

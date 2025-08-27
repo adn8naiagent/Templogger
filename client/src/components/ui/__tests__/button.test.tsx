@@ -143,19 +143,19 @@ describe('Button Component', () => {
 
   describe('Error Scenarios', () => {
     it('handles invalid variant gracefully', () => {
-      render(<Button variant={undefined as any}>Invalid</Button>);
+      render(<Button variant={undefined as never}>Invalid</Button>);
       const button = screen.getByRole('button');
       expect(button).toBeInTheDocument();
     });
 
     it('handles invalid size gracefully', () => {
-      render(<Button size={undefined as any}>Invalid</Button>);
+      render(<Button size={undefined as never}>Invalid</Button>);
       const button = screen.getByRole('button');
       expect(button).toBeInTheDocument();
     });
 
     it('handles null className', () => {
-      render(<Button className={null as any}>Button</Button>);
+      render(<Button className={null as never}>Button</Button>);
       const button = screen.getByRole('button');
       expect(button).toBeInTheDocument();
     });

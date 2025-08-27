@@ -1,6 +1,5 @@
 import { 
   ChecklistSchedule,
-  ScheduleWindow,
   GeneratedInstance,
   ScheduleError 
 } from "@shared/checklist-types";
@@ -20,7 +19,7 @@ export interface WeekInfo {
 
 export class SchedulingUtils {
   // Convert timezone-aware date to UTC for consistent storage
-  static toUTC(dateStr: string, timezone: string = 'UTC'): Date {
+  static toUTC(dateStr: string, _timezone: string = 'UTC'): Date {
     // For simplicity, we'll work with UTC dates
     // In production, you'd want proper timezone handling
     return new Date(dateStr + 'T00:00:00.000Z');
@@ -34,14 +33,20 @@ export class SchedulingUtils {
     const instances: GeneratedInstance[] = [];
     
     const scheduleStart = this.toUTC(schedule.startDate, schedule.timezone);
-    const scheduleEnd = schedule.endDate ? this.toUTC(schedule.endDate, schedule.timezone) : dateRange.end;
+    const scheduleEnd = schedule.endDate 
+      ? this.toUTC(schedule.endDate, schedule.timezone) 
+      : dateRange.end;
     
     const effectiveStart = new Date(Math.max(dateRange.start.getTime(), scheduleStart.getTime()));
     const effectiveEnd = new Date(Math.min(dateRange.end.getTime(), scheduleEnd.getTime()));
 
     if (effectiveStart > effectiveEnd) return instances;
 
-    for (let date = new Date(effectiveStart); date <= effectiveEnd; date.setUTCDate(date.getUTCDate() + 1)) {
+    for (
+      let date = new Date(effectiveStart); 
+      date <= effectiveEnd; 
+      date.setUTCDate(date.getUTCDate() + 1)
+    ) {
       instances.push({
         checklistId: schedule.checklistId,
         scheduleId: schedule._id || '',
@@ -67,14 +72,20 @@ export class SchedulingUtils {
     const instances: GeneratedInstance[] = [];
     
     const scheduleStart = this.toUTC(schedule.startDate, schedule.timezone);
-    const scheduleEnd = schedule.endDate ? this.toUTC(schedule.endDate, schedule.timezone) : dateRange.end;
+    const scheduleEnd = schedule.endDate 
+      ? this.toUTC(schedule.endDate, schedule.timezone) 
+      : dateRange.end;
     
     const effectiveStart = new Date(Math.max(dateRange.start.getTime(), scheduleStart.getTime()));
     const effectiveEnd = new Date(Math.min(dateRange.end.getTime(), scheduleEnd.getTime()));
 
     if (effectiveStart > effectiveEnd) return instances;
 
-    for (let date = new Date(effectiveStart); date <= effectiveEnd; date.setUTCDate(date.getUTCDate() + 1)) {
+    for (
+      let date = new Date(effectiveStart); 
+      date <= effectiveEnd; 
+      date.setUTCDate(date.getUTCDate() + 1)
+    ) {
       const dayOfWeek = date.getUTCDay(); // 0 = Sunday, 1 = Monday, etc.
       
       if (schedule.daysOfWeek.includes(dayOfWeek)) {
@@ -100,7 +111,9 @@ export class SchedulingUtils {
     const instances: GeneratedInstance[] = [];
     
     const scheduleStart = this.toUTC(schedule.startDate, schedule.timezone);
-    const scheduleEnd = schedule.endDate ? this.toUTC(schedule.endDate, schedule.timezone) : dateRange.end;
+    const scheduleEnd = schedule.endDate 
+      ? this.toUTC(schedule.endDate, schedule.timezone) 
+      : dateRange.end;
     
     const effectiveStart = new Date(Math.max(dateRange.start.getTime(), scheduleStart.getTime()));
     const effectiveEnd = new Date(Math.min(dateRange.end.getTime(), scheduleEnd.getTime()));
@@ -253,11 +266,13 @@ export class SchedulingUtils {
     const firstDayWeekday = firstDayOfYear.getUTCDay(); // 0 = Sunday, 1 = Monday, etc.
     
     // Calculate the number of days from the start of the year
-    const daysSinceStart = Math.floor((date.getTime() - firstDayOfYear.getTime()) / (1000 * 60 * 60 * 24));
+    const daysSinceStart = Math.floor(
+      (date.getTime() - firstDayOfYear.getTime()) / (1000 * 60 * 60 * 24)
+    );
     
     // Calculate week number (ISO week)
     // Adjust for the first day of the year not being Monday
-    const daysToFirstMonday = (7 - firstDayWeekday + 1) % 7;
+    const _daysToFirstMonday = (7 - firstDayWeekday + 1) % 7;
     const adjustedDays = daysSinceStart + firstDayWeekday - 1;
     const weekNumber = Math.floor(adjustedDays / 7) + 1;
     
@@ -328,7 +343,11 @@ export class SchedulingUtils {
     if (schedule.endDate) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(schedule.endDate)) {
         errors.push('End date must be in YYYY-MM-DD format');
-      } else if (schedule.startDate && schedule.endDate && new Date(schedule.endDate) <= new Date(schedule.startDate)) {
+      } else if (
+        schedule.startDate && 
+        schedule.endDate && 
+        new Date(schedule.endDate) <= new Date(schedule.startDate)
+      ) {
         errors.push('End date must be after start date');
       }
     }

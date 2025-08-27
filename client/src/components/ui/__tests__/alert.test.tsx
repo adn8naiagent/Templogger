@@ -200,19 +200,19 @@ describe('Alert Components', () => {
 
   describe('Error Scenarios', () => {
     it('handles null className gracefully', () => {
-      render(<Alert className={null as any} data-testid="alert">Content</Alert>);
+      render(<Alert className={undefined} data-testid="alert">Content</Alert>);
       const alert = screen.getByTestId('alert');
       expect(alert).toBeInTheDocument();
     });
 
     it('handles undefined variant gracefully', () => {
-      render(<Alert variant={undefined as any} data-testid="alert">Content</Alert>);
+      render(<Alert variant={undefined} data-testid="alert">Content</Alert>);
       const alert = screen.getByTestId('alert');
       expect(alert).toBeInTheDocument();
     });
 
     it('handles invalid variant gracefully', () => {
-      render(<Alert variant={'invalid' as any} data-testid="alert">Content</Alert>);
+      render(<Alert variant={'invalid' as 'default' | 'destructive' | null | undefined} data-testid="alert">Content</Alert>);
       const alert = screen.getByTestId('alert');
       expect(alert).toBeInTheDocument();
     });

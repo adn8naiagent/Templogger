@@ -207,7 +207,7 @@ export default function CalibrationManager({ ___fridgeId, fridgeName }: Calibrat
     }
   };
 
-  const getCalibrationStatus = (record: CalibrationRecord) => {
+  const getCalibrationStatus = (record: CalibrationRecord): { status: string; color: 'destructive' | 'secondary' | 'default'; text: string } => {
     const nextDue = new Date(record.nextCalibrationDue);
     const now = new Date();
     const daysDiff = Math.ceil((nextDue.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
@@ -435,7 +435,7 @@ export default function CalibrationManager({ ___fridgeId, fridgeName }: Calibrat
                     {new Date(latestRecord.calibrationDate).toLocaleDateString()}
                   </span>
                 </div>
-                <Badge variant={getCalibrationStatus(latestRecord).color as any}>
+                <Badge variant={getCalibrationStatus(latestRecord).color}>
                   {getCalibrationStatus(latestRecord).status === 'overdue' && <AlertTriangle className="h-3 w-3 mr-1" />}
                   {getCalibrationStatus(latestRecord).status === 'current' && <CheckCircle className="h-3 w-3 mr-1" />}
                   {getCalibrationStatus(latestRecord).text}
@@ -487,7 +487,7 @@ export default function CalibrationManager({ ___fridgeId, fridgeName }: Calibrat
                       {new Date(record.nextCalibrationDue).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={status.color as any}>
+                      <Badge variant={status.color}>
                         {status.status === 'overdue' && <AlertTriangle className="h-3 w-3 mr-1" />}
                         {status.status === 'current' && <CheckCircle className="h-3 w-3 mr-1" />}
                         {status.text}

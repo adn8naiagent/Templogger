@@ -146,7 +146,7 @@ export default function ChecklistDashboard() {
         title: "Export Successful",
         description: "Checklist report has been downloaded",
       });
-    } catch (_) {
+    } catch {
       toast({
         title: "Export Failed",
         description: "Failed to export checklist report",
@@ -445,7 +445,9 @@ export default function ChecklistDashboard() {
           <Card>
             <CardContent className="p-6 text-center">
               <div className="text-2xl font-bold text-yellow-600 mb-2">
-                {metrics.byChecklist.filter(s => s.completionRate >= 70 && s.completionRate < 90).length}
+                {metrics.byChecklist.filter(s =>
+                  s.completionRate >= 70 && s.completionRate < 90
+                ).length}
               </div>
               <p className="text-sm text-muted-foreground">
                 Checklists with 70-89% completion

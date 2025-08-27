@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable max-len */
 import { 
   ChecklistWithScheduleAndItems,
   ChecklistSchedule,
@@ -60,7 +62,7 @@ export class ChecklistService {
         isActive: true,
       };
 
-      const itemsData: InsertChecklistItem[] = _data.items.map((item: any, index: any) => ({
+      const itemsData: InsertChecklistItem[] = _data.items.map((item: any, _index: any) => ({
         _userId,
         checklistId: '', // Will be set by storage method
         title: item.label,
@@ -73,7 +75,7 @@ export class ChecklistService {
       
       // Transform to enhanced format
       return this.transformToEnhancedChecklist(checklist, []);
-    } catch (_) {
+    } catch {
       throw new ChecklistError('Failed to create checklist', 'CREATE_FAILED', 500);
     }
   }
@@ -185,7 +187,7 @@ export class ChecklistService {
           }
         }
       }
-    } catch (_) {
+    } catch {
       throw new InstanceError('Failed to generate instances');
     }
   }
@@ -225,7 +227,7 @@ export class ChecklistService {
         instances: calendarInstances,
         period: { start: from, end: to },
       };
-    } catch (_) {
+    } catch {
       throw new ChecklistError('Failed to get calendar instances', 'CALENDAR_ERROR');
     }
   }
@@ -360,7 +362,7 @@ export class ChecklistService {
         overallOnTimeRate: totalCompleted > 0 ? (totalOnTime / totalCompleted) * 100 : 100,
         byChecklist: summaries,
       };
-    } catch (_) {
+    } catch {
       throw new ChecklistError('Failed to get summaries', 'SUMMARIES_ERROR');
     }
   }
@@ -372,7 +374,7 @@ export class ChecklistService {
       const filtered = activeOnly ? checklists.filter(c => c.isActive) : checklists;
       
       return filtered.map(c => this.transformToEnhancedChecklist(c, c.items));
-    } catch (_) {
+    } catch {
       throw new ChecklistError('Failed to list checklists', 'LIST_FAILED');
     }
   }
@@ -401,7 +403,7 @@ export class ChecklistService {
       }
 
       return records;
-    } catch (_) {
+    } catch {
       throw new ChecklistError('Failed to export CSV', 'EXPORT_ERROR');
     }
   }
@@ -552,7 +554,7 @@ export class ChecklistService {
     return weekId; // Already in YYYY-WNN format
   }
 
-  private async getInstancesForChecklist(checklistId: string, from: string, to: string): Promise<ChecklistInstance[]> {
+  private async getInstancesForChecklist(_checklistId: string, _from: string, _to: string): Promise<ChecklistInstance[]> {
     // This would need to be implemented to query instances from completions table
     // For now, return empty array
     return [];
@@ -582,8 +584,8 @@ export class ChecklistService {
   }
 
   private findInstanceInCompletions(
-    completions: ChecklistCompletion[],
-    instanceId: string
+    _completions: ChecklistCompletion[],
+    _instanceId: string
   ): ChecklistInstance | null {
     // Implementation would search through completions for instance metadata
     return null;

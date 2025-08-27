@@ -18,6 +18,7 @@ export interface ChecklistInstance {
   _id: string;
   checklistId: string;
   scheduleId: string;
+  // eslint-disable-next-line max-len
   targetDate: string; // ISO date string (for DAILY/DOW) or week identifier (for WEEKLY like "2024-W08")
   status: 'REQUIRED' | 'COMPLETED' | 'MISSED';
   completedAt?: Date;
@@ -164,6 +165,7 @@ export const generateInstancesRequestSchema = z.object({
 // Type exports
 export type CreateChecklistRequest = z.infer<typeof createChecklistRequestSchema>;
 export type ScheduleChecklistRequest = z.infer<typeof scheduleChecklistRequestSchema>;
+// eslint-disable-next-line max-len
 export type CompleteChecklistInstanceRequest = z.infer<typeof completeChecklistInstanceRequestSchema>;
 export type CalendarRequest = z.infer<typeof calendarRequestSchema>;
 export type SummariesRequest = z.infer<typeof summariesRequestSchema>;

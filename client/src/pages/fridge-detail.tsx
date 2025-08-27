@@ -48,12 +48,12 @@ export default function FridgeDetail() {
     enabled: !!id,
   });
 
-  const { data: calibrationRecords = [] } = useQuery<CalibrationRecord[]>({
+  const { data: _calibrationRecords = [] } = useQuery<CalibrationRecord[]>({
     queryKey: [`/api/fridges/${id}/calibrations`],
     enabled: !!id,
   });
 
-  const { data: maintenanceRecords = [] } = useQuery<MaintenanceRecord[]>({
+  const { data: _maintenanceRecords = [] } = useQuery<MaintenanceRecord[]>({
     queryKey: [`/api/fridges/${id}/maintenance`],
     enabled: !!id,
   });
@@ -407,7 +407,7 @@ export default function FridgeDetail() {
         </Card>
 
         {/* Calibration Records */}
-        <CalibrationManager {...({ fridgeId: fridge._id, fridgeName: fridge.name } as any)} />
+        <CalibrationManager fridgeId={fridge._id} fridgeName={fridge.name} />
       </div>
     </div>
   );

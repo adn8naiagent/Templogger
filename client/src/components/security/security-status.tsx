@@ -78,8 +78,12 @@ export default function SecurityStatus() {
     );
   }
 
-  const totalIssues = status ? Object.values(status.vulnerabilities).reduce((a, b) => a + b, 0) : 0;
-  const hasHighSeverity = status ? (status.vulnerabilities.high > 0 || status.vulnerabilities.critical > 0) : false;
+  const totalIssues = status
+    ? Object.values(status.vulnerabilities).reduce((a, b) => a + b, 0)
+    : 0;
+  const hasHighSeverity = status
+    ? (status.vulnerabilities.high > 0 || status.vulnerabilities.critical > 0)
+    : false;
 
   const getStatusIcon = () => {
     if (!status || status.message) return <Shield className="h-4 w-4" />;

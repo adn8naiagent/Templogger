@@ -4,17 +4,17 @@ import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+// import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft,
   CheckCircle,
   XCircle,
   AlertTriangle,
   FileText,
-  User,
+  // User,
   BarChart3,
   Download,
-  Eye
+  // Eye
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -70,7 +70,7 @@ export default function ViewAuditCompletion() {
   const { _completionId } = useParams<{ _completionId: string }>();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user: _user, isAuthenticated, isLoading } = useAuth();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -113,7 +113,7 @@ export default function ViewAuditCompletion() {
     return "text-red-600";
   };
 
-  const getComplianceBadge = (rate: number) => {
+  const _getComplianceBadge = (rate: number) => {
     if (rate >= 90) return <Badge className="bg-green-600">{rate}% Compliant</Badge>;
     if (rate >= 70) return <Badge variant="secondary">{rate}% Compliant</Badge>;
     return <Badge variant="destructive">{rate}% Compliant</Badge>;
@@ -125,7 +125,7 @@ export default function ViewAuditCompletion() {
     const csvHeaders = ['Section', 'Item', 'Compliant', 'Notes', 'Action Required'];
     const csvRows = [csvHeaders.join(',')];
     
-    completion.responses.forEach((response: any) => {
+    completion.responses.forEach((response: AuditResponse) => {
       const row = [
         `"${response.sectionTitle}"`,
         `"${response.itemText}"`,
@@ -186,7 +186,10 @@ export default function ViewAuditCompletion() {
   }
 
   // Group responses by section
-  const responsesBySection = completion.responses.reduce((acc: any, response: any) => {
+  const responsesBySection = completion.responses.reduce((
+    acc: Record<string, { sectionTitle: string; responses: AuditResponse[] }>,
+    response: AuditResponse
+  ) => {
     if (!acc[response.sectionId]) {
       acc[response.sectionId] = {
         sectionTitle: response.sectionTitle,
@@ -197,9 +200,15 @@ export default function ViewAuditCompletion() {
     return acc;
   }, {} as Record<string, { sectionTitle: string; responses: AuditResponse[] }>);
 
-  const compliantCount = completion.responses.filter((r: any) => r.isCompliant).length;
-  const nonCompliantCount = completion.responses.filter((r: any) => !r.isCompliant).length;
-  const actionItems = completion.responses.filter((r: any) => r.actionRequired && r.actionRequired.trim() !== '');
+  const compliantCount = completion.responses.filter(
+    (r: AuditResponse) => r.isCompliant
+  ).length;
+  const nonCompliantCount = completion.responses.filter(
+    (r: AuditResponse) => !r.isCompliant
+  ).length;
+  const actionItems = completion.responses.filter(
+    (r: AuditResponse) => r.actionRequired && r.actionRequired.trim() !== ''
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -237,7 +246,8 @@ export default function ViewAuditCompletion() {
               Audit Summary
             </CardTitle>
             <CardDescription>
-              Completed on {new Date(completion.completedAt).toLocaleDateString()} at {new Date(completion.completedAt).toLocaleTimeString()}
+              Completed on {new Date(completion.completedAt).toLocaleDateString()} at{' '}
+              {new Date(completion.completedAt).toLocaleTimeString()}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -296,7 +306,7 @@ export default function ViewAuditCompletion() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {actionItems.map((item: any, index: number) => (
+                {actionItems.map((item: AuditResponse, index: number) => (
                   <div key={item._id} className="bg-white dark:bg-gray-900 rounded-lg p-4 border">
                     <div className="flex items-start gap-3">
                       <Badge variant="outline" className="text-xs mt-0.5">
@@ -325,7 +335,14 @@ export default function ViewAuditCompletion() {
 
         {/* Detailed Results by Section */}
         <div className="space-y-6">
-          {Object.entries(responsesBySection).map(([sectionId, { sectionTitle, responses }]: [string, any], index: number) => (
+          {Object.entries(responsesBySection).map(
+            (
+              [sectionId, { sectionTitle, responses }]: [
+                string,
+                { sectionTitle: string; responses: AuditResponse[] }
+              ],
+              index: number
+            ) => (
             <Card key={sectionId}>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -335,14 +352,15 @@ export default function ViewAuditCompletion() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">
-                      {responses.filter((r: any) => r.isCompliant).length}/{responses.length} Compliant
+                      {responses.filter((r: AuditResponse) => r.isCompliant).length}/
+                      {responses.length} Compliant
                     </Badge>
                   </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {responses.map((response: any, itemIndex: number) => (
+                  {responses.map((response: AuditResponse, itemIndex: number) => (
                     <div 
                       key={response._id}
                       className={`p-4 rounded-lg border-2 ${
@@ -399,7 +417,8 @@ export default function ViewAuditCompletion() {
                 </div>
               </CardContent>
             </Card>
-          ))}
+            )
+          )}
         </div>
       </div>
     </div>

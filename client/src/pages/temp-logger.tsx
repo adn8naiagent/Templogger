@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,17 +32,17 @@ import {
   Crown,
   Star,
   MapPin,
-  FileText,
-  Palette,
-  Tag,
+  // FileText,
+  // Palette,
+  // Tag,
   BarChart3,
   Eye,
-  CheckSquare
+  // CheckSquare
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { logTemperatureSchema, type LogTemperatureData } from "@shared/schema";
+import { logTemperatureSchema, type LogTemperatureData, type CalibrationRecord } from "@shared/schema";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -68,7 +68,7 @@ interface Fridge {
   complianceScore: number;
   status: 'good' | 'warning' | 'critical';
   complianceStatus: string;
-  latestCalibration?: any;
+  latestCalibration?: CalibrationRecord;
   calibrationStatus: string;
 }
 
@@ -94,12 +94,17 @@ export default function TempLogger() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedFridgeId, setSelectedFridgeId] = useState("");
-  const [selectedTimeWindowId, setSelectedTimeWindowId] = useState("");
+  const [_selectedTimeWindowId, _setSelectedTimeWindowId] = useState("");
   const [isLateEntry, setIsLateEntry] = useState(false);
   const [showCorrectiveActions, setShowCorrectiveActions] = useState(false);
 
   // Fetch fridges with recent temperatures
-  const { data: fridges = [], isLoading: fridgesLoading, error, refetch } = useQuery<Fridge[]>({
+  const {
+    data: fridges = [],
+    isLoading: fridgesLoading,
+    error: _error,
+    refetch
+  } = useQuery<Fridge[]>({
     queryKey: ["/api/fridges/recent-temps"],
     retry: (failureCount, error) => {
       if (isUnauthorizedError(error as Error)) {
@@ -117,10 +122,10 @@ export default function TempLogger() {
     },
   });
 
-  // Debug logging
-  console.log('[temp-logger] Fridges data:', fridges);
-  console.log('[temp-logger] Loading state:', fridgesLoading);
-  console.log('[temp-logger] Error:', error);
+  // Debug logging (disabled in production)
+  // console.log('[temp-logger] Fridges data:', fridges);
+  // console.log('[temp-logger] Loading state:', fridgesLoading);
+  // console.log('[temp-logger] Error:', _error);
 
   // Fetch labels
   const { data: labels = [] } = useQuery<Label[]>({
@@ -166,7 +171,7 @@ export default function TempLogger() {
         setSelectedTimeWindowId(missedWindow._id);
       }
     }
-  }, [timeWindows, currentTimeWindow]);
+  }, [timeWindows, currentTimeWindow, selectedFridgeId]);
 
   // Helper function for compliance badge coloring
   const getComplianceBadgeClass = (score: number) => {
@@ -215,7 +220,12 @@ export default function TempLogger() {
   });
 
   // Check if any temperature would be out of range
-  const checkTemperatureRange = (minReading: string, maxReading: string, currentReading: string, _fridgeId: string) => {
+  const checkTemperatureRange = useCallback((
+    minReading: string, 
+    maxReading: string, 
+    currentReading: string, 
+    _fridgeId: string
+  ) => {
     const selectedFridge = fridges.find((f: Fridge) => f._id === _fridgeId);
     if (!selectedFridge) return false;
 
@@ -238,7 +248,7 @@ export default function TempLogger() {
     }
 
     return false;
-  };
+  }, [fridges]);
 
   // Log temperature mutation
   const logTempMutation = useMutation({
@@ -263,7 +273,7 @@ export default function TempLogger() {
       setIsLateEntry(false);
       setShowCorrectiveActions(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message,
@@ -291,7 +301,9 @@ export default function TempLogger() {
     const headers = Object.keys(csvData[0] || {});
     const csvContent = [
       headers.join(','),
-      ...csvData.map((row: any) => headers.map(header => `"${row[header as keyof typeof row]}"`).join(','))
+      ...csvData.map((row: Record<string, string>) => 
+        headers.map(header => `"${row[header]}"`).join(',')
+      )
     ].join('\\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -314,7 +326,7 @@ export default function TempLogger() {
       const isOutOfRange = checkTemperatureRange(minTemp, maxTemp, currentTemp, currentFridgeId);
       setShowCorrectiveActions(isOutOfRange || isLateEntry);
     }
-  }, [minTemp, maxTemp, currentTemp, currentFridgeId, isLateEntry]);
+  }, [minTemp, maxTemp, currentTemp, currentFridgeId, isLateEntry, checkTemperatureRange]);
 
   // Auto-fill time window and late entry detection
   useEffect(() => {
@@ -382,7 +394,9 @@ export default function TempLogger() {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="border-2 border-slate-300 hover:border-blue-500 hover:bg-blue-50 dark:border-slate-600 dark:hover:border-blue-400 dark:hover:bg-blue-950/20 shadow-sm hover:shadow-md transition-all duration-200" 
+                  className="border-2 border-slate-300 hover:border-blue-500 hover:bg-blue-50 
+                    dark:border-slate-600 dark:hover:border-blue-400 
+                    dark:hover:bg-blue-950/20 shadow-sm hover:shadow-md transition-all duration-200" 
                   data-testid="user-menu"
                 >
                   <div className="flex items-center gap-2">
@@ -550,11 +564,16 @@ export default function TempLogger() {
                     </div>
                     Log Temperature Reading
                   </CardTitle>
-                  <CardDescription className="text-slate-600 dark:text-slate-300">Record a new temperature measurement with compliance tracking</CardDescription>
+                  <CardDescription className="text-slate-600 dark:text-slate-300">
+                    Record a new temperature measurement with compliance tracking
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="p-6">
                   <Form {...tempForm}>
-                    <form onSubmit={tempForm.handleSubmit((_data) => logTempMutation.mutate(_data))} className="space-y-6">
+                    <form 
+                      onSubmit={tempForm.handleSubmit((_data) => logTempMutation.mutate(_data))} 
+                      className="space-y-6"
+                    >
                       <FormField
                         control={tempForm.control}
                         name="_fridgeId"
@@ -664,7 +683,9 @@ export default function TempLogger() {
                           </div>
 
                           {/* Temperature range validation alert */}
-                          {(tempForm.watch("minTempReading") || tempForm.watch("maxTempReading") || tempForm.watch("currentTempReading")) && 
+                          {(tempForm.watch("minTempReading") || 
+                            tempForm.watch("maxTempReading") || 
+                            tempForm.watch("currentTempReading")) && 
                            checkTemperatureRange(
                              tempForm.watch("minTempReading"), 
                              tempForm.watch("maxTempReading"), 
@@ -674,7 +695,8 @@ export default function TempLogger() {
                             <Alert variant="destructive" className="border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800">
                               <AlertTriangle className="h-5 w-5" />
                               <AlertDescription className="text-red-800 dark:text-red-200 font-medium">
-                                ⚠️ One or more temperature readings are out of safe range! Corrective action required.
+                                ⚠️ One or more temperature readings are out of safe range! 
+                                Corrective action required.
                               </AlertDescription>
                             </Alert>
                           )}
@@ -722,7 +744,8 @@ export default function TempLogger() {
                           <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
                             <Clock className="h-4 w-4" />
                             <AlertDescription className="text-blue-800 dark:text-blue-200 text-sm">
-                              <strong>Automatic Timestamp:</strong> The current date and time will be automatically recorded with this temperature reading.
+                              <strong>Automatic Timestamp:</strong> The current date and time will
+                              be automatically recorded with this temperature reading.
                             </AlertDescription>
                           </Alert>
 
@@ -894,8 +917,27 @@ export default function TempLogger() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-600 dark:text-slate-300">Avg. Compliance</span>
-                  <Badge className={`font-medium ${getComplianceBadgeClass(fridges.length > 0 ? Math.round(fridges.reduce((acc: number, f: Fridge) => acc + f.complianceScore, 0) / fridges.length) : 0)}`}>
-                    {fridges.length > 0 ? Math.round(fridges.reduce((acc: number, f: Fridge) => acc + f.complianceScore, 0) / fridges.length) : 0}%
+                  <Badge 
+                    className={`font-medium ${getComplianceBadgeClass(
+                      fridges.length > 0 
+                        ? Math.round(
+                            fridges.reduce(
+                              (acc: number, f: Fridge) => acc + f.complianceScore, 
+                              0
+                            ) / 
+                            fridges.length
+                          )
+                        : 0
+                    )}`}
+                  >
+                    {fridges.length > 0 
+                      ? Math.round(
+                          fridges.reduce(
+                            (acc: number, f: Fridge) => acc + f.complianceScore, 
+                            0
+                          ) / fridges.length
+                        )
+                      : 0}%
                   </Badge>
                 </div>
               </CardContent>
