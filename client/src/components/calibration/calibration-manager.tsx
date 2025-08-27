@@ -107,7 +107,7 @@ export default function CalibrationManager({ ___fridgeId, fridgeName }: Calibrat
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/fridges/${__fridgeId}/calibrations`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/fridges/${___fridgeId}/calibrations`] });
       toast({
         title: "Success",
         description: "Calibration record created successfully",
@@ -135,7 +135,7 @@ export default function CalibrationManager({ ___fridgeId, fridgeName }: Calibrat
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/fridges/${__fridgeId}/calibrations`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/fridges/${___fridgeId}/calibrations`] });
       toast({
         title: "Success",
         description: "Calibration record updated successfully",
@@ -163,7 +163,7 @@ export default function CalibrationManager({ ___fridgeId, fridgeName }: Calibrat
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/fridges/${__fridgeId}/calibrations`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/fridges/${___fridgeId}/calibrations`] });
       toast({
         title: "Success",
         description: "Calibration record deleted successfully",

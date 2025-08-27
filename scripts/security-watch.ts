@@ -109,7 +109,7 @@ class SecurityWatcher {
     try {
       const statusContent = await fs.readFile(this.statusFile, 'utf-8');
       return JSON.parse(statusContent);
-    } catch (error) {
+    } catch (_) {
       return null;
     }
   }

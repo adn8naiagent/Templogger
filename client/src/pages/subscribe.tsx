@@ -3,7 +3,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { useEffect, useState } from 'react';
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle, Star } from "lucide-react";
 import { Link, useLocation } from "wouter";
@@ -45,7 +45,7 @@ const SubscribeForm = () => {
           variant: "destructive",
         });
       }
-    } catch (error: any) {
+    } catch (_: any) {
       toast({
         title: "Payment Error",
         description: "An unexpected error occurred during payment.",

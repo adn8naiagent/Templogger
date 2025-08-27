@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -171,7 +171,7 @@ export default function ViewAuditCompletion() {
               <AlertTriangle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">Completion Not Found</h3>
               <p className="text-muted-foreground mb-4">
-                The audit completion could not be found or you don't have access to it.
+                The audit completion could not be found or you don&apos;t have access to it.
               </p>
               <Button onClick={() => setLocation('/self-audit-checklists')}>
                 <ArrowLeft className="w-4 h-4 mr-2" />

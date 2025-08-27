@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -346,7 +346,7 @@ export default function EditFridge() {
           <div className="text-center">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Fridge not found</h2>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
-              The requested fridge could not be found or you don't have access to it.
+              The requested fridge could not be found or you don&apos;t have access to it.
             </p>
           </div>
         </div>

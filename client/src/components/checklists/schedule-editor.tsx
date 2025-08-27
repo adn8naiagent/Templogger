@@ -191,7 +191,9 @@ export default function ScheduleEditor({
 
     const preview = [];
     const start = new Date(startDate);
-    const end = endDate ? new Date(endDate) : new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from start
+    const end = endDate 
+      ? new Date(endDate) 
+      : new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from start
     
     const today = new Date();
     const current = new Date(Math.max(start.getTime(), today.getTime()));
@@ -265,7 +267,7 @@ export default function ScheduleEditor({
             Schedule Checklist
           </DialogTitle>
           <DialogDescription>
-            Set up when "{checklist?.name}" should be required for completion
+            Set up when &quot;{checklist?.name}&quot; should be required for completion
           </DialogDescription>
         </DialogHeader>
 
@@ -394,7 +396,9 @@ export default function ScheduleEditor({
                     <div className="font-medium text-blue-900">Current Schedule</div>
                     <div className="text-sm text-blue-700 space-y-1">
                       <div>Type: {checklist.schedule.cadence}</div>
-                      <div>Active since: {new Date(checklist.schedule.startDate).toLocaleDateString()}</div>
+                      <div>
+                        Active since: {new Date(checklist.schedule.startDate).toLocaleDateString()}
+                      </div>
                       {checklist.schedule.endDate && (
                         <div>Ends: {new Date(checklist.schedule.endDate).toLocaleDateString()}</div>
                       )}

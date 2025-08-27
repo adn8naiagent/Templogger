@@ -1,4 +1,4 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -16,7 +16,16 @@ interface TierCardProps {
   tierKey: string;
 }
 
-function TierCard({ name, price, currency, interval, popular, features, limitations, tierKey }: TierCardProps) {
+function TierCard({
+  name,
+  price,
+  currency,
+  interval,
+  popular,
+  features,
+  limitations,
+  tierKey
+}: TierCardProps) {
   return (
     <div className={`p-6 ${popular ? 'bg-primary/5 dark:bg-primary/10' : ''}`} data-testid={`tier-${tierKey}`}>
       <div className="flex items-center space-x-2 mb-4">

@@ -180,8 +180,8 @@ export interface IStorage {
   // Self-audit methods
   getAuditTemplates(_userId: string): Promise<(AuditTemplate & { sections: (AuditSection & { items: AuditItem[] })[] })[]>;
   getAuditTemplate(_templateId: string, _userId: string): Promise<(AuditTemplate & { sections: (AuditSection & { items: AuditItem[] })[] }) | undefined>;
-  createAuditTemplate(_templateData: InsertAuditTemplate, __sectionsData: { sections: Array<{ title: string; description?: string; orderIndex: number; items: Array<{ text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }): Promise<AuditTemplate>;
-  updateAuditTemplate(_templateId: string, _userId: string, _templateData: Partial<AuditTemplate>, __sectionsData?: { sections: Array<{ id?: string; title: string; description?: string; orderIndex: number; items: Array<{ id?: string; text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }): Promise<AuditTemplate | undefined>;
+  createAuditTemplate(_templateData: InsertAuditTemplate, ___sectionsData: { sections: Array<{ title: string; description?: string; orderIndex: number; items: Array<{ text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }): Promise<AuditTemplate>;
+  updateAuditTemplate(_templateId: string, _userId: string, _templateData: Partial<AuditTemplate>, ___sectionsData?: { sections: Array<{ id?: string; title: string; description?: string; orderIndex: number; items: Array<{ id?: string; text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }): Promise<AuditTemplate | undefined>;
   deleteAuditTemplate(_templateId: string, _userId: string): Promise<boolean>;
   createDefaultAuditTemplate(_userId: string): Promise<AuditTemplate>;
   
@@ -254,7 +254,7 @@ export class DatabaseStorage implements IStorage {
     try {
       await this.db.delete(users).where(eq(users._id, _id));
       return true;
-    } catch (error) {
+    } catch (_) {
       return false;
     }
   }
@@ -383,7 +383,7 @@ export class DatabaseStorage implements IStorage {
       await this.db.delete(labels)
         .where(and(eq(labels._id, _id), eq(labels._userId, _userId)));
       return true;
-    } catch (error) {
+    } catch (_) {
       return false;
     }
   }
@@ -472,7 +472,7 @@ export class DatabaseStorage implements IStorage {
     try {
       await this.db.delete(timeWindows).where(eq(timeWindows._id, _id));
       return true;
-    } catch (error) {
+    } catch (_) {
       return false;
     }
   }
@@ -739,7 +739,7 @@ export class DatabaseStorage implements IStorage {
       // Delete checklist
       await this.db.delete(checklists).where(eq(checklists._id, _id));
       return true;
-    } catch (error) {
+    } catch (_) {
       return false;
     }
   }
@@ -1271,11 +1271,11 @@ export class DatabaseStorage implements IStorage {
 
   async createAuditTemplate(
     _templateData: InsertAuditTemplate, 
-    __sectionsData: { sections: Array<{ title: string; description?: string; orderIndex: number; items: Array<{ text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }
+    ___sectionsData: { sections: Array<{ title: string; description?: string; orderIndex: number; items: Array<{ text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }
   ): Promise<AuditTemplate> {
     const [template] = await this.db.insert(auditTemplates).values(_templateData).returning();
 
-    for (const sectionData of _sectionsData.sections) {
+    for (const sectionData of __sectionsData.sections) {
       const [section] = await this.db.insert(auditSections).values({
         _templateId: template._id,
         title: sectionData.title,
@@ -1301,7 +1301,7 @@ export class DatabaseStorage implements IStorage {
     _templateId: string, 
     _userId: string, 
     _templateData: Partial<AuditTemplate>, 
-    _sectionsData?: { sections: Array<{ id?: string; title: string; description?: string; orderIndex: number; items: Array<{ id?: string; text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }
+    __sectionsData?: { sections: Array<{ id?: string; title: string; description?: string; orderIndex: number; items: Array<{ id?: string; text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }
   ): Promise<AuditTemplate | undefined> {
     const [updated] = await this.db.update(auditTemplates)
       .set({ ..._templateData, updatedAt: new Date() })
@@ -1310,12 +1310,12 @@ export class DatabaseStorage implements IStorage {
 
     if (!updated) return undefined;
 
-    if (__sectionsData) {
+    if (___sectionsData) {
       // Delete existing sections and items (cascade will handle items)
       await this.db.delete(auditSections).where(eq(auditSections._templateId, _templateId));
 
       // Create new sections and items
-      for (const sectionData of _sectionsData.sections) {
+      for (const sectionData of __sectionsData.sections) {
         const [section] = await this.db.insert(auditSections).values({
           _templateId: _templateId,
           title: sectionData.title,

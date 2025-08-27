@@ -18,7 +18,10 @@
       "Bash(snyk:*)",
       "Bash(npx snyk:*)",
       "Bash(npm test:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(npx eslint:*)",
+      "Bash(perl:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

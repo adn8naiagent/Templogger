@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useLocation } from "wouter";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 // import { Label } from "@/components/ui/label";
@@ -41,7 +41,7 @@ export default function Login() {
       
       toast({
         title: "Welcome back!",
-        description: "You've been signed in successfully.",
+        description: "You&apos;ve been signed in successfully.",
       });
       
       // Invalidate the auth query and navigate
@@ -163,7 +163,7 @@ export default function Login() {
               </Button>
 
               <div className="text-center text-sm text-muted-foreground">
-                Don't have an account?{" "}
+                Don&apos;t have an account?{" "}
                 <Link to="/auth/signup" className="text-primary hover:underline" data-testid="link-signup">
                   Sign up
                 </Link>

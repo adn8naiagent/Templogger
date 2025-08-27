@@ -73,7 +73,7 @@ export class ChecklistService {
       
       // Transform to enhanced format
       return this.transformToEnhancedChecklist(checklist, []);
-    } catch (error) {
+    } catch (_) {
       throw new ChecklistError('Failed to create checklist', 'CREATE_FAILED', 500);
     }
   }
@@ -185,7 +185,7 @@ export class ChecklistService {
           }
         }
       }
-    } catch (error) {
+    } catch (_) {
       throw new InstanceError('Failed to generate instances');
     }
   }
@@ -225,7 +225,7 @@ export class ChecklistService {
         instances: calendarInstances,
         period: { start: from, end: to },
       };
-    } catch (error) {
+    } catch (_) {
       throw new ChecklistError('Failed to get calendar instances', 'CALENDAR_ERROR');
     }
   }
@@ -360,7 +360,7 @@ export class ChecklistService {
         overallOnTimeRate: totalCompleted > 0 ? (totalOnTime / totalCompleted) * 100 : 100,
         byChecklist: summaries,
       };
-    } catch (error) {
+    } catch (_) {
       throw new ChecklistError('Failed to get summaries', 'SUMMARIES_ERROR');
     }
   }
@@ -372,7 +372,7 @@ export class ChecklistService {
       const filtered = activeOnly ? checklists.filter(c => c.isActive) : checklists;
       
       return filtered.map(c => this.transformToEnhancedChecklist(c, c.items));
-    } catch (error) {
+    } catch (_) {
       throw new ChecklistError('Failed to list checklists', 'LIST_FAILED');
     }
   }
@@ -401,7 +401,7 @@ export class ChecklistService {
       }
 
       return records;
-    } catch (error) {
+    } catch (_) {
       throw new ChecklistError('Failed to export CSV', 'EXPORT_ERROR');
     }
   }
@@ -499,7 +499,7 @@ export class ChecklistService {
         }
         break;
 
-      case 'WEEKLY':
+      case 'WEEKLY': {
         const startWeek = this.getWeekIdentifier(start);
         const endWeek = this.getWeekIdentifier(end);
         
@@ -516,6 +516,7 @@ export class ChecklistService {
           currentDate.setDate(currentDate.getDate() + 7);
         }
         break;
+      }
     }
 
     return instances;
@@ -599,17 +600,19 @@ export class ChecklistService {
     
     switch (instance.cadence) {
       case 'DAILY':
-      case 'DOW':
+      case 'DOW': {
         // On-time if completed on the same day
         const targetDate = new Date(instance.targetDate);
         return completedDate.toDateString() === targetDate.toDateString();
+      }
       
-      case 'WEEKLY':
+      case 'WEEKLY': {
         // On-time if completed within the week
         const weekStart = this.getDateFromWeekIdentifier(instance.targetDate);
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekEnd.getDate() + 6);
         return completedDate >= weekStart && completedDate <= weekEnd;
+      }
       
       default:
         return false;

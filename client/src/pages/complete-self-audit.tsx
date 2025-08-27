@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -241,7 +241,7 @@ export default function CompleteSelfAudit() {
               <AlertTriangle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">Template Not Found</h3>
               <p className="text-muted-foreground mb-4">
-                The audit template could not be found or you don't have access to it.
+                The audit template could not be found or you don&apos;t have access to it.
               </p>
               <Button onClick={() => setLocation('/self-audit-checklists')}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -531,7 +531,7 @@ export default function CompleteSelfAudit() {
           <DialogHeader>
             <DialogTitle>Confirm Audit Submission</DialogTitle>
             <DialogDescription>
-              Are you sure you want to submit this audit? You won't be able to make changes after submission.
+              Are you sure you want to submit this audit? You won&apos;t be able to make changes after submission.
             </DialogDescription>
           </DialogHeader>
           

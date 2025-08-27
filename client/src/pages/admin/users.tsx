@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { 
   Table, 
   TableBody, 
@@ -57,28 +57,7 @@ export default function AdminUsers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
 
-  // Redirect if not admin
-  if ((currentUser as any)?.role !== 'admin') {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center">Access Denied</CardTitle>
-            <CardDescription className="text-center">
-              You need administrator privileges to access this page.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Link to="/">
-              <Button>Return Home</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Fetch all users
+  // All hooks must come first, before any conditional logic
   const { _data: users = [], isLoading: usersLoading } = useQuery({
     queryKey: ["/api/admin/users"],
     queryFn: async () => {
@@ -115,7 +94,7 @@ export default function AdminUsers() {
   // Delete user mutation
   const deleteUserMutation = useMutation({
     mutationFn: async (_userId: string) => {
-      return apiRequest("DELETE", `/api/admin/users/${userId}`);
+      return apiRequest("DELETE", `/api/admin/users/${_userId}`);
     },
     onSuccess: () => {
       toast({
@@ -132,6 +111,27 @@ export default function AdminUsers() {
       });
     },
   });
+
+  // Then conditional logic and early returns
+  if ((currentUser as any)?.role !== 'admin') {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center">Access Denied</CardTitle>
+            <CardDescription className="text-center">
+              You need administrator privileges to access this page.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Link to="/">
+              <Button>Return Home</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Filter users based on search
   const filteredUsers = users.filter((user: AdminUser) =>
@@ -244,7 +244,7 @@ export default function AdminUsers() {
               <Input
                 placeholder="Search users..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target._value)}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8 w-64"
                 data-testid="input-search-users"
               />
@@ -272,7 +272,7 @@ export default function AdminUsers() {
                 </TableHeader>
                 <TableBody>
                   {filteredUsers.map((user: AdminUser) => (
-                    <TableRow key={user.id}>
+                    <TableRow key={user._id}>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
@@ -295,19 +295,19 @@ export default function AdminUsers() {
                             variant="ghost"
                             size="sm"
                             onClick={() => setEditingUser(user)}
-                            data-testid={`button-edit-${user.id}`}
+                            data-testid={`button-edit-${user._id}`}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           
-                          {user.id !== (currentUser as any)?.id && (
+                          {user._id !== (currentUser as any)?._id && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button 
                                   variant="ghost" 
                                   size="sm" 
                                   className="text-red-600 hover:text-red-700"
-                                  data-testid={`button-delete-${user.id}`}
+                                  data-testid={`button-delete-${user._id}`}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -358,7 +358,7 @@ export default function AdminUsers() {
                 <label className="text-sm font-medium">Role</label>
                 <Select
                   defaultValue={editingUser.role}
-                  onValueChange={(_value) => setEditingUser({ ...editingUser, role: value })}
+                  onValueChange={(value) => setEditingUser({ ...editingUser, role: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -373,7 +373,7 @@ export default function AdminUsers() {
                 <label className="text-sm font-medium">Subscription Status</label>
                 <Select
                   defaultValue={editingUser.subscriptionStatus}
-                  onValueChange={(_value) => setEditingUser({ ...editingUser, subscriptionStatus: value })}
+                  onValueChange={(value) => setEditingUser({ ...editingUser, subscriptionStatus: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />

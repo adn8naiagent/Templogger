@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
   Table,
@@ -30,6 +34,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
+import { Calendar } from "@/components/ui/calendar";
 
 interface ChecklistSummary {
   checklistId: string;
@@ -141,7 +146,7 @@ export default function ChecklistDashboard() {
         title: "Export Successful",
         description: "Checklist report has been downloaded",
       });
-    } catch (error) {
+    } catch (_) {
       toast({
         title: "Export Failed",
         description: "Failed to export checklist report",

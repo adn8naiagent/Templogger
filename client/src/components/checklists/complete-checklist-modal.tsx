@@ -24,6 +24,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
+import { Calendar } from "@/components/ui/calendar";
 
 interface ChecklistItem {
   _id: string;
@@ -125,7 +126,7 @@ export default function CompleteChecklistModal({
   const updateItemState = (itemId: string, _updates: Partial<ItemCompletionState>) => {
     setItemStates(prev => 
       prev.map(state => 
-        state.itemId === itemId ? { ..._state, ...updates } : _state
+        state.itemId === itemId ? { ...state, ..._updates } : state
       )
     );
   };
@@ -197,7 +198,7 @@ export default function CompleteChecklistModal({
             Complete Checklist
           </DialogTitle>
           <DialogDescription>
-            Complete "{instance.checklistName}" for {formatTargetDate(instance.targetDate, instance.cadence)}
+            Complete &quot;{instance.checklistName}&quot; for {formatTargetDate(instance.targetDate, instance.cadence)}
           </DialogDescription>
         </DialogHeader>
 

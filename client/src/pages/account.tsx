@@ -1,6 +1,6 @@
 // import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 // import { Label } from "@/components/ui/label";
@@ -152,7 +152,7 @@ export default function Account() {
         title: "Export successful!",
         description: "Your data has been downloaded.",
       });
-    } catch (error) {
+    } catch (_) {
       toast({
         title: "Export failed",
         description: "Failed to export your data.",

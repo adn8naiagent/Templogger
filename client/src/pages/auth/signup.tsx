@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useLocation } from "wouter";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 // import { Label } from "@/components/ui/label";
@@ -34,7 +34,7 @@ export default function Signup() {
       const response = await apiRequest("POST", "/api/auth/signup", _data);
       return response.json();
     },
-    onSuccess: async (_data) => {
+    onSuccess: async (data) => {
       // Store the auth token in localStorage
       if (data.authToken) {
         localStorage.setItem('authToken', data.authToken);
@@ -42,7 +42,7 @@ export default function Signup() {
       
       toast({
         title: "Account created!",
-        description: "Welcome! Your account has been created successfully. Let's set up your first fridge!",
+        description: "Welcome! Your account has been created successfully. Let&apos;s set up your first fridge!",
       });
       
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });

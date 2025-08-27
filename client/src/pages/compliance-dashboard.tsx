@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -170,7 +170,7 @@ export default function ComplianceDashboard() {
         title: "Export successful!",
         description: "Compliance report has been downloaded.",
       });
-    } catch (error) {
+    } catch (_) {
       toast({
         title: "Export failed",
         description: "Failed to export compliance report.",
@@ -378,7 +378,7 @@ export default function ComplianceDashboard() {
 
           <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm" data-testid="metric-daily-activity">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-200">Today's Activity</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-200">Today&apos;s Activity</CardTitle>
               <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
                 <Activity className="h-4 w-4 text-purple-600 dark:text-purple-400" />
               </div>

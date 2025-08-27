@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { CheckCircle, Crown, ArrowRight } from "lucide-react";
+import { Link } from "wouter";
 
 export default function SubscribeSuccess() {
   const { user, refetch } = useAuth();
@@ -47,7 +51,7 @@ export default function SubscribeSuccess() {
           </div>
 
           <div className="bg-muted p-4 rounded-lg">
-            <h3 className="font-semibold mb-2">What's included:</h3>
+            <h3 className="font-semibold mb-2">What&apos;s included:</h3>
             <ul className="text-sm text-left space-y-1">
               <li>✓ Unlimited refrigerator monitoring</li>
               <li>✓ Advanced temperature alerts</li>

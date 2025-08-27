@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -36,7 +36,19 @@ interface SubscriptionStats {
 export default function AdminSubscriptions() {
   const { user: currentUser } = useAuth();
 
-  // Redirect if not admin
+  // All hooks must come first, before any conditional logic
+  const { _data: users = [], isLoading: usersLoading } = useQuery({
+    queryKey: ["/api/admin/users"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/users");
+      if (!response.ok) {
+        throw new Error("Failed to fetch users");
+      }
+      return response.json();
+    },
+  });
+
+  // Then conditional logic and early returns
   if ((currentUser as any)?.role !== 'admin') {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -56,18 +68,6 @@ export default function AdminSubscriptions() {
       </div>
     );
   }
-
-  // Fetch all users to calculate subscription stats
-  const { _data: users = [], isLoading: usersLoading } = useQuery({
-    queryKey: ["/api/admin/users"],
-    queryFn: async () => {
-      const response = await fetch("/api/admin/users");
-      if (!response.ok) {
-        throw new Error("Failed to fetch users");
-      }
-      return response.json();
-    },
-  });
 
   // Calculate subscription statistics
   const subscriptionStats: SubscriptionStats = {
@@ -240,7 +240,7 @@ export default function AdminSubscriptions() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
-                <Tooltip formatter={(_value) => [`$${value}`, "Revenue"]} />
+                <Tooltip formatter={(value) => [`$${value}`, "Revenue"]} />
                 <Bar dataKey="revenue" fill="#8b5cf6" />
               </BarChart>
             </ResponsiveContainer>
@@ -279,7 +279,7 @@ export default function AdminSubscriptions() {
                 </TableHeader>
                 <TableBody>
                   {subscribedUsers.map((user: AdminUser) => (
-                    <TableRow key={user.id}>
+                    <TableRow key={user._id}>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">

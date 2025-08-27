@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocation } from "wouter";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -103,7 +103,7 @@ export default function AddFridge() {
           console.error("Error creating time windows:", error);
           toast({
             title: "Warning",
-            description: "Fridge created but some check times couldn't be saved.",
+            description: "Fridge created but some check times couldn&apos;t be saved.",
             variant: "destructive",
           });
         }
@@ -537,7 +537,7 @@ export default function AddFridge() {
 
                           {timeWindows.length === 0 ? (
                             <div className="text-center py-4 text-sm text-muted-foreground border border-dashed rounded">
-                              No check times added yet. Click "Add Time" to set your first check.
+                              No check times added yet. Click &quot;Add Time&quot; to set your first check.
                             </div>
                           ) : (
                             <div className="space-y-2">

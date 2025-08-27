@@ -160,17 +160,19 @@ export class SchedulingUtils {
   ): boolean {
     switch (cadence) {
       case 'DAILY':
-      case 'DOW':
+      case 'DOW': {
         // On-time if completed on the same day
         const target = new Date(targetDate);
         return this.isSameDay(completedAt, target);
+      }
       
-      case 'WEEKLY':
+      case 'WEEKLY': {
         // On-time if completed within the target week
         const weekInfo = this.parseWeekIdentifier(targetDate);
         if (!weekInfo) return false;
         
         return completedAt >= weekInfo.startDate && completedAt <= weekInfo.endDate;
+      }
       
       default:
         return false;
@@ -185,13 +187,14 @@ export class SchedulingUtils {
   ): boolean {
     switch (cadence) {
       case 'DAILY':
-      case 'DOW':
+      case 'DOW': {
         // Missed if current date is after target date
         const target = new Date(targetDate);
         target.setUTCHours(23, 59, 59, 999); // End of target day
         return currentDate > target;
+      }
       
-      case 'WEEKLY':
+      case 'WEEKLY': {
         // Missed if current date is after the end of target week
         const weekInfo = this.parseWeekIdentifier(targetDate);
         if (!weekInfo) return false;
@@ -199,6 +202,7 @@ export class SchedulingUtils {
         const weekEnd = new Date(weekInfo.endDate);
         weekEnd.setUTCHours(23, 59, 59, 999); // End of last day of week
         return currentDate > weekEnd;
+      }
       
       default:
         return false;

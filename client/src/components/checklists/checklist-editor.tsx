@@ -22,6 +22,7 @@ import {
   Trash2,
   GripVertical,
   CheckSquare,
+  Square,
   Save,
   X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";

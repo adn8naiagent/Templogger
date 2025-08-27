@@ -26,7 +26,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   try {
     // Decode the token (simple base64 decode for now)
     userId = Buffer.from(token, 'base64').toString();
-  } catch (error) {
+  } catch (_) {
     return res.status(401).json({ message: "Invalid token" });
   }
   
@@ -49,7 +49,7 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
   try {
     // Decode the token
     userId = Buffer.from(token, 'base64').toString();
-  } catch (error) {
+  } catch (_) {
     return res.status(401).json({ error: "Invalid token" });
   }
   
@@ -61,7 +61,7 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
     req.user = user;
     (req as any).userId = userId;
     next();
-  } catch (error) {
+  } catch (_) {
     res.status(500).json({ error: "Failed to verify admin status" });
   }
 }
@@ -189,7 +189,7 @@ export async function getCurrentUser(req: Request, res: Response) {
     try {
       // Decode the token (simple base64 decode for now)
       userId = Buffer.from(token, 'base64').toString();
-    } catch (error) {
+    } catch (_) {
       return res.status(401).json({ message: "Invalid token" });
     }
 

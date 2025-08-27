@@ -1,5 +1,6 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 // import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,7 +23,13 @@ export default function AdminDashboard() {
   const { user, isLoading } = useAuth();
   const { toast } = useToast();
 
-  // Redirect if not admin
+  // All hooks must come first, before any conditional logic
+  const { _data: stats, isLoading: statsLoading } = useQuery<AdminStats>({
+    queryKey: ["/api/admin/stats"],
+    enabled: (user as any)?.role === "admin",
+  });
+
+  // Then effects and other hooks
   useEffect(() => {
     if (!isLoading && (!user || (user as any).role !== "admin")) {
       toast({
@@ -34,11 +41,6 @@ export default function AdminDashboard() {
       return;
     }
   }, [user, isLoading, toast]);
-
-  const { _data: stats, isLoading: statsLoading } = useQuery<AdminStats>({
-    queryKey: ["/api/admin/stats"],
-    enabled: (user as any)?.role === "admin",
-  });
 
   if (isLoading || !user || (user as any).role !== "admin") {
     return (
