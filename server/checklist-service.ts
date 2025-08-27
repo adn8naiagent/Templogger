@@ -52,15 +52,15 @@ export class ChecklistService {
     try {
       // Map to existing schema format
       const checklistData: InsertChecklist = {
-        title: data.name,
-        description: data.description || null,
+        title: _data.name,
+        description: _data.description || null,
         frequency: 'custom', // We'll use custom for our enhanced scheduling
         _fridgeId: null, // Global checklists for now
         createdBy: _userId,
         isActive: true,
       };
 
-      const itemsData: InsertChecklistItem[] = data.items.map((item, index) => ({
+      const itemsData: InsertChecklistItem[] = _data.items.map((item: any, index: any) => ({
         _userId,
         checklistId: '', // Will be set by storage method
         title: item.label,
@@ -88,11 +88,11 @@ export class ChecklistService {
 
       // Update checklist
       const updates = {
-        title: data.name,
-        description: data.description || null,
+        title: _data.name,
+        description: _data.description || null,
       };
 
-      const updatedChecklist = await this.storage.updateChecklist(checklistId, _userId, _updates);
+      const updatedChecklist = await this.storage.updateChecklist(checklistId, _userId, updates);
       if (!updatedChecklist) {
         throw new ChecklistError('Failed to update checklist', 'UPDATE_FAILED', 500);
       }
@@ -116,11 +116,11 @@ export class ChecklistService {
 
       // Store schedule metadata in the description field as JSON
       const scheduleMetadata: ScheduleMetadata = {
-        cadence: data.cadence,
-        daysOfWeek: data.daysOfWeek,
-        startDate: data.startDate,
-        endDate: data.endDate,
-        timezone: data.timezone,
+        cadence: _data.cadence,
+        daysOfWeek: _data.daysOfWeek,
+        startDate: _data.startDate,
+        endDate: _data.endDate,
+        timezone: _data.timezone,
         isActive: true,
       };
 
@@ -213,7 +213,7 @@ export class ChecklistService {
             checklistId: checklist._id,
             checklistName: checklist.title,
             targetDate: instance.targetDate,
-            status: instance._status,
+            status: instance.status,
             cadence: schedule.cadence,
             completedAt: instance.completedAt,
             completedBy: instance.completedBy,
@@ -252,9 +252,9 @@ export class ChecklistService {
       }
 
       const requiredItems = checklist.items.filter(item => item.isRequired);
-      const checkedRequiredItems = data.items
-        .filter(item => item.checked)
-        .filter(item => requiredItems.some(req => req.id === item.itemId));
+      const checkedRequiredItems = _data.items
+        .filter((item: any) => item.checked)
+        .filter((item: any) => requiredItems.some(req => req._id === item.itemId));
 
       if (checkedRequiredItems.length < requiredItems.length) {
         throw new CompletionError('All required items must be completed');
@@ -265,11 +265,11 @@ export class ChecklistService {
         checklistId: instance.checklistId,
         _fridgeId: null,
         completedBy: _userId,
-        completedItems: data.items.filter(i => i.checked).map(i => i.itemId),
+        completedItems: _data.items.filter((i: any) => i.checked).map((i: any) => i.itemId),
         notes: JSON.stringify({
           instanceId,
-          confirmationNote: data.confirmationNote,
-          itemNotes: data.items.reduce((acc, item) => {
+          confirmationNote: _data.confirmationNote,
+          itemNotes: _data.items.reduce((acc: any, item: any) => {
             if (item.note) acc[item.itemId] = item.note;
             return acc;
           }, {} as Record<string, string>),
@@ -287,8 +287,8 @@ export class ChecklistService {
         status: 'COMPLETED',
         completedAt: new Date(),
         completedBy: _userId,
-        completedItems: completionData.completedItems || [],
-        confirmationNote: data.confirmationNote,
+        completedItems: _completionData.completedItems || [],
+        confirmationNote: _data.confirmationNote,
         createdAt: instance.createdAt,
         updatedAt: new Date(),
       };
@@ -311,7 +311,7 @@ export class ChecklistService {
       let targetChecklists = checklists.filter(c => this.hasSchedule(c));
 
       if (checklistId) {
-        targetChecklists = targetChecklists.filter(c => c.id === checklistId);
+        targetChecklists = targetChecklists.filter(c => c._id === checklistId);
       }
 
       if (cadence) {
@@ -444,7 +444,7 @@ export class ChecklistService {
         note: item.description || undefined,
       })),
       schedule: schedule ? {
-        _id: `schedule_${checklist.id}`,
+        _id: `schedule_${checklist._id}`,
         checklistId: checklist._id,
         ...schedule,
         createdAt: checklist.createdAt || new Date(),
@@ -526,7 +526,7 @@ export class ChecklistService {
     return {
       checklistId,
       scheduleId: `schedule_${checklistId}`,
-      targetDate: date.toISOString().split('T')[0],
+      targetDate: date.toISOString().split('T')[0]!,
       status: 'REQUIRED',
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -543,8 +543,8 @@ export class ChecklistService {
 
   private getDateFromWeekIdentifier(weekId: string): Date {
     const [year, week] = weekId.split('-W');
-    const firstDay = new Date(parseInt(year), 0, 1);
-    const days = (parseInt(week) - 1) * 7 - firstDay.getDay() + 1;
+    const firstDay = new Date(parseInt(year!), 0, 1);
+    const days = (parseInt(week!) - 1) * 7 - firstDay.getDay() + 1;
     return new Date(firstDay.getTime() + days * 24 * 60 * 60 * 1000);
   }
 
@@ -563,7 +563,7 @@ export class ChecklistService {
     const instanceMetadata: InstanceMetadata = {
       instanceId: `instance_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       targetDate: instance.targetDate,
-      status: instance._status,
+      status: instance.status,
       scheduleId: instance.scheduleId,
     };
 

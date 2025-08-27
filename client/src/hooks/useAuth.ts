@@ -5,7 +5,7 @@ import type { User } from "@shared/schema";
 export function useAuth() {
   const queryClient = useQueryClient();
   
-  const { _data: user, isLoading, refetch } = useQuery<User>({
+  const { data: user, isLoading, refetch } = useQuery<User>({
     queryKey: ["/api/auth/user"],
     retry: false,
   });

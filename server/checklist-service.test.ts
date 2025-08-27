@@ -24,9 +24,9 @@ describe('SchedulingUtils', () => {
     const instances = SchedulingUtils.generateInstances(schedule, dateRange);
     
     expect(instances).toHaveLength(3); // Jan 1, 2, 3
-    expect(instances[0].targetDate).toBe('2024-01-01');
-    expect(instances[1].targetDate).toBe('2024-01-02');
-    expect(instances[2].targetDate).toBe('2024-01-03');
+    expect(instances[0]!.targetDate).toBe('2024-01-01');
+    expect(instances[1]!.targetDate).toBe('2024-01-02');
+    expect(instances[2]!.targetDate).toBe('2024-01-03');
   });
 
   test('should generate DOW instances correctly', () => {
@@ -52,9 +52,9 @@ describe('SchedulingUtils', () => {
     
     // Should only include Monday (1st), Wednesday (3rd), Friday (5th)
     expect(instances).toHaveLength(3);
-    expect(instances[0].targetDate).toBe('2024-01-01'); // Monday
-    expect(instances[1].targetDate).toBe('2024-01-03'); // Wednesday  
-    expect(instances[2].targetDate).toBe('2024-01-05'); // Friday
+    expect(instances[0]!.targetDate).toBe('2024-01-01'); // Monday
+    expect(instances[1]!.targetDate).toBe('2024-01-03'); // Wednesday  
+    expect(instances[2]!.targetDate).toBe('2024-01-05'); // Friday
   });
 
   test('should validate schedule correctly', () => {

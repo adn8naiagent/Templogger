@@ -393,7 +393,7 @@ export default function CompleteChecklistModal({
               id="confirmationNote"
               placeholder="Add any overall notes or observations about completing this checklist..."
               value={confirmationNote}
-              onChange={(e) => setConfirmationNote(e.target._value)}
+              onChange={(e) => setConfirmationNote(e.target.value)}
               rows={3}
             />
           </div>

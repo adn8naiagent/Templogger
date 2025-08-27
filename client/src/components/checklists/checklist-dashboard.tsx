@@ -67,11 +67,11 @@ export default function ChecklistDashboard() {
   const [dateFrom, setDateFrom] = useState(() => {
     const date = new Date();
     date.setDate(date.getDate() - 30); // 30 days ago
-    return date.toISOString().split('T')[0];
+    return date.toISOString().split('T')[0]!;
   });
   
   const [dateTo, setDateTo] = useState(() => {
-    return new Date().toISOString().split('T')[0]; // Today
+    return new Date().toISOString().split('T')[0]!; // Today
   });
   
   const [selectedChecklistId, setSelectedChecklistId] = useState<string>('');
@@ -222,7 +222,7 @@ export default function ChecklistDashboard() {
                 id="dateFrom"
                 type="date"
                 value={dateFrom}
-                onChange={(e) => setDateFrom(e.target._value)}
+                onChange={(e) => setDateFrom(e.target.value)}
                 className="mt-1"
               />
             </div>
@@ -233,7 +233,7 @@ export default function ChecklistDashboard() {
                 id="dateTo"
                 type="date"
                 value={dateTo}
-                onChange={(e) => setDateTo(e.target._value)}
+                onChange={(e) => setDateTo(e.target.value)}
                 className="mt-1"
               />
             </div>

@@ -34,28 +34,28 @@ interface FridgeWithLogs extends Fridge {
 }
 
 export default function FridgeDetail() {
-  const { id } = useParams<{ _id: string }>();
+  const { id } = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const { _data: fridge, isLoading } = useQuery<FridgeWithLogs>({
+  const { data: fridge, isLoading } = useQuery<FridgeWithLogs>({
     queryKey: [`/api/fridge/${id}`],
-    enabled: !!_id,
+    enabled: !!id,
   });
 
-  const { _data: timeWindows = [] } = useQuery<TimeWindow[]>({
+  const { data: timeWindows = [] } = useQuery<TimeWindow[]>({
     queryKey: [`/api/fridges/${id}/time-windows`],
-    enabled: !!_id,
+    enabled: !!id,
   });
 
-  const { _data: _calibrationRecords = [] } = useQuery<CalibrationRecord[]>({
+  const { data: calibrationRecords = [] } = useQuery<CalibrationRecord[]>({
     queryKey: [`/api/fridges/${id}/calibrations`],
-    enabled: !!_id,
+    enabled: !!id,
   });
 
-  const { _data: _maintenanceRecords = [] } = useQuery<MaintenanceRecord[]>({
+  const { data: maintenanceRecords = [] } = useQuery<MaintenanceRecord[]>({
     queryKey: [`/api/fridges/${id}/maintenance`],
-    enabled: !!_id,
+    enabled: !!id,
   });
 
   const handleSort = () => {
@@ -211,7 +211,7 @@ export default function FridgeDetail() {
                 Export Logs
               </Button>
               <Button variant="outline" asChild data-testid="button-settings">
-                <Link to={`/fridge/${fridge.id}/edit`}>
+                <Link to={`/fridge/${fridge._id}/edit`}>
                   <Settings className="h-4 w-4 mr-2" />
                   Settings
                 </Link>
@@ -239,7 +239,7 @@ export default function FridgeDetail() {
                 <CardDescription>Current status and basic information</CardDescription>
               </div>
               <Button variant="ghost" size="sm" asChild data-testid="button-header-settings">
-                <Link to={`/fridge/${fridge.id}/edit`}>
+                <Link to={`/fridge/${fridge._id}/edit`}>
                   <Settings className="h-4 w-4" />
                 </Link>
               </Button>
@@ -280,9 +280,9 @@ export default function FridgeDetail() {
                   <Clock className="h-4 w-4" />
                   {timeWindows.length === 0 ? 'No schedule' : 
                    timeWindows.length === 1 ? (
-                     timeWindows[0].checkType === 'daily' ? 'Daily checks' : 
-                     timeWindows[0].startTime && timeWindows[0].endTime ? 
-                       `Daily ${timeWindows[0].startTime}-${timeWindows[0].endTime}` : 
+                     timeWindows[0]!.checkType === 'daily' ? 'Daily checks' : 
+                     timeWindows[0]!.startTime && timeWindows[0]!.endTime ? 
+                       `Daily ${timeWindows[0]!.startTime}-${timeWindows[0]!.endTime}` : 
                        'Single check window'
                    ) :
                    timeWindows.length === 2 ? 'Twice daily' :
@@ -344,7 +344,7 @@ export default function FridgeDetail() {
                   </TableHeader>
                   <TableBody>
                     {sortedLogs.map((log) => (
-                      <TableRow key={log.id} data-testid={`log-row-${log.id}`}>
+                      <TableRow key={log._id} data-testid={`log-row-${log._id}`}>
                         <TableCell>
                           <div className="flex flex-col">
                             <span className="font-medium">
@@ -407,7 +407,7 @@ export default function FridgeDetail() {
         </Card>
 
         {/* Calibration Records */}
-        <CalibrationManager fridgeId={fridge.id} fridgeName={fridge.name} />
+        <CalibrationManager {...({ fridgeId: fridge._id, fridgeName: fridge.name } as any)} />
       </div>
     </div>
   );

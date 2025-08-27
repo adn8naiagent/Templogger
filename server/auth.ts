@@ -13,7 +13,7 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 }
 
 // Authentication middleware - updated for token-based auth
-export function requireAuth(req: Request, res: Response, next: NextFunction) {
+export function requireAuth(req: Request, res: Response, next: NextFunction): Response | void {
   const authHeader = req.headers.authorization;
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -21,7 +21,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   }
 
   const token = authHeader.substring(7);
-  let _userId: string;
+  let userId: string;
   
   try {
     // Decode the token (simple base64 decode for now)
@@ -36,7 +36,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 }
 
 // Admin middleware - updated for token-based auth
-export async function requireAdmin(req: Request, res: Response, next: NextFunction) {
+export async function requireAdmin(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   const authHeader = req.headers.authorization;
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -44,7 +44,7 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
   }
 
   const token = authHeader.substring(7);
-  let _userId: string;
+  let userId: string;
   
   try {
     // Decode the token
@@ -54,7 +54,7 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
   }
   
   try {
-    const user = await storage.getUser(_userId);
+    const user = await storage.getUser(userId);
     if (!user || user.role !== "admin") {
       return res.status(403).json({ error: "Admin access required" });
     }
@@ -62,12 +62,12 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
     (req as any).userId = userId;
     next();
   } catch (_) {
-    res.status(500).json({ error: "Failed to verify admin status" });
+    return res.status(500).json({ error: "Failed to verify admin status" });
   }
 }
 
 // Sign up route handler
-export async function signUp(req: Request, res: Response) {
+export async function signUp(req: Request, res: Response): Promise<Response | void> {
   try {
     const result = signUpSchema.safeParse(req.body);
     if (!result.success) {
@@ -119,12 +119,12 @@ export async function signUp(req: Request, res: Response) {
     });
   } catch (error: any) {
     console.error("Sign up error:", error);
-    res.status(500).json({ error: "Failed to create account" });
+    return res.status(500).json({ error: "Failed to create account" });
   }
 }
 
 // Sign in route handler
-export async function signIn(req: Request, res: Response) {
+export async function signIn(req: Request, res: Response): Promise<Response | void> {
   try {
     const result = signInSchema.safeParse(req.body);
     if (!result.success) {
@@ -161,20 +161,20 @@ export async function signIn(req: Request, res: Response) {
     });
   } catch (error: any) {
     console.error("Sign in error:", error);
-    res.status(500).json({ error: "Failed to sign in" });
+    return res.status(500).json({ error: "Failed to sign in" });
   }
 }
 
 // Sign out route handler - for token-based auth, this is just a client-side operation
-export async function signOut(req: Request, res: Response) {
+export async function signOut(req: Request, res: Response): Promise<Response> {
   // With token-based auth, logout is primarily handled on the client side
   // Server just confirms the logout request
   console.log("signOut - logout confirmed");
-  res.json({ message: "Signed out successfully" });
+  return res.json({ message: "Signed out successfully" });
 }
 
 // Get current user route handler
-export async function getCurrentUser(req: Request, res: Response) {
+export async function getCurrentUser(req: Request, res: Response): Promise<Response | void> {
   try {
     // Check for auth token in Authorization header
     const authHeader = req.headers.authorization;
@@ -184,7 +184,7 @@ export async function getCurrentUser(req: Request, res: Response) {
     }
 
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-    let _userId: string;
+    let userId: string;
     
     try {
       // Decode the token (simple base64 decode for now)
@@ -193,7 +193,7 @@ export async function getCurrentUser(req: Request, res: Response) {
       return res.status(401).json({ message: "Invalid token" });
     }
 
-    const user = await storage.getUser(_userId);
+    const user = await storage.getUser(userId);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -203,6 +203,6 @@ export async function getCurrentUser(req: Request, res: Response) {
     res.json(userWithoutPassword);
   } catch (error: any) {
     console.error("Get user error:", error);
-    res.status(500).json({ error: "Failed to get user" });
+    return res.status(500).json({ error: "Failed to get user" });
   }
 }

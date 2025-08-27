@@ -9,14 +9,14 @@ const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
 
 type ToasterToast = ToastProps & {
-  _id: string
+  id: string
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
 }
 
-type Toast = Omit<ToasterToast, "_id"> & {
-  _id?: string
+type Toast = Omit<ToasterToast, "id"> & {
+  id?: string
 }
 
 const actionTypes = {
@@ -79,13 +79,13 @@ export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
       return {
-        ..._state,
+        ...state,
         toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
       }
 
     case "UPDATE_TOAST":
       return {
-        ..._state,
+        ...state,
         toasts: state.toasts.map((t) =>
           t.id === action.toast.id ? { ...t, ...action.toast } : t
         ),
@@ -100,17 +100,17 @@ export const reducer = (state: State, action: Action): State => {
         addToRemoveQueue(toastId)
       } else {
         state.toasts.forEach((toast) => {
-          addToRemoveQueue(toast._id)
+          addToRemoveQueue(toast.id)
         })
       }
 
       return {
-        ..._state,
+        ...state,
         toasts: state.toasts.map((t) =>
           t.id === toastId || toastId === undefined
             ? {
                 ...t,
-                _open: false,
+                open: false,
               }
             : t
         ),
@@ -119,12 +119,12 @@ export const reducer = (state: State, action: Action): State => {
     case "REMOVE_TOAST":
       if (action.toastId === undefined) {
         return {
-          ..._state,
+          ...state,
           toasts: [],
         }
       }
       return {
-        ..._state,
+        ...state,
         toasts: state.toasts.filter((t) => t.id !== action.toastId),
       }
   }
@@ -141,8 +141,8 @@ function dispatch(action: Action) {
   })
 }
 
-function toast({ _id, ...props }: Toast) {
-  const id = _id || genId()
+function toast({ id: providedId, ...props }: Toast) {
+  const id = providedId || genId()
 
   const update = (props: ToasterToast) =>
     dispatch({
@@ -155,23 +155,23 @@ function toast({ _id, ...props }: Toast) {
     type: "ADD_TOAST",
     toast: {
       ...props,
-      _id: id,
-      _open: true,
-      onOpenChange: (_open) => {
-        if (!_open) dismiss()
+      id: id,
+      open: true,
+      onOpenChange: (open) => {
+        if (!open) dismiss()
       },
     },
   })
 
   return {
-    _id: _id,
+    id: id,
     dismiss,
     update,
   }
 }
 
 function useToast() {
-  const [_state, setState] = React.useState<State>(memoryState)
+  const [state, setState] = React.useState<State>(memoryState)
 
   React.useEffect(() => {
     listeners.push(setState)
@@ -181,10 +181,10 @@ function useToast() {
         listeners.splice(index, 1)
       }
     }
-  }, [_state])
+  }, [state])
 
   return {
-    ..._state,
+    ...state,
     toast,
     dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
   }

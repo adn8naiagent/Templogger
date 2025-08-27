@@ -28,7 +28,7 @@ interface ServiceCardProps {
   serviceKey: string;
 }
 
-function ServiceCard({ name, description, icon, _status, features, serviceKey }: ServiceCardProps) {
+function ServiceCard({ name, description, icon, status, features, serviceKey }: ServiceCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -53,8 +53,8 @@ function ServiceCard({ name, description, icon, _status, features, serviceKey }:
     },
   });
 
-  const getStatusColor = (_status: string) => {
-    switch (_status) {
+  const getStatusColor = (status: string) => {
+    switch (status) {
       case "connected":
         return "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200";
       case "disconnected":
@@ -81,7 +81,7 @@ function ServiceCard({ name, description, icon, _status, features, serviceKey }:
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm">Connection</span>
-            <Badge className={getStatusColor(_status)} data-testid={`status-${serviceKey}`}>
+            <Badge className={getStatusColor(status)} data-testid={`status-${serviceKey}`}>
               {status.charAt(0).toUpperCase() + status.slice(1)}
             </Badge>
           </div>
@@ -107,7 +107,7 @@ function ServiceCard({ name, description, icon, _status, features, serviceKey }:
 }
 
 export default function ServiceIntegrations() {
-  const { _data: services } = useQuery<ServicesResponse>({
+  const { data: services } = useQuery<ServicesResponse>({
     queryKey: ["/api/services-status"],
   });
 

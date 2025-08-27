@@ -110,7 +110,7 @@ export default function SelfAuditChecklists() {
 
   // Fetch audit templates
   const { 
-    _data: templates = [], 
+    data: templates = [], 
     isLoading: templatesLoading, 
     error: templatesError 
   } = useQuery({
@@ -131,7 +131,7 @@ export default function SelfAuditChecklists() {
   });
 
   // Fetch recent completions
-  const { _data: recentCompletions = [] } = useQuery({
+  const { data: recentCompletions = [] } = useQuery({
     queryKey: ['audit-completions-recent'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/audit-completions');
@@ -170,7 +170,7 @@ export default function SelfAuditChecklists() {
   // Delete template mutation
   const deleteTemplateMutation = useMutation({
     mutationFn: async (_templateId: string) => {
-      const response = await apiRequest('DELETE', `/api/audit-templates/${templateId}`);
+      const response = await apiRequest('DELETE', `/api/audit-templates/${_templateId}`);
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to delete template: ${response.status} - ${errorText}`);
@@ -270,7 +270,7 @@ export default function SelfAuditChecklists() {
                   <Input
                     placeholder="Search templates..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target._value)}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
                   />
                 </div>
@@ -315,7 +315,7 @@ export default function SelfAuditChecklists() {
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {filteredTemplates.map((template: AuditTemplate) => (
-                  <Card key={template.id} className="relative">
+                  <Card key={template._id} className="relative">
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
@@ -347,7 +347,7 @@ export default function SelfAuditChecklists() {
                               Edit
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                              <Link to={`/self-audit/${template.id}/complete`}>
+                              <Link to={`/self-audit/${template._id}/complete`}>
                                 <PlayCircle className="w-4 h-4 mr-2" />
                                 Complete Audit
                               </Link>
@@ -378,7 +378,7 @@ export default function SelfAuditChecklists() {
                         <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2 max-h-20 overflow-hidden">
                           <div className="font-medium mb-1">Sections:</div>
                           {template.sections.slice(0, 3).map((section, idx) => (
-                            <div key={section.id}>• {section.title}</div>
+                            <div key={section._id}>• {section.title}</div>
                           ))}
                           {template.sections.length > 3 && (
                             <div>• ... and {template.sections.length - 3} more</div>
@@ -393,7 +393,7 @@ export default function SelfAuditChecklists() {
                             asChild
                             className="flex-1"
                           >
-                            <Link to={`/self-audit/${template.id}/complete`}>
+                            <Link to={`/self-audit/${template._id}/complete`}>
                               <PlayCircle className="w-3 h-3 mr-1" />
                               Complete
                             </Link>
@@ -438,7 +438,7 @@ export default function SelfAuditChecklists() {
                 ) : (
                   <div className="space-y-4">
                     {recentCompletions.slice(0, 10).map((completion: AuditCompletion) => (
-                      <div key={completion.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div key={completion._id} className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex-1">
                           <h4 className="font-medium">{completion.templateName}</h4>
                           <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
@@ -449,7 +449,7 @@ export default function SelfAuditChecklists() {
                           </div>
                         </div>
                         <Button variant="outline" size="sm" asChild>
-                          <Link to={`/self-audit/completion/${completion.id}`}>
+                          <Link to={`/self-audit/completion/${completion._id}`}>
                             <Eye className="w-4 h-4" />
                           </Link>
                         </Button>

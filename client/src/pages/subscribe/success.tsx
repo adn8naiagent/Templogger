@@ -26,6 +26,7 @@ export default function SubscribeSuccess() {
       }, 1000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [countdown]);
 
   return (

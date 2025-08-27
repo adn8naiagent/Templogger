@@ -39,7 +39,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 // Note: requireAdmin is now imported from ./auth
 
 // Input validation helper
-function handleValidationErrors(req: Request, res: Response, next: NextFunction): void {
+function handleValidationErrors(req: Request, res: Response, next: NextFunction): void | Response {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ 
@@ -61,7 +61,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/auth/user', getCurrentUser);
 
   // Get current user profile
-  app.get("/api/user/profile", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/user/profile", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const user = await storage.getUser(userId);
@@ -79,7 +79,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user profile
-  app.put("/api/user/profile", requireAuth, async (req: any, res: Response) => {
+  app.put("/api/user/profile", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const result = updateProfileSchema.safeParse(req.body);
       if (!result.success) {
@@ -117,7 +117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Settings update (dark mode, etc)
-  app.put("/api/user/settings", requireAuth, async (req: any, res: Response) => {
+  app.put("/api/user/settings", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const { darkMode } = req.body;
       const userId = req.userId;
@@ -138,7 +138,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reset password (no current password required)
-  app.put("/api/user/reset-password", requireAuth, async (req: any, res: Response) => {
+  app.put("/api/user/reset-password", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const { newPassword } = req.body;
@@ -162,7 +162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete account
-  app.delete("/api/user/account", requireAuth, async (req: any, res: Response) => {
+  app.delete("/api/user/account", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const deleted = await storage.deleteUser(userId);
@@ -178,7 +178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export user data
-  app.get("/api/user/export", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/user/export", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const user = await storage.getUser(userId);
@@ -196,7 +196,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create comprehensive CSV content
       let csvContent = 'User Profile\n';
       csvContent += `ID,Email,First Name,Last Name,Role,Subscription Status,Dark Mode,Created At\n`;
-      csvContent += `"${user.id}","${user.email || ''}","${user.firstName || ''}","${user.lastName || ''}","${user.role}","${user.subscriptionStatus}","${user.darkMode}","${user.createdAt}"\n\n`;
+      csvContent += `"${user._id}","${user.email || ''}","${user.firstName || ''}","${user.lastName || ''}","${user.role}","${user.subscriptionStatus}","${user.darkMode}","${user.createdAt}"\n\n`;
       
       csvContent += 'Temperature Logs\n';
       csvContent += 'Fridge Name,Temperature,Person Name,Date,Time,Alert Status\n';
@@ -215,7 +215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stripe subscription endpoints
   
   // Create subscription for trial users
-  app.post('/api/create-subscription', requireAuth, async (req: any, res: Response) => {
+  app.post('/api/create-subscription', requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const user = await storage.getUser(userId);
@@ -249,7 +249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const price = await stripe.prices.create({
-        product: product._id,
+        product: product.id,
         currency: 'usd',
         unit_amount: 1000, // $10.00 in cents
         recurring: {
@@ -261,7 +261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const subscription = await stripe.subscriptions.create({
         customer: stripeCustomerId,
         items: [{
-          price: price._id,
+          price: price.id,
         }],
         payment_behavior: 'default_incomplete',
         expand: ['latest_invoice.payment_intent'],
@@ -269,12 +269,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update user with subscription info
       await storage.updateUser(userId, {
-        stripeSubscriptionId: subscription._id,
+        stripeSubscriptionId: subscription.id,
       });
 
       const latestInvoice = subscription.latest_invoice as any;
       res.json({
-        subscriptionId: subscription._id,
+        subscriptionId: subscription.id,
         clientSecret: latestInvoice?.payment_intent?.client_secret,
       });
     } catch (error: any) {
@@ -284,7 +284,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Handle successful subscription payment
-  app.post('/api/subscription-success', requireAuth, async (req: any, res: Response) => {
+  app.post('/api/subscription-success', requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const { subscriptionId } = req.body;
@@ -315,7 +315,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get subscription status
-  app.get('/api/subscription-status', requireAuth, async (req: any, res: Response) => {
+  app.get('/api/subscription-status', requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const user = await storage.getUser(userId);
@@ -329,8 +329,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
           stripeStatus = {
-            _id: subscription._id,
-            status: subscription._status,
+            id: subscription.id,
+            status: subscription.status,
             currentPeriodEnd: (subscription as any).current_period_end,
             cancelAtPeriodEnd: subscription.cancel_at_period_end,
           };
@@ -351,7 +351,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Get all users
-  app.get("/api/admin/users", requireAdmin, async (req: any, res: Response) => {
+  app.get("/api/admin/users", requireAdmin, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const users = await storage.getAllUsers();
       res.json(users);
@@ -362,7 +362,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Update user role/subscription
-  app.put("/api/admin/users/:userId", requireAdmin, async (req, res) => {
+  app.put("/api/admin/users/:userId", requireAdmin, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const { userId } = req.params;
       const { role, subscriptionStatus } = req.body;
@@ -383,7 +383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Delete user
-  app.delete("/api/admin/users/:userId", requireAdmin, async (req, res) => {
+  app.delete("/api/admin/users/:userId", requireAdmin, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const { userId } = req.params;
       const deleted = await storage.deleteUser(userId);
@@ -401,7 +401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Temperature Logging API Endpoints
   
   // Get user's fridges
-  app.get("/api/fridges", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/fridges", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const fridges = await storage.getFridges(userId);
@@ -413,7 +413,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new fridge
-  app.post("/api/fridges", requireAuth, async (req: any, res: Response) => {
+  app.post("/api/fridges", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const result = createFridgeSchema.safeParse(req.body);
       if (!result.success) {
@@ -427,7 +427,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.userId;
       
       const newFridge = await storage.createFridge({
-        userId,
+        _userId: userId,
         name,
         location,
         notes,
@@ -448,7 +448,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced temperature logging with compliance tracking
-  app.post("/api/temperature-logs", requireAuth, async (req: any, res: Response) => {
+  app.post("/api/temperature-logs", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const result = logTemperatureSchema.safeParse(req.body);
       if (!result.success) {
@@ -459,10 +459,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.userId;
-      const { fridgeId, timeWindowId, minTempReading, maxTempReading, currentTempReading, personName, isOnTime = true, lateReason, correctiveAction, correctiveNotes } = result.data;
+      const { _fridgeId, timeWindowId, minTempReading, maxTempReading, currentTempReading, personName, isOnTime = true, lateReason, correctiveAction, correctiveNotes } = result.data;
       
       // Verify fridge ownership
-      const fridge = await storage.getFridge(fridgeId, userId);
+      const fridge = await storage.getFridge(_fridgeId, userId);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
@@ -483,8 +483,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const logData = {
-        userId: req.userId,
-        fridgeId,
+        _userId: req.userId,
+        _fridgeId: _fridgeId,
         timeWindowId: timeWindowId || null,
         minTempReading,
         maxTempReading,
@@ -507,7 +507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get temperature logs for a fridge
-  app.get("/api/fridges/:fridgeId/logs", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/fridges/:fridgeId/logs", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const { fridgeId } = req.params;
       const userId = req.userId;
@@ -520,7 +520,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced fridges with compliance data
-  app.get("/api/fridges/recent-temps", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/fridges/recent-temps", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       console.log(`[API] getFridgesWithRecentTemps called for user: ${userId}`);
@@ -534,7 +534,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all fridges for view fridges page
-  app.get("/api/fridges/all", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/fridges/all", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const fridges = await storage.getAllFridgesWithLogs(userId);
@@ -546,7 +546,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get single fridge with detailed logs
-  app.get("/api/fridge/:id", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/fridge/:id", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const fridge = await storage.getFridgeWithLogs(userId, req.params.id);
@@ -561,7 +561,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update fridge
-  app.patch("/api/fridge/:id", requireAuth, async (req: any, res: Response) => {
+  app.patch("/api/fridge/:id", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const fridge = await storage.updateFridge(req.params.id, userId, req.body);
@@ -576,7 +576,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Soft delete (deactivate) fridge
-  app.patch("/api/fridge/:id/deactivate", requireAuth, async (req: any, res: Response) => {
+  app.patch("/api/fridge/:id/deactivate", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const fridge = await storage.deactivateFridge(userId, req.params.id);
@@ -591,7 +591,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reactivate fridge
-  app.patch("/api/fridge/:id/activate", requireAuth, async (req: any, res: Response) => {
+  app.patch("/api/fridge/:id/activate", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const fridge = await storage.reactivateFridge(userId, req.params.id);
@@ -606,7 +606,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Hard delete fridge
-  app.delete("/api/fridge/:id", requireAuth, async (req: any, res: Response) => {
+  app.delete("/api/fridge/:id", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const success = await storage.deleteFridge(req.params.id, userId);
@@ -623,7 +623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Label management endpoints
   
   // Get user's labels
-  app.get("/api/labels", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/labels", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const labels = await storage.getLabels(userId);
@@ -635,7 +635,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new label
-  app.post("/api/labels", requireAuth, async (req: any, res: Response) => {
+  app.post("/api/labels", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const result = createLabelSchema.safeParse(req.body);
       if (!result.success) {
@@ -648,7 +648,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.userId;
       const newLabel = await storage.createLabel({
         ...result.data,
-        userId
+        _userId: userId
       });
 
       res.status(201).json(newLabel);
@@ -659,7 +659,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update label
-  app.put("/api/labels/:labelId", requireAuth, async (req: any, res: Response) => {
+  app.put("/api/labels/:labelId", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const { labelId } = req.params;
       const userId = req.userId;
@@ -685,7 +685,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete label
-  app.delete("/api/labels/:labelId", requireAuth, async (req: any, res: Response) => {
+  app.delete("/api/labels/:labelId", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const { labelId } = req.params;
       const userId = req.userId;
@@ -703,7 +703,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export all temperature logs as CSV
-  app.get("/api/export/temperature-logs", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/export/temperature-logs", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const logs = await storage.getAllTemperatureLogsForUser(userId);
@@ -742,7 +742,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Health check endpoint
-  app.get("/api/health", async (req, res) => {
+  app.get("/api/health", async (req: Request, res: Response) => {
     try {
       res.json({ 
         status: "ok", 
@@ -761,7 +761,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Environment validation endpoint
-  app.get("/api/env-status", async (req, res) => {
+  app.get("/api/env-status", async (req: Request, res: Response) => {
     try {
       const envVars = {
         NODE_ENV: process.env.NODE_ENV,
@@ -791,7 +791,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Development server status
-  app.get("/api/dev-status", async (req, res) => {
+  app.get("/api/dev-status", async (req: Request, res: Response) => {
     try {
       res.json({
         frontend: {
@@ -818,7 +818,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // TypeScript compilation status
-  app.get("/api/typescript-status", async (req, res) => {
+  app.get("/api/typescript-status", async (req: Request, res: Response) => {
     try {
       res.json({
         client: {
@@ -846,7 +846,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Service integration status
-  app.get("/api/services-status", async (req, res) => {
+  app.get("/api/services-status", async (req: Request, res: Response) => {
     try {
       const services = {
         supabase: {
@@ -891,7 +891,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Subscription tiers endpoint
-  app.get("/api/subscription-tiers", async (req, res) => {
+  app.get("/api/subscription-tiers", async (req: Request, res: Response) => {
     try {
       const tiers = {
         free: {
@@ -945,7 +945,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Development tooling status
-  app.get("/api/tooling-status", async (req, res) => {
+  app.get("/api/tooling-status", async (req: Request, res: Response) => {
     try {
       res.json({
         codeQuality: {
@@ -970,7 +970,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin Stats API
-  app.get("/api/admin/stats", requireAdmin, async (req: any, res: Response) => {
+  app.get("/api/admin/stats", requireAdmin, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const users = await storage.getAllUsers();
       const totalUsers = users.length;
@@ -1014,7 +1014,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user by admin
-  app.put("/api/admin/users/:userId", requireAdmin, async (req: any, res: Response) => {
+  app.put("/api/admin/users/:userId", requireAdmin, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const { userId } = req.params;
       const { role, subscriptionStatus } = req.body;
@@ -1032,7 +1032,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete user by admin
-  app.delete("/api/admin/users/:userId", requireAdmin, async (req: any, res: Response) => {
+  app.delete("/api/admin/users/:userId", requireAdmin, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const { userId } = req.params;
       
@@ -1073,7 +1073,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // Test service connections
-  app.post("/api/test-connection/:service", async (req, res) => {
+  app.post("/api/test-connection/:service", async (req: Request, res: Response) => {
     try {
       const service = req.params.service;
       
@@ -1106,7 +1106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =========================
 
   // Get time windows for a fridge
-  app.get("/api/fridges/:fridgeId/time-windows", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/fridges/:fridgeId/time-windows", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const { fridgeId } = req.params;
       const userId = req.userId;
@@ -1120,7 +1120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create time window
-  app.post("/api/time-windows", requireAuth, async (req: any, res: Response) => {
+  app.post("/api/time-windows", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const result = createTimeWindowSchema.safeParse(req.body);
       if (!result.success) {
@@ -1131,17 +1131,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.userId;
-      const { fridgeId, label, startTime, endTime } = result.data;
+      const { _fridgeId, label, startTime, endTime } = result.data;
       
       // Verify fridge ownership
-      const fridge = await storage.getFridge(fridgeId, userId);
+      const fridge = await storage.getFridge(_fridgeId, userId);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
 
       const timeWindow = await storage.createTimeWindow({
-        userId,
-        fridgeId,
+        _userId: userId,
+        _fridgeId: _fridgeId,
         label,
         startTime,
         endTime,
@@ -1160,7 +1160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =========================
 
   // Get compliance overview
-  app.get("/api/compliance/overview", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/compliance/overview", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const date = req.query.date ? new Date(req.query.date as string) : undefined;
@@ -1174,7 +1174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get unresolved out-of-range events count
-  app.get("/api/out-of-range-events/unresolved/count", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/out-of-range-events/unresolved/count", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const count = await storage.getUnresolvedEventsCount(userId);
@@ -1190,7 +1190,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =========================
 
   // Get checklists
-  app.get("/api/checklists", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/checklists", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const { fridgeId } = req.query;
@@ -1204,7 +1204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get due checklists
-  app.get("/api/checklists/due", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/checklists/due", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const dueChecklists = await storage.getDueChecklists(userId);
@@ -1216,7 +1216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create checklist (Admin/Manager only)
-  app.post("/api/checklists", requireAuth, async (req: any, res: Response) => {
+  app.post("/api/checklists", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const result = createChecklistSchema.safeParse(req.body);
       if (!result.success) {
@@ -1234,13 +1234,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Insufficient permissions to create checklists" });
       }
 
-      const { title, description, frequency, fridgeId, items } = result.data;
+      const { title, description, frequency, _fridgeId, items } = result.data;
       
       const checklistData = {
         title,
         description: description || null,
         frequency,
-        fridgeId: fridgeId || null,
+        _fridgeId: _fridgeId || null,
         createdBy: userId,
         isActive: true,
       };
@@ -1262,7 +1262,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Complete checklist
-  app.post("/api/checklists/:id/complete", requireAuth, async (req: any, res: Response) => {
+  app.post("/api/checklists/:id/complete", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const { id } = req.params;
       const userId = req.userId;
@@ -1275,17 +1275,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { fridgeId, completedItems, notes } = result.data;
+      const { _fridgeId, completedItems, notes } = result.data;
       
-      const _completionData = {
-        checklistId: _id,
-        fridgeId: fridgeId || null,
+      const completionData = {
+        checklistId: id,
+        _fridgeId: _fridgeId || null,
         completedBy: userId,
         completedItems,
         notes: notes || null,
       };
 
-      const completion = await storage.createChecklistCompletion(_completionData);
+      const completion = await storage.createChecklistCompletion(completionData);
       res.json(completion);
     } catch (error: any) {
       console.error("Complete checklist error:", error);
@@ -1298,7 +1298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =========================
 
   // Get enhanced checklists with scheduling
-  app.get("/api/v2/checklists", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/v2/checklists", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const { active } = req.query;
@@ -1313,7 +1313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create enhanced checklist
-  app.post("/api/v2/checklists", requireAuth, async (req: any, res: Response) => {
+  app.post("/api/v2/checklists", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const result = createChecklistRequestSchema.safeParse(req.body);
       if (!result.success) {
@@ -1333,7 +1333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update enhanced checklist
-  app.put("/api/v2/checklists/:id", requireAuth, async (req: any, res: Response) => {
+  app.put("/api/v2/checklists/:id", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const { id } = req.params;
       const result = createChecklistRequestSchema.safeParse(req.body);
@@ -1354,7 +1354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Schedule checklist
-  app.post("/api/v2/checklists/:id/schedule", requireAuth, async (req: any, res: Response) => {
+  app.post("/api/v2/checklists/:id/schedule", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const { id } = req.params;
       const result = scheduleChecklistRequestSchema.safeParse(req.body);
@@ -1375,7 +1375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get calendar view
-  app.get("/api/v2/calendar", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/v2/calendar", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const result = calendarRequestSchema.safeParse(req.query);
       if (!result.success) {
@@ -1396,7 +1396,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate instances
-  app.post("/api/v2/instances/generate", requireAuth, async (req: any, res: Response) => {
+  app.post("/api/v2/instances/generate", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const result = generateInstancesRequestSchema.safeParse(req.query);
       if (!result.success) {
@@ -1417,7 +1417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Complete checklist instance
-  app.post("/api/v2/instances/:instanceId/complete", requireAuth, async (req: any, res: Response) => {
+  app.post("/api/v2/instances/:instanceId/complete", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const { instanceId } = req.params;
       const result = completeChecklistInstanceRequestSchema.safeParse(req.body);
@@ -1438,7 +1438,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get summaries for dashboard
-  app.get("/api/v2/summaries", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/v2/summaries", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const result = summariesRequestSchema.safeParse(req.query);
       if (!result.success) {
@@ -1459,7 +1459,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export checklist CSV
-  app.get("/api/v2/export/checklists", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/v2/export/checklists", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const result = summariesRequestSchema.safeParse(req.query);
       if (!result.success) {
@@ -1508,7 +1508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =========================
 
   // Get calibration records for a fridge
-  app.get("/api/fridges/:fridgeId/calibrations", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/fridges/:fridgeId/calibrations", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const { fridgeId } = req.params;
       const userId = req.userId;
@@ -1522,7 +1522,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create calibration record
-  app.post("/api/calibration-records", requireAuth, async (req: any, res: Response) => {
+  app.post("/api/calibration-records", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const { createCalibrationRecordSchema } = await import("@shared/schema");
       const result = createCalibrationRecordSchema.safeParse(req.body);
@@ -1534,10 +1534,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.userId;
-      const { fridgeId, calibrationDate, performedBy, calibrationStandard, beforeCalibrationReading, afterCalibrationReading, accuracy, notes } = result.data;
+      const { _fridgeId, calibrationDate, performedBy, calibrationStandard, beforeCalibrationReading, afterCalibrationReading, accuracy, notes } = result.data;
       
       // Verify fridge ownership
-      const fridge = await storage.getFridge(fridgeId, userId);
+      const fridge = await storage.getFridge(_fridgeId, userId);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
@@ -1547,8 +1547,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       nextDue.setFullYear(nextDue.getFullYear() + 1);
 
       const recordData = {
-        userId,
-        fridgeId,
+        _userId: userId,
+        _fridgeId,
         calibrationDate: new Date(calibrationDate),
         nextCalibrationDue: nextDue,
         performedBy,
@@ -1561,16 +1561,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         certificateFilePath: null,
       };
 
-      const record = await storage.createCalibrationRecord(_recordData);
+      const record = await storage.createCalibrationRecord(recordData);
       res.status(201).json(record);
     } catch (error: any) {
       console.error("Create calibration record error:", error);
-      res.status(500).json({ error: "Failed to create calibration record" });
+      return res.status(500).json({ error: "Failed to create calibration record" });
     }
   });
 
   // Update calibration record
-  app.put("/api/calibration-records/:recordId", requireAuth, async (req: any, res: Response) => {
+  app.put("/api/calibration-records/:recordId", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const { recordId } = req.params;
       const userId = req.userId;
@@ -1601,7 +1601,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes: notes || null,
       };
 
-      const record = await storage.updateCalibrationRecord(recordId, userId, _updates);
+      const record = await storage.updateCalibrationRecord(recordId, userId, updates);
       if (!record) {
         return res.status(404).json({ error: "Calibration record not found" });
       }
@@ -1609,12 +1609,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(record);
     } catch (error: any) {
       console.error("Update calibration record error:", error);
-      res.status(500).json({ error: "Failed to update calibration record" });
+      return res.status(500).json({ error: "Failed to update calibration record" });
     }
   });
 
   // Delete calibration record
-  app.delete("/api/calibration-records/:recordId", requireAuth, async (req: any, res: Response) => {
+  app.delete("/api/calibration-records/:recordId", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const { recordId } = req.params;
       const userId = req.userId;
@@ -1632,7 +1632,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export compliance report as CSV
-  app.get("/api/export/compliance-report", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/export/compliance-report", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       
@@ -1778,7 +1778,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =========================
   
   // Get audit templates
-  app.get("/api/audit-templates", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/audit-templates", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const templates = await storage.getAuditTemplates(userId);
@@ -1790,12 +1790,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get specific audit template
-  app.get("/api/audit-templates/:templateId", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/audit-templates/:templateId", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const { templateId } = req.params;
       
-      const template = await storage.getAuditTemplate(_templateId, userId);
+      const template = await storage.getAuditTemplate(templateId, userId);
       if (!template) {
         return res.status(404).json({ error: "Template not found" });
       }
@@ -1803,12 +1803,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(template);
     } catch (error: any) {
       console.error("Get audit template error:", error);
-      res.status(500).json({ error: "Failed to get audit template" });
+      return res.status(500).json({ error: "Failed to get audit template" });
     }
   });
 
   // Create audit template
-  app.post("/api/audit-templates", requireAuth, async (req: any, res: Response) => {
+  app.post("/api/audit-templates", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const { createAuditTemplateSchema } = await import("@shared/self-audit-types");
@@ -1822,22 +1822,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const templateData = {
-        userId,
+        _userId: userId,
         name: result.data.name,
         description: result.data.description,
         isDefault: false
       };
 
-      const template = await storage.createAuditTemplate(_templateData, result.data);
+      const template = await storage.createAuditTemplate(templateData, result.data);
       res.status(201).json(template);
     } catch (error: any) {
       console.error("Create audit template error:", error);
-      res.status(500).json({ error: "Failed to create audit template" });
+      return res.status(500).json({ error: "Failed to create audit template" });
     }
   });
 
   // Update audit template
-  app.put("/api/audit-templates/:templateId", requireAuth, async (req: any, res: Response) => {
+  app.put("/api/audit-templates/:templateId", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const { templateId } = req.params;
@@ -1854,7 +1854,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { _id, sections, ...templateData } = result.data;
       const sectionsData = sections ? { sections } : undefined;
 
-      const template = await storage.updateAuditTemplate(_templateId, userId, _templateData, _sectionsData);
+      const template = await storage.updateAuditTemplate(templateId, userId, templateData, sectionsData);
       if (!template) {
         return res.status(404).json({ error: "Template not found" });
       }
@@ -1862,17 +1862,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(template);
     } catch (error: any) {
       console.error("Update audit template error:", error);
-      res.status(500).json({ error: "Failed to update audit template" });
+      return res.status(500).json({ error: "Failed to update audit template" });
     }
   });
 
   // Delete audit template
-  app.delete("/api/audit-templates/:templateId", requireAuth, async (req: any, res: Response) => {
+  app.delete("/api/audit-templates/:templateId", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const { templateId } = req.params;
       
-      const success = await storage.deleteAuditTemplate(_templateId, userId);
+      const success = await storage.deleteAuditTemplate(templateId, userId);
       if (!success) {
         return res.status(404).json({ error: "Template not found" });
       }
@@ -1880,24 +1880,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Template deleted successfully" });
     } catch (error: any) {
       console.error("Delete audit template error:", error);
-      res.status(500).json({ error: "Failed to delete audit template" });
+      return res.status(500).json({ error: "Failed to delete audit template" });
     }
   });
 
   // Create default audit template
-  app.post("/api/audit-templates/default", requireAuth, async (req: any, res: Response) => {
+  app.post("/api/audit-templates/default", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const template = await storage.createDefaultAuditTemplate(userId);
       res.status(201).json(template);
     } catch (error: any) {
       console.error("Create default audit template error:", error);
-      res.status(500).json({ error: "Failed to create default audit template" });
+      return res.status(500).json({ error: "Failed to create default audit template" });
     }
   });
 
   // Complete audit checklist
-  app.post("/api/audit-completions", requireAuth, async (req: any, res: Response) => {
+  app.post("/api/audit-completions", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const { completeAuditSchema, calculateComplianceRate } = await import("@shared/self-audit-types");
@@ -1918,8 +1918,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Map responses to include section and item details first
       const responsesData = result.data.responses.map(response => {
-        const section = template.sections.find(s => s.id === response.sectionId);
-        const item = section?.items.find(i => i.id === response.itemId);
+        const section = template.sections.find((s: any) => s._id === response.sectionId);
+        const item = section?.items.find((i: any) => i._id === response.itemId);
         
         return {
           _id: '', // Will be set by storage method
@@ -1935,10 +1935,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Calculate compliance rate using the properly typed responses
-      const complianceRate = calculateComplianceRate(_responsesData);
+      const complianceRate = calculateComplianceRate(responsesData);
 
-      const _completionData = {
-        userId,
+      const completionData = {
+        _userId: userId,
         _templateId: result.data._templateId,
         templateName: template.name,
         completedBy: userId,
@@ -1946,7 +1946,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         complianceRate: complianceRate.toString()
       };
 
-      const completion = await storage.createAuditCompletion(_completionData, _responsesData);
+      const completion = await storage.createAuditCompletion(completionData, responsesData);
       res.status(201).json(completion);
     } catch (error: any) {
       console.error("Complete audit error:", error);
@@ -1955,18 +1955,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get audit completions
-  app.get("/api/audit-completions", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/audit-completions", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const { auditFiltersSchema } = await import("@shared/self-audit-types");
       
-      const _filters: any = {};
-      if (req.query._templateId) filters.templateId = req.query.templateId as string;
+      const filters: any = {};
+      if (req.query._templateId) filters._templateId = req.query._templateId as string;
       if (req.query.startDate) filters.startDate = new Date(req.query.startDate as string);
       if (req.query.endDate) filters.endDate = new Date(req.query.endDate as string);
       if (req.query.completedBy) filters.completedBy = req.query.completedBy as string;
 
-      const completions = await storage.getAuditCompletions(userId, _filters);
+      const completions = await storage.getAuditCompletions(userId, filters);
       res.json(completions);
     } catch (error: any) {
       console.error("Get audit completions error:", error);
@@ -1975,12 +1975,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get specific audit completion
-  app.get("/api/audit-completions/:completionId", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/audit-completions/:completionId", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const { completionId } = req.params;
       
-      const completion = await storage.getAuditCompletion(_completionId, userId);
+      const completion = await storage.getAuditCompletion(completionId, userId);
       if (!completion) {
         return res.status(404).json({ error: "Completion not found" });
       }
@@ -1988,12 +1988,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(completion);
     } catch (error: any) {
       console.error("Get audit completion error:", error);
-      res.status(500).json({ error: "Failed to get audit completion" });
+      return res.status(500).json({ error: "Failed to get audit completion" });
     }
   });
 
   // Get audit completion statistics
-  app.get("/api/audit-stats", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/audit-stats", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       const userId = req.userId;
       const stats = await storage.getAuditCompletionStats(userId);
@@ -2005,7 +2005,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Security status endpoint (development only)
-  app.get("/api/security/status", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/security/status", requireAuth, async (req: any, res: Response): Promise<void | Response> => {
     try {
       // Only allow in development environment
       if (process.env.NODE_ENV !== 'development') {
@@ -2020,7 +2020,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const statusFile = path.join(process.cwd(), '.security-status.json');
         const statusContent = await fs.readFile(statusFile, 'utf-8');
         const status = JSON.parse(statusContent);
-        res.json(_status);
+        res.json(status);
       } catch (fileError) {
         // If no status file exists, return default status
         res.json({

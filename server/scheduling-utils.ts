@@ -44,7 +44,7 @@ export class SchedulingUtils {
     for (let date = new Date(effectiveStart); date <= effectiveEnd; date.setUTCDate(date.getUTCDate() + 1)) {
       instances.push({
         checklistId: schedule.checklistId,
-        scheduleId: schedule._id,
+        scheduleId: schedule._id || '',
         targetDate: this.formatDateISO(new Date(date)),
         status: 'REQUIRED',
         createdAt: new Date(),
@@ -80,7 +80,7 @@ export class SchedulingUtils {
       if (schedule.daysOfWeek.includes(dayOfWeek)) {
         instances.push({
           checklistId: schedule.checklistId,
-          scheduleId: schedule._id,
+          scheduleId: schedule._id || '',
           targetDate: this.formatDateISO(new Date(date)),
           status: 'REQUIRED',
           createdAt: new Date(),
@@ -119,7 +119,7 @@ export class SchedulingUtils {
       if (currentWeek.endDate >= effectiveStart && currentWeek.startDate <= effectiveEnd) {
         instances.push({
           checklistId: schedule.checklistId,
-          scheduleId: schedule._id,
+          scheduleId: schedule._id || '',
           targetDate: currentWeek.identifier,
           status: 'REQUIRED',
           createdAt: new Date(),
@@ -238,7 +238,7 @@ export class SchedulingUtils {
   // Helper methods
 
   private static formatDateISO(date: Date): string {
-    return date.toISOString().split('T')[0]; // YYYY-MM-DD
+    return date.toISOString().split('T')[0]!; // YYYY-MM-DD
   }
 
   private static isSameDay(date1: Date, date2: Date): boolean {
@@ -287,8 +287,8 @@ export class SchedulingUtils {
     const match = weekId.match(/^(\d{4})-W(\d{2})$/);
     if (!match) return null;
 
-    const year = parseInt(match[1]);
-    const week = parseInt(match[2]);
+    const year = parseInt(match[1]!, 10);
+    const week = parseInt(match[2]!, 10);
 
     // Reconstruct week info
     const firstDayOfYear = new Date(Date.UTC(year, 0, 1));
@@ -328,7 +328,7 @@ export class SchedulingUtils {
     if (schedule.endDate) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(schedule.endDate)) {
         errors.push('End date must be in YYYY-MM-DD format');
-      } else if (schedule.startDate && new Date(schedule.endDate) <= new Date(schedule.startDate)) {
+      } else if (schedule.startDate && schedule.endDate && new Date(schedule.endDate) <= new Date(schedule.startDate)) {
         errors.push('End date must be after start date');
       }
     }

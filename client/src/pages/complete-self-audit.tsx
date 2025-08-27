@@ -61,7 +61,7 @@ interface AuditResponse {
 }
 
 export default function CompleteSelfAudit() {
-  const { templateId } = useParams<{ _templateId: string }>();
+  const { templateId } = useParams<{ templateId: string }>();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { user: _user, isAuthenticated, isLoading } = useAuth();
@@ -88,7 +88,7 @@ export default function CompleteSelfAudit() {
 
   // Fetch template
   const { 
-    _data: template, 
+    data: template, 
     isLoading: templateLoading, 
     error: templateError 
   } = useQuery({
@@ -103,16 +103,16 @@ export default function CompleteSelfAudit() {
       }
       return response.json() as Promise<AuditTemplate>;
     },
-    enabled: isAuthenticated && !!_templateId,
+    enabled: isAuthenticated && !!templateId,
   });
 
   // Submit audit completion
   const completeMutation = useMutation({
     mutationFn: async (_data: { responses: AuditResponse[]; notes?: string }) => {
       const response = await apiRequest('POST', '/api/audit-completions', {
-        _templateId,
-        responses: data.responses,
-        notes: data.notes
+        templateId,
+        responses: _data.responses,
+        notes: _data.notes
       });
       if (!response.ok) {
         const errorText = await response.text();
@@ -145,8 +145,10 @@ export default function CompleteSelfAudit() {
         ...prev[key],
         sectionId,
         itemId,
-        [field]: value
-      }
+        isCompliant: field === 'isCompliant' ? value as boolean : prev[key]?.isCompliant || false,
+        notes: field === 'notes' ? value as string : prev[key]?.notes,
+        actionRequired: field === 'actionRequired' ? value as string : prev[key]?.actionRequired,
+      } as AuditResponse
     }));
   };
 
@@ -158,7 +160,7 @@ export default function CompleteSelfAudit() {
   const calculateComplianceRate = (): number => {
     if (!template) return 0;
     
-    const totalItems = template.sections.reduce((total, section) => 
+    const totalItems = template.sections.reduce((total: number, section: any) => 
       total + section.items.length, 0);
     
     if (totalItems === 0) return 100;
@@ -170,7 +172,7 @@ export default function CompleteSelfAudit() {
   const getTotalProgress = (): number => {
     if (!template) return 0;
     
-    const totalItems = template.sections.reduce((total, section) => 
+    const totalItems = template.sections.reduce((total: number, section: any) => 
       total + section.items.length, 0);
     
     if (totalItems === 0) return 100;
@@ -336,9 +338,9 @@ export default function CompleteSelfAudit() {
         {/* Audit Sections */}
         <div className="space-y-6">
           {template.sections
-            .sort((a, b) => a.orderIndex - b.orderIndex)
-            .map((section, sectionIndex) => (
-              <Card key={section.id}>
+            .sort((a: any, b: any) => a.orderIndex - b.orderIndex)
+            .map((section: any, sectionIndex: number) => (
+              <Card key={section._id}>
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -359,8 +361,8 @@ export default function CompleteSelfAudit() {
                 <CardContent>
                   <div className="space-y-4">
                     {section.items
-                      .sort((a, b) => a.orderIndex - b.orderIndex)
-                      .map((item, itemIndex) => {
+                      .sort((a: any, b: any) => a.orderIndex - b.orderIndex)
+                      .map((item: any, itemIndex: number) => {
                         const response = getResponse(section._id, item._id);
                         const isCompliant = response?.isCompliant;
                         
@@ -430,7 +432,7 @@ export default function CompleteSelfAudit() {
                                         id={`notes-${item.id}`}
                                         placeholder="Add any additional notes or observations..."
                                         value={response?.notes || ""}
-                                        onChange={(e) => handleResponseChange(section._id, item._id, 'notes', e.target._value)}
+                                        onChange={(e) => handleResponseChange(section._id, item._id, 'notes', e.target.value)}
                                         className="mt-1"
                                         rows={2}
                                       />
@@ -445,7 +447,7 @@ export default function CompleteSelfAudit() {
                                           id={`action-${item.id}`}
                                           placeholder="What corrective actions need to be taken?"
                                           value={response?.actionRequired || ""}
-                                          onChange={(e) => handleResponseChange(section._id, item._id, 'actionRequired', e.target._value)}
+                                          onChange={(e) => handleResponseChange(section._id, item._id, 'actionRequired', e.target.value)}
                                           className="mt-1"
                                           rows={2}
                                         />
@@ -476,7 +478,7 @@ export default function CompleteSelfAudit() {
             <Textarea
               placeholder="Enter your overall notes and recommendations..."
               value={overallNotes}
-              onChange={(e) => setOverallNotes(e.target._value)}
+              onChange={(e) => setOverallNotes(e.target.value)}
               rows={4}
             />
           </CardContent>

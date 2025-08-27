@@ -37,7 +37,7 @@ export default function AdminSubscriptions() {
   const { user: currentUser } = useAuth();
 
   // All hooks must come first, before any conditional logic
-  const { _data: users = [], isLoading: usersLoading } = useQuery({
+  const { data: users = [], isLoading: usersLoading } = useQuery({
     queryKey: ["/api/admin/users"],
     queryFn: async () => {
       const response = await fetch("/api/admin/users");

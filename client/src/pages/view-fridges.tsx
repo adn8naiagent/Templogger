@@ -30,7 +30,7 @@ export default function ViewFridges() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
 
-  const { _data: fridges = [], isLoading } = useQuery<FridgeWithLogs[]>({
+  const { data: fridges = [], isLoading } = useQuery<FridgeWithLogs[]>({
     queryKey: ['/api/fridges/all'],
     enabled: !!user,
   });
@@ -144,9 +144,9 @@ export default function ViewFridges() {
           <>
             <div className="mb-6">
               <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                Monitoring {fridges.filter(f => f.isActive).length} active fridges
-                {fridges.filter(f => !f.isActive).length > 0 && 
-                  ` (${fridges.filter(f => !f.isActive).length} inactive)`
+                Monitoring {fridges.filter((f: any) => f.isActive).length} active fridges
+                {fridges.filter((f: any) => !f.isActive).length > 0 && 
+                  ` (${fridges.filter((f: any) => !f.isActive).length} inactive)`
                 }
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -155,9 +155,9 @@ export default function ViewFridges() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {fridges.map((fridge) => (
+              {fridges.map((fridge: any) => (
                 <Card 
-                  key={fridge.id} 
+                  key={fridge._id} 
                   className={`cursor-pointer hover:shadow-lg transition-shadow ${
                     !fridge.isActive ? 'opacity-75' : ''
                   }`}
@@ -165,7 +165,7 @@ export default function ViewFridges() {
                     borderLeft: `5px solid ${fridge.color || '#3b82f6'}`,
                     background: `linear-gradient(135deg, ${fridge.color || '#3b82f6'}08, transparent 50%)`
                   }}
-                  data-testid={`fridge-card-${fridge.id}`}
+                  data-testid={`fridge-card-${fridge._id}`}
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
@@ -194,9 +194,9 @@ export default function ViewFridges() {
                           variant="ghost"
                           size="sm"
                           asChild
-                          data-testid={`button-settings-${fridge.id}`}
+                          data-testid={`button-settings-${fridge._id}`}
                         >
-                          <Link to={`/fridge/${fridge.id}/edit`}>
+                          <Link to={`/fridge/${fridge._id}/edit`}>
                             <Settings className="h-4 w-4" />
                           </Link>
                         </Button>
@@ -248,9 +248,9 @@ export default function ViewFridges() {
                         size="sm" 
                         className="flex-1"
                         asChild
-                        data-testid={`button-view-${fridge.id}`}
+                        data-testid={`button-view-${fridge._id}`}
                       >
-                        <Link to={`/fridge/${fridge.id}`}>
+                        <Link to={`/fridge/${fridge._id}`}>
                           <Eye className="h-4 w-4 mr-1" />
                           View Details
                         </Link>

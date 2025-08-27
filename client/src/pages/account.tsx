@@ -93,7 +93,7 @@ export default function Account() {
   // Reset password mutation
   const resetPasswordMutation = useMutation({
     mutationFn: async (_data: ResetPasswordData) => {
-      return apiRequest("PUT", "/api/user/reset-password", { newPassword: data.newPassword });
+      return apiRequest("PUT", "/api/user/reset-password", { newPassword: _data.newPassword });
     },
     onSuccess: () => {
       toast({
@@ -455,7 +455,7 @@ export default function Account() {
               <div className="text-sm space-y-1">
                 <p><span className="text-muted-foreground">Member since:</span> {user?.createdAt && new Date(user.createdAt).toLocaleDateString()}</p>
                 <p><span className="text-muted-foreground">Last updated:</span> {user?.updatedAt && new Date(user.updatedAt).toLocaleDateString()}</p>
-                <p><span className="text-muted-foreground">User ID:</span> {user?.id}</p>
+                <p><span className="text-muted-foreground">User ID:</span> {user?._id}</p>
               </div>
             </div>
 

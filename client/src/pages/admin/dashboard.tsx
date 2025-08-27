@@ -24,7 +24,7 @@ export default function AdminDashboard() {
   const { toast } = useToast();
 
   // All hooks must come first, before any conditional logic
-  const { _data: stats, isLoading: statsLoading } = useQuery<AdminStats>({
+  const { data: stats, isLoading: statsLoading } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
     enabled: (user as any)?.role === "admin",
   });
@@ -183,7 +183,7 @@ export default function AdminDashboard() {
                           dataKey="count"
                           label={({ tier, count }) => `${tier}: ${count}`}
                         >
-                          {(stats?.subscriptionBreakdown || []).map((entry, index) => (
+                          {(stats?.subscriptionBreakdown || []).map((entry: any, index: number) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
@@ -191,7 +191,7 @@ export default function AdminDashboard() {
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="space-y-2">
-                      {(stats?.subscriptionBreakdown || []).map((item, index) => (
+                      {(stats?.subscriptionBreakdown || []).map((item: any, index: number) => (
                         <div key={index} className="flex items-center gap-2">
                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
                           <span className="text-sm">{item.tier}: {item.count}</span>

@@ -60,10 +60,10 @@ export default function Navigation({ onRefresh }: NavigationProps) {
                     {user?.role === 'staff' && <Star className="w-4 h-4 text-green-500" />}
                     <Avatar className="w-6 h-6">
                       <AvatarFallback className="bg-primary text-primary-foreground text-xs font-medium">
-                        {user?.firstName?.[0] || user?.username?.[0] || 'U'}
+                        {user?.firstName?.[0] || user?.email?.[0] || 'U'}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="hidden sm:inline-block text-sm">{user?.firstName || user?.username || 'User'}</span>
+                    <span className="hidden sm:inline-block text-sm">{user?.firstName || user?.email || 'User'}</span>
                   </div>
                 </Button>
               </DropdownMenuTrigger>

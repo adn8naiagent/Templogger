@@ -94,7 +94,7 @@ export default function Subscribe() {
     apiRequest("POST", "/api/create-subscription")
       .then((res) => res.json())
       .then((_data) => {
-        setClientSecret(data.clientSecret);
+        setClientSecret(_data.clientSecret);
         setLoading(false);
       })
       .catch((error) => {

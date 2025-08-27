@@ -35,8 +35,8 @@ export default function Login() {
     },
     onSuccess: async (_data) => {
       // Store the auth token in localStorage
-      if (data.authToken) {
-        localStorage.setItem('authToken', data.authToken);
+      if (_data.authToken) {
+        localStorage.setItem('authToken', _data.authToken);
       }
       
       toast({

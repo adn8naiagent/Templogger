@@ -42,9 +42,9 @@ interface EnvStatus {
   };
 }
 
-function StatusCard({ title, description, icon, _status, details }: StatusCardProps) {
-  const getStatusColor = (_status: string) => {
-    switch (_status) {
+function StatusCard({ title, description, icon, status, details }: StatusCardProps) {
+  const getStatusColor = (status: string) => {
+    switch (status) {
       case "online":
       case "clean": 
       case "loaded":
@@ -83,7 +83,7 @@ function StatusCard({ title, description, icon, _status, details }: StatusCardPr
           <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
             {icon}
           </div>
-          <Badge className={getStatusColor(_status)} data-testid={`status-${status}`}>
+          <Badge className={getStatusColor(status)} data-testid={`status-${status}`}>
             {status.charAt(0).toUpperCase() + status.slice(1)}
           </Badge>
         </div>
@@ -97,8 +97,8 @@ function StatusCard({ title, description, icon, _status, details }: StatusCardPr
           {details.map((detail, index) => (
             <div key={index} className="flex justify-between text-sm" data-testid={`detail-${index}`}>
               <span>{detail.label}</span>
-              <span className={getDetailColor(detail._status)}>
-                {getDetailIcon(detail._status)}
+              <span className={getDetailColor(detail.status)}>
+                {getDetailIcon(detail.status)}
               </span>
             </div>
           ))}
@@ -109,15 +109,15 @@ function StatusCard({ title, description, icon, _status, details }: StatusCardPr
 }
 
 export default function ProjectOverview() {
-  const { _data: devStatus } = useQuery<DevStatus>({
+  const { data: devStatus } = useQuery<DevStatus>({
     queryKey: ["/api/dev-status"],
   });
 
-  const { _data: tsStatus } = useQuery<TsStatus>({
+  const { data: tsStatus } = useQuery<TsStatus>({
     queryKey: ["/api/typescript-status"], 
   });
 
-  const { _data: envStatus } = useQuery<EnvStatus>({
+  const { data: envStatus } = useQuery<EnvStatus>({
     queryKey: ["/api/env-status"],
   });
 

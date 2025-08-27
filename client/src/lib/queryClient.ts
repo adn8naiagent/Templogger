@@ -14,7 +14,7 @@ export async function apiRequest(
 ): Promise<Response> {
   const headers: Record<string, string> = {};
   
-  if (_data) {
+  if (data) {
     headers["Content-Type"] = "application/json";
   }
   
@@ -27,7 +27,7 @@ export async function apiRequest(
   const res = await fetch(url, {
     method,
     headers,
-    body: data ? JSON.stringify(_data) : undefined,
+    body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
 

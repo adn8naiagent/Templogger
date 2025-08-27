@@ -114,9 +114,9 @@ export default function Checklists() {
 
   // Fetch checklists
   const { 
-    _data: checklists = [], 
+    data: checklists = [], 
     isLoading: checklistsLoading, 
-    error: _checklistsError 
+    error: checklistsError 
   } = useQuery({
     queryKey: ['checklists', { activeOnly }],
     queryFn: async () => {
@@ -138,7 +138,7 @@ export default function Checklists() {
 
   // Create/Update checklist mutation
   const createChecklistMutation = useMutation({
-    mutationFn: async (_data: { name: string; description?: string; items: Omit<ChecklistItem, 'id'>[] }) => {
+    mutationFn: async (_data: { name: string; description?: string; items: Omit<ChecklistItem, '_id'>[] }) => {
       const response = await apiRequest('POST', '/api/v2/checklists', _data);
 
       if (!response.ok) {
@@ -276,7 +276,7 @@ export default function Checklists() {
                   <Input
                     placeholder="Search checklists..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target._value)}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
                   />
                 </div>
@@ -321,7 +321,7 @@ export default function Checklists() {
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {filteredChecklists.map((checklist: ChecklistWithScheduleAndItems) => (
-                  <Card key={checklist.id} className="relative">
+                  <Card key={checklist._id} className="relative">
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">

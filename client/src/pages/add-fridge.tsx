@@ -60,7 +60,7 @@ export default function AddFridge() {
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   // Fetch labels
-  const { _data: labels = [] } = useQuery<Label[]>({
+  const { data: labels = [] } = useQuery<Label[]>({
     queryKey: ["/api/labels"],
   });
 
@@ -86,7 +86,7 @@ export default function AddFridge() {
     },
     onSuccess: async (newFridge) => {
       // Create time windows if scheduled checks are enabled
-      if (enableScheduledChecks && timeWindows.length > 0) {
+      if (_enableScheduledChecks && timeWindows.length > 0) {
         try {
           for (const window of timeWindows) {
             await apiRequest("POST", "/api/time-windows", {
@@ -111,7 +111,7 @@ export default function AddFridge() {
       
       toast({
         title: "Fridge created!",
-        description: enableScheduledChecks ? 
+        description: _enableScheduledChecks ? 
           "New fridge with scheduled temperature checks has been added successfully." :
           "New fridge has been added successfully.",
       });
@@ -169,8 +169,10 @@ export default function AddFridge() {
 
   const updateTimeWindow = (index: number, field: keyof TimeWindow, value: string | number[]) => {
     const updated = [...timeWindows];
-    updated[index] = { ...updated[index], [field]: value };
-    setTimeWindows(updated);
+    if (updated[index]) {
+      updated[index] = { ...updated[index], [field]: value };
+      setTimeWindows(updated);
+    }
   };
 
   const validateTimeWindow = (window: TimeWindow): string | null => {
@@ -184,7 +186,7 @@ export default function AddFridge() {
 
   const onSubmit = async (_data: CreateFridgeData) => {
     // Validate time windows if scheduled checks are enabled
-    if (enableScheduledChecks && checkFrequency === 'multiple' && timeWindows.length === 0) {
+    if (_enableScheduledChecks && checkFrequency === 'multiple' && timeWindows.length === 0) {
       toast({
         title: "Validation Error",
         description: "Please add at least one temperature check time.",
@@ -194,13 +196,15 @@ export default function AddFridge() {
     }
 
     // Validate each time window for proper start/end time ordering
-    if (enableScheduledChecks && checkFrequency === 'multiple') {
+    if (_enableScheduledChecks && checkFrequency === 'multiple') {
       for (let i = 0; i < timeWindows.length; i++) {
-        const error = validateTimeWindow(timeWindows[i]);
+        const window = timeWindows[i];
+        if (!window) continue;
+        const error = validateTimeWindow(window);
         if (error) {
           toast({
             title: "Validation Error",
-            description: `${timeWindows[i].label}: ${error}`,
+            description: `${window.label}: ${error}`,
             variant: "destructive",
           });
           return;
@@ -209,7 +213,7 @@ export default function AddFridge() {
     }
     
     // Set default once-per-day check if selected and create the fridge with time windows
-    if (enableScheduledChecks && checkFrequency === 'once') {
+    if (_enableScheduledChecks && checkFrequency === 'once') {
       const dailyCheck = {
         label: "Daily Check",
         checkType: "daily",
@@ -217,7 +221,7 @@ export default function AddFridge() {
       };
       
       // Create fridge first, then add the daily check
-      const fridgeData = { ...data };
+      const fridgeData = { ..._data };
       const response = await apiRequest("POST", "/api/fridges", fridgeData);
       const newFridge = await response.json();
       
@@ -245,9 +249,9 @@ export default function AddFridge() {
       
       setLocation("/");
       return;
-    } else if (enableScheduledChecks && checkFrequency === 'twice') {
+    } else if (_enableScheduledChecks && checkFrequency === 'twice') {
       // Create fridge first, then add AM and PM checks
-      const fridgeData = { ...data };
+      const fridgeData = { ..._data };
       const response = await apiRequest("POST", "/api/fridges", fridgeData);
       const newFridge = await response.json();
       
@@ -418,20 +422,20 @@ export default function AddFridge() {
                             <p className="text-sm text-muted-foreground">No labels available</p>
                           ) : (
                             labels.map((label: Label) => (
-                              <div key={label.id} className="flex items-center space-x-2">
+                              <div key={label._id} className="flex items-center space-x-2">
                                 <Checkbox
-                                  id={label.id}
+                                  id={label._id}
                                   checked={field.value.includes(label.name)}
                                   onCheckedChange={(checked) => {
                                     if (checked) {
-                                      field.onChange([...field._value, label.name]);
+                                      field.onChange([...field.value, label.name]);
                                     } else {
                                       field.onChange(field.value.filter((l: string) => l !== label.name));
                                     }
                                   }}
                                   data-testid={`checkbox-label-${label.name}`}
                                 />
-                                <label htmlFor={label.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                                <label htmlFor={label._id} className="flex items-center gap-2 text-sm cursor-pointer">
                                   <div 
                                     className="w-3 h-3 rounded" 
                                     style={{ backgroundColor: label.color }}
@@ -548,7 +552,7 @@ export default function AddFridge() {
                                       type="text"
                                       placeholder="Check label"
                                       value={window.label}
-                                      onChange={(e) => updateTimeWindow(index, 'label', e.target._value)}
+                                      onChange={(e) => updateTimeWindow(index, 'label', e.target.value)}
                                       className="mb-2"
                                       data-testid={`input-check-label-${index}`}
                                     />
@@ -558,7 +562,7 @@ export default function AddFridge() {
                                         <Input
                                           type="time"
                                           value={window.startTime}
-                                          onChange={(e) => updateTimeWindow(index, 'startTime', e.target._value)}
+                                          onChange={(e) => updateTimeWindow(index, 'startTime', e.target.value)}
                                           data-testid={`input-start-time-${index}`}
                                         />
                                       </div>
@@ -567,7 +571,7 @@ export default function AddFridge() {
                                         <Input
                                           type="time"
                                           value={window.endTime}
-                                          onChange={(e) => updateTimeWindow(index, 'endTime', e.target._value)}
+                                          onChange={(e) => updateTimeWindow(index, 'endTime', e.target.value)}
                                           data-testid={`input-end-time-${index}`}
                                         />
                                       </div>

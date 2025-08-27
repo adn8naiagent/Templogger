@@ -99,7 +99,7 @@ export default function TempLogger() {
   const [showCorrectiveActions, setShowCorrectiveActions] = useState(false);
 
   // Fetch fridges with recent temperatures
-  const { _data: fridges = [], isLoading: fridgesLoading, error, refetch } = useQuery<Fridge[]>({
+  const { data: fridges = [], isLoading: fridgesLoading, error, refetch } = useQuery<Fridge[]>({
     queryKey: ["/api/fridges/recent-temps"],
     retry: (failureCount, error) => {
       if (isUnauthorizedError(error as Error)) {
@@ -118,17 +118,17 @@ export default function TempLogger() {
   });
 
   // Debug logging
-  console.log('[temp-logger] Fridges _data:', fridges);
+  console.log('[temp-logger] Fridges data:', fridges);
   console.log('[temp-logger] Loading state:', fridgesLoading);
   console.log('[temp-logger] Error:', error);
 
   // Fetch labels
-  const { _data: labels = [] } = useQuery<Label[]>({
+  const { data: labels = [] } = useQuery<Label[]>({
     queryKey: ["/api/labels"],
   });
 
   // Fetch time windows for selected fridge
-  const { _data: timeWindows = [] } = useQuery<TimeWindow[]>({
+  const { data: timeWindows = [] } = useQuery<TimeWindow[]>({
     queryKey: ["/api/fridges", selectedFridgeId, "time-windows"],
     queryFn: async () => {
       if (!selectedFridgeId) return [];
@@ -177,7 +177,7 @@ export default function TempLogger() {
 
   // Helper function for calibration status badge
   const getCalibrationBadgeClass = (status: string) => {
-    switch (_status) {
+    switch (status) {
       case 'current': return "bg-green-600 text-white";
       case 'due-soon': return "bg-amber-500 text-white";
       case 'overdue': return "bg-red-600 text-white";
@@ -187,7 +187,7 @@ export default function TempLogger() {
   };
 
   const getCalibrationStatusText = (status: string) => {
-    switch (_status) {
+    switch (status) {
       case 'current': return "Calibrated";
       case 'due-soon': return "Due Soon";
       case 'overdue': return "Overdue";
@@ -216,7 +216,7 @@ export default function TempLogger() {
 
   // Check if any temperature would be out of range
   const checkTemperatureRange = (minReading: string, maxReading: string, currentReading: string, _fridgeId: string) => {
-    const selectedFridge = fridges.find((f: Fridge) => f.id === _fridgeId);
+    const selectedFridge = fridges.find((f: Fridge) => f._id === _fridgeId);
     if (!selectedFridge) return false;
 
     const minTemp = parseFloat(selectedFridge.minTemp);
@@ -242,8 +242,8 @@ export default function TempLogger() {
 
   // Log temperature mutation
   const logTempMutation = useMutation({
-    mutationFn: async (_data: LogTemperatureData) => {
-      const response = await apiRequest("POST", "/api/temperature-logs", _data);
+    mutationFn: async (data: LogTemperatureData) => {
+      const response = await apiRequest("POST", "/api/temperature-logs", data);
       return response.json();
     },
     onSuccess: (result) => {
@@ -291,7 +291,7 @@ export default function TempLogger() {
     const headers = Object.keys(csvData[0] || {});
     const csvContent = [
       headers.join(','),
-      ...csvData.map(row => headers.map(header => `"${row[header as keyof typeof row]}"`).join(','))
+      ...csvData.map((row: any) => headers.map(header => `"${row[header as keyof typeof row]}"`).join(','))
     ].join('\\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -307,7 +307,7 @@ export default function TempLogger() {
   const minTemp = tempForm.watch("minTempReading");
   const maxTemp = tempForm.watch("maxTempReading");
   const currentTemp = tempForm.watch("currentTempReading");
-  const currentFridgeId = tempForm.watch("fridgeId");
+  const currentFridgeId = tempForm.watch("_fridgeId");
 
   useEffect(() => {
     if ((minTemp || maxTemp || currentTemp) && currentFridgeId) {
@@ -557,13 +557,13 @@ export default function TempLogger() {
                     <form onSubmit={tempForm.handleSubmit((_data) => logTempMutation.mutate(_data))} className="space-y-6">
                       <FormField
                         control={tempForm.control}
-                        name="fridgeId"
+                        name="_fridgeId"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-200">Select Fridge *</FormLabel>
                             <Select onValueChange={(_value) => {
                               field.onChange(_value);
-                              setSelectedFridgeId(_value);
+                              setSelectedFridgeId(_value as string);
                             }} value={field.value}>
                               <FormControl>
                                 <SelectTrigger className="h-11 border-slate-300 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400" data-testid="select-fridge">
@@ -572,7 +572,7 @@ export default function TempLogger() {
                               </FormControl>
                               <SelectContent className="border-slate-200 dark:border-slate-700">
                                 {fridges.map((fridge: Fridge) => (
-                                  <SelectItem key={fridge.id} value={fridge.id} data-testid={`fridge-option-${fridge.name}`} className="py-3">
+                                  <SelectItem key={fridge._id} value={fridge._id} data-testid={`fridge-option-${fridge.name}`} className="py-3">
                                     <div className="flex items-center gap-3">
                                       <div 
                                         className="w-6 h-6 rounded-md border flex items-center justify-center flex-shrink-0 shadow-sm" 
@@ -745,13 +745,13 @@ export default function TempLogger() {
                               </FormControl>
                               <SelectContent>
                                 {timeWindows.map((window: TimeWindow) => (
-                                  <SelectItem key={window.id} value={window.id} data-testid={`time-window-${window.label}`}>
+                                  <SelectItem key={window._id} value={window._id} data-testid={`time-window-${window.label}`}>
                                     <div className="flex items-center gap-2">
                                       <span>{window.label}</span>
                                       <span className="text-muted-foreground text-sm">
                                         ({window.startTime} - {window.endTime})
                                       </span>
-                                      {window.id === currentTimeWindow?.id && (
+                                      {window._id === currentTimeWindow?._id && (
                                         <Badge variant="default" className="text-xs">Current</Badge>
                                       )}
                                     </div>
@@ -940,7 +940,7 @@ export default function TempLogger() {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {fridges.map((fridge: Fridge) => (
                 <Card 
-                  key={fridge.id} 
+                  key={fridge._id} 
                   className={`relative overflow-hidden bg-white dark:bg-slate-800 shadow-sm hover:shadow-md transition-all duration-200 ${
                     fridge.isAlarm ? 'ring-2 ring-red-200 dark:ring-red-800' : 
                     fridge.status === 'warning' ? 'ring-2 ring-yellow-200 dark:ring-yellow-800' :
@@ -1056,8 +1056,8 @@ export default function TempLogger() {
                   </CardContent>
                   {/* View Details Button */}
                   <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-600">
-                    <Button variant="outline" size="sm" className="w-full" asChild data-testid={`button-view-details-${fridge.id}`}>
-                      <Link to={`/fridge/${fridge.id}`}>
+                    <Button variant="outline" size="sm" className="w-full" asChild data-testid={`button-view-details-${fridge._id}`}>
+                      <Link to={`/fridge/${fridge._id}`}>
                         <Eye className="h-4 w-4 mr-2" />
                         View Details
                       </Link>

@@ -180,8 +180,8 @@ export interface IStorage {
   // Self-audit methods
   getAuditTemplates(_userId: string): Promise<(AuditTemplate & { sections: (AuditSection & { items: AuditItem[] })[] })[]>;
   getAuditTemplate(_templateId: string, _userId: string): Promise<(AuditTemplate & { sections: (AuditSection & { items: AuditItem[] })[] }) | undefined>;
-  createAuditTemplate(_templateData: InsertAuditTemplate, ___sectionsData: { sections: Array<{ title: string; description?: string; orderIndex: number; items: Array<{ text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }): Promise<AuditTemplate>;
-  updateAuditTemplate(_templateId: string, _userId: string, _templateData: Partial<AuditTemplate>, ___sectionsData?: { sections: Array<{ id?: string; title: string; description?: string; orderIndex: number; items: Array<{ id?: string; text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }): Promise<AuditTemplate | undefined>;
+  createAuditTemplate(_templateData: InsertAuditTemplate, ____sectionsData: { sections: Array<{ title: string; description?: string; orderIndex: number; items: Array<{ text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }): Promise<AuditTemplate>;
+  updateAuditTemplate(_templateId: string, _userId: string, _templateData: Partial<AuditTemplate>, ____sectionsData?: { sections: Array<{ id?: string; title: string; description?: string; orderIndex: number; items: Array<{ id?: string; text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }): Promise<AuditTemplate | undefined>;
   deleteAuditTemplate(_templateId: string, _userId: string): Promise<boolean>;
   createDefaultAuditTemplate(_userId: string): Promise<AuditTemplate>;
   
@@ -210,12 +210,12 @@ export class DatabaseStorage implements IStorage {
 
   async getUser(_id: string): Promise<User | undefined> {
     const result = await this.db.select().from(users).where(eq(users._id, _id)).limit(1);
-    return result[0];
+    return result[0]!;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const result = await this.db.select().from(users).where(eq(users.email, email)).limit(1);
-    return result[0];
+    return result[0]!;
   }
 
   async getAllUsers(): Promise<User[]> {
@@ -224,7 +224,7 @@ export class DatabaseStorage implements IStorage {
 
   async createUser(userData: InsertUser): Promise<User> {
     const result = await this.db.insert(users).values(userData).returning();
-    return result[0];
+    return result[0]!;
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
@@ -239,7 +239,7 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .returning();
-    return result[0];
+    return result[0]!;
   }
 
   async updateUser(_id: string, _updates: Partial<User>): Promise<User | undefined> {
@@ -247,7 +247,7 @@ export class DatabaseStorage implements IStorage {
       ..._updates,
       updatedAt: new Date()
     }).where(eq(users._id, _id)).returning();
-    return result[0];
+    return result[0]!;
   }
 
   async deleteUser(_id: string): Promise<boolean> {
@@ -263,7 +263,7 @@ export class DatabaseStorage implements IStorage {
   async getFridges(_userId: string): Promise<Fridge[]> {
     const result = await this.db.select().from(fridges).where(eq(fridges._userId, _userId)).orderBy(fridges.createdAt);
     // eslint-disable-next-line no-console
-    console.log(`[getFridges] User ${userId}: Found ${result.length} fridges`);
+    console.log(`[getFridges] User ${_userId}: Found ${result.length} fridges`);
     return result;
   }
 
@@ -290,16 +290,16 @@ export class DatabaseStorage implements IStorage {
 
   async createFridge(fridgeData: InsertFridge): Promise<Fridge> {
     // eslint-disable-next-line no-console
-    console.log(`[createFridge] Creating fridge for user: ${fridgeData.userId}`);
+    console.log(`[createFridge] Creating fridge for user: ${fridgeData._userId}`);
     const result = await this.db.insert(fridges).values(fridgeData).returning();
     // eslint-disable-next-line no-console
-    console.log(`[createFridge] Created fridge with ID: ${result[0].id}`);
-    return result[0];
+    console.log(`[createFridge] Created fridge with ID: ${result[0]?._id}`);
+    return result[0]!;
   }
 
   async updateFridge(_id: string, _userId: string, _updates: any): Promise<Fridge | undefined> {
     // Extract time windows from updates
-    const { timeWindows: newTimeWindows, ...fridgeUpdates } = updates;
+    const { timeWindows: newTimeWindows, ...fridgeUpdates } = _updates;
     
     // Update the fridge record
     const result = await this.db.update(fridges).set({
@@ -333,7 +333,7 @@ export class DatabaseStorage implements IStorage {
       }
     }
     
-    return result[0];
+    return result[0]!;
   }
 
   async deleteFridge(_id: string, _userId: string): Promise<boolean> {
@@ -364,18 +364,18 @@ export class DatabaseStorage implements IStorage {
     const result = await this.db.select().from(labels)
       .where(and(eq(labels._id, _id), eq(labels._userId, _userId)))
       .limit(1);
-    return result[0];
+    return result[0]!;
   }
 
   async createLabel(labelData: InsertLabel): Promise<Label> {
     const result = await this.db.insert(labels).values(labelData).returning();
-    return result[0];
+    return result[0]!;
   }
 
   async updateLabel(_id: string, _userId: string, _updates: Partial<Label>): Promise<Label | undefined> {
     const result = await this.db.update(labels).set(_updates)
       .where(and(eq(labels._id, _id), eq(labels._userId, _userId))).returning();
-    return result[0];
+    return result[0]!;
   }
 
   async deleteLabel(_id: string, _userId: string): Promise<boolean> {
@@ -406,7 +406,7 @@ export class DatabaseStorage implements IStorage {
 
   async createTemperatureLog(logData: InsertTemperatureLog): Promise<TemperatureLog> {
     const result = await this.db.insert(temperatureLogs).values(logData).returning();
-    return result[0];
+    return result[0]!;
   }
 
   async getAllTemperatureLogsForUser(_userId: string): Promise<(TemperatureLog & { fridgeName: string })[]> {
@@ -454,7 +454,7 @@ export class DatabaseStorage implements IStorage {
 
   async createTimeWindow(timeWindowData: InsertTimeWindow): Promise<TimeWindow> {
     const result = await this.db.insert(timeWindows).values(timeWindowData).returning();
-    return result[0];
+    return result[0]!;
   }
 
   async updateTimeWindow(_id: string, _userId: string, _updates: Partial<TimeWindow>): Promise<TimeWindow | undefined> {
@@ -462,7 +462,7 @@ export class DatabaseStorage implements IStorage {
     if (!timeWindow) return undefined;
     
     const result = await this.db.update(timeWindows).set(_updates).where(eq(timeWindows._id, _id)).returning();
-    return result[0];
+    return result[0]!;
   }
 
   async deleteTimeWindow(_id: string, _userId: string): Promise<boolean> {
@@ -512,12 +512,12 @@ export class DatabaseStorage implements IStorage {
     const result = await this.db.select().from(complianceRecords)
       .where(eq(complianceRecords._id, _id))
       .limit(1);
-    return result[0];
+    return result[0]!;
   }
 
   async createComplianceRecord(_userId: string, _recordData: InsertComplianceRecord): Promise<ComplianceRecord> {
-    const result = await this.db.insert(complianceRecords).values({ ..._recordData, userId }).returning();
-    return result[0];
+    const result = await this.db.insert(complianceRecords).values({ ..._recordData, _userId }).returning();
+    return result[0]!;
   }
 
   async updateComplianceRecord(_id: string, _updates: Partial<ComplianceRecord>): Promise<ComplianceRecord | undefined> {
@@ -525,7 +525,7 @@ export class DatabaseStorage implements IStorage {
       .set({ ..._updates, updatedAt: new Date() })
       .where(eq(complianceRecords._id, _id))
       .returning();
-    return result[0];
+    return result[0]!;
   }
 
   async getComplianceOverview(_userId: string, date?: Date): Promise<{
@@ -573,7 +573,7 @@ export class DatabaseStorage implements IStorage {
     // Calculate basic stats
     const lateEntries = todayLogs.filter(log => !log.temperature_logs.isOnTime).length;
     const compliantFridges = userFridges.filter(fridge => 
-      todayLogs.some(log => log.temperature_logs.fridgeId === fridge._id)
+      todayLogs.some(log => log.temperature_logs._fridgeId === fridge._id)
     ).length;
 
     // Get out-of-range events count
@@ -612,7 +612,7 @@ export class DatabaseStorage implements IStorage {
           ((fridgeLogs.length - fridgeAlertLogs.length) / fridgeLogs.length) * 100 : 0;
 
         // Get last reading
-        const lastReading = fridgeLogs.length > 0 ? fridgeLogs[0].createdAt!.toISOString() : new Date().toISOString();
+        const lastReading = fridgeLogs.length > 0 ? fridgeLogs[0]!.createdAt!.toISOString() : new Date().toISOString();
         
         // Determine status
         let _status: 'compliant' | 'warning' | 'critical' = 'compliant';
@@ -620,7 +620,7 @@ export class DatabaseStorage implements IStorage {
         else if (complianceScore < 90) _status = 'warning';
 
         // Count missed readings (fridges that should have had readings today but didn't)
-        const todayFridgeLogs = todayLogs.filter(log => log.temperature_logs.fridgeId === fridge._id);
+        const todayFridgeLogs = todayLogs.filter(log => log.temperature_logs._fridgeId === fridge._id);
         const missedReadings = todayFridgeLogs.length === 0 ? 1 : 0; // Simple logic for now
 
         return {
@@ -628,7 +628,7 @@ export class DatabaseStorage implements IStorage {
           fridgeName: fridge.name,
           complianceScore: Math.round(complianceScore),
           lastReading,
-          _status,
+          status: _status,
           missedReadings,
         };
       })
@@ -637,11 +637,11 @@ export class DatabaseStorage implements IStorage {
     // Generate basic trends (simplified for now)
     const trends = {
       week: Array.from({ length: 7 }, (_, i) => ({
-        date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!,
         compliance: Math.round(overallComplianceRate + (Math.random() - 0.5) * 10)
       })),
       month: Array.from({ length: 30 }, (_, i) => ({
-        date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!,
         compliance: Math.round(overallComplianceRate + (Math.random() - 0.5) * 15)
       }))
     };
@@ -708,14 +708,14 @@ export class DatabaseStorage implements IStorage {
     if (items.length > 0) {
       const itemsWithChecklistId = items.map((item, index) => ({
         ...item,
-        _userId: checklist.createdBy,
-        checklistId: checklist._id,
+        _userId: checklist!.createdBy,
+        checklistId: checklist!._id,
         sortOrder: index.toString(),
       }));
       await this.db.insert(checklistItems).values(itemsWithChecklistId);
     }
 
-    return checklist;
+    return checklist!;
   }
 
   async updateChecklist(_id: string, _userId: string, _updates: Partial<Checklist>): Promise<Checklist | undefined> {
@@ -726,7 +726,7 @@ export class DatabaseStorage implements IStorage {
       .set(_updates)
       .where(eq(checklists._id, _id))
       .returning();
-    return result[0];
+    return result[0]!;
   }
 
   async deleteChecklist(_id: string, _userId: string): Promise<boolean> {
@@ -757,8 +757,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createChecklistCompletion(_completionData: InsertChecklistCompletion): Promise<ChecklistCompletion> {
-    const result = await this.db.insert(checklistCompletions).values({ ..._completionData, _userId: completionData.completedBy }).returning();
-    return result[0];
+    const result = await this.db.insert(checklistCompletions).values({ ..._completionData, _userId: _completionData.completedBy }).returning();
+    return result[0]!;
   }
 
   async getDueChecklists(_userId: string): Promise<Checklist[]> {
@@ -780,7 +780,7 @@ export class DatabaseStorage implements IStorage {
       if (lastCompletion.length === 0) {
         isDue = true; // Never completed
       } else {
-        const lastCompletedDate = new Date(lastCompletion[0].completedAt!);
+        const lastCompletedDate = new Date(lastCompletion[0]?.completedAt!);
         const daysDiff = Math.floor((today.getTime() - lastCompletedDate.getTime()) / (1000 * 3600 * 24));
 
         switch (checklist.frequency) {
@@ -833,7 +833,7 @@ export class DatabaseStorage implements IStorage {
     }
     
     const result = await this.db.insert(outOfRangeEvents).values({ ...eventData, _userId: fridge[0]._userId }).returning();
-    return result[0];
+    return result[0]!;
   }
 
   async resolveOutOfRangeEvent(_id: string, notes?: string): Promise<OutOfRangeEvent | undefined> {
@@ -844,7 +844,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(outOfRangeEvents._id, _id))
       .returning();
-    return result[0];
+    return result[0]!;
   }
 
   async getUnresolvedEventsCount(_userId: string): Promise<number> {
@@ -1024,7 +1024,7 @@ export class DatabaseStorage implements IStorage {
 
   async createMissedCheck(missedCheckData: InsertMissedCheck): Promise<MissedCheck> {
     const result = await this.db.insert(missedChecks).values(missedCheckData).returning();
-    return result[0];
+    return result[0]!;
   }
 
   async overrideMissedCheck(_id: string, _userId: string, overrideReason: string): Promise<MissedCheck | undefined> {
@@ -1271,13 +1271,13 @@ export class DatabaseStorage implements IStorage {
 
   async createAuditTemplate(
     _templateData: InsertAuditTemplate, 
-    ___sectionsData: { sections: Array<{ title: string; description?: string; orderIndex: number; items: Array<{ text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }
+    ____sectionsData: { sections: Array<{ title: string; description?: string; orderIndex: number; items: Array<{ text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }
   ): Promise<AuditTemplate> {
     const [template] = await this.db.insert(auditTemplates).values(_templateData).returning();
 
-    for (const sectionData of __sectionsData.sections) {
+    for (const sectionData of ____sectionsData.sections) {
       const [section] = await this.db.insert(auditSections).values({
-        _templateId: template._id,
+        _templateId: template!._id,
         title: sectionData.title,
         description: sectionData.description,
         orderIndex: sectionData.orderIndex.toString()
@@ -1285,7 +1285,7 @@ export class DatabaseStorage implements IStorage {
 
       for (const itemData of sectionData.items) {
         await this.db.insert(auditItems).values({
-          sectionId: section._id,
+          sectionId: section!._id,
           text: itemData.text,
           isRequired: itemData.isRequired,
           orderIndex: itemData.orderIndex.toString(),
@@ -1294,14 +1294,14 @@ export class DatabaseStorage implements IStorage {
       }
     }
 
-    return template;
+    return template!;
   }
 
   async updateAuditTemplate(
     _templateId: string, 
     _userId: string, 
     _templateData: Partial<AuditTemplate>, 
-    __sectionsData?: { sections: Array<{ id?: string; title: string; description?: string; orderIndex: number; items: Array<{ id?: string; text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }
+    ___sectionsData?: { sections: Array<{ id?: string; title: string; description?: string; orderIndex: number; items: Array<{ id?: string; text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }
   ): Promise<AuditTemplate | undefined> {
     const [updated] = await this.db.update(auditTemplates)
       .set({ ..._templateData, updatedAt: new Date() })
@@ -1315,7 +1315,7 @@ export class DatabaseStorage implements IStorage {
       await this.db.delete(auditSections).where(eq(auditSections._templateId, _templateId));
 
       // Create new sections and items
-      for (const sectionData of __sectionsData.sections) {
+      for (const sectionData of ___sectionsData.sections) {
         const [section] = await this.db.insert(auditSections).values({
           _templateId: _templateId,
           title: sectionData.title,
@@ -1325,7 +1325,7 @@ export class DatabaseStorage implements IStorage {
 
         for (const itemData of sectionData.items) {
           await this.db.insert(auditItems).values({
-            sectionId: section._id,
+            sectionId: section!._id,
             text: itemData.text,
             isRequired: itemData.isRequired,
             orderIndex: itemData.orderIndex.toString(),
@@ -1365,11 +1365,11 @@ export class DatabaseStorage implements IStorage {
     for (const responseData of _responsesData) {
       await this.db.insert(auditResponses).values({
         ...responseData,
-        _completionId: completion._id
+        _completionId: completion!._id
       });
     }
 
-    return completion;
+    return completion!;
   }
 
   async getAuditCompletions(_userId: string, filters?: { templateId?: string; startDate?: Date; endDate?: Date; completedBy?: string }): Promise<(AuditCompletion & { responses: AuditResponse[]; complianceRate: number })[]> {
@@ -1463,12 +1463,12 @@ export class DatabaseStorage implements IStorage {
     const result = await this.db.select().from(calibrationRecords)
       .where(and(eq(calibrationRecords._id, _id), eq(calibrationRecords._userId, _userId)))
       .limit(1);
-    return result[0];
+    return result[0]!;
   }
 
   async createCalibrationRecord(_recordData: InsertCalibrationRecord): Promise<CalibrationRecord> {
     const [record] = await this.db.insert(calibrationRecords).values(_recordData).returning();
-    return record;
+    return record!;
   }
 
   async updateCalibrationRecord(_id: string, _userId: string, _updates: Partial<CalibrationRecord>): Promise<CalibrationRecord | undefined> {
@@ -1490,7 +1490,7 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(calibrationRecords._fridgeId, _fridgeId), eq(calibrationRecords._userId, _userId)))
       .orderBy(desc(calibrationRecords.calibrationDate))
       .limit(1);
-    return result[0];
+    return result[0]!;
   }
 }
 

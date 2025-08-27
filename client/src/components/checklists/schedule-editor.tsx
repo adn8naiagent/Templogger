@@ -101,7 +101,7 @@ export default function ScheduleEditor({
       // Set defaults
       setCadence('DAILY');
       setSelectedDays([]);
-      setStartDate(new Date().toISOString().split('T')[0]); // Today
+      setStartDate(new Date().toISOString().split('T')[0]!); // Today
       setEndDate('');
     }
   }, [checklist, isOpen]);
@@ -119,7 +119,7 @@ export default function ScheduleEditor({
 
       const response = await apiRequest(
         'POST',
-        `/api/v2/checklists/${checklist.id}/schedule`,
+        `/api/v2/checklists/${checklist._id}/schedule`,
         _data
       );
 
@@ -319,9 +319,9 @@ export default function ScheduleEditor({
                   <Button
                     key={day.value}
                     type="button"
-                    variant={selectedDays.includes(day._value) ? "default" : "outline"}
+                    variant={selectedDays.includes(day.value) ? "default" : "outline"}
                     size="sm"
-                    onClick={() => toggleDay(day._value)}
+                    onClick={() => toggleDay(day.value)}
                     className="flex-shrink-0"
                   >
                     {day.short}
@@ -344,7 +344,7 @@ export default function ScheduleEditor({
                 id="startDate"
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target._value)}
+                onChange={(e) => setStartDate(e.target.value)}
                 min={new Date().toISOString().split('T')[0]}
                 className="mt-1"
               />
@@ -355,7 +355,7 @@ export default function ScheduleEditor({
                 id="endDate"
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target._value)}
+                onChange={(e) => setEndDate(e.target.value)}
                 min={startDate || new Date().toISOString().split('T')[0]}
                 className="mt-1"
               />

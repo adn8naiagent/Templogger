@@ -174,9 +174,9 @@ export default function ChecklistCalendar() {
     for (let week = 0; week < 6; week++) {
       const weekDays = [];
       for (let day = 0; day < 7; day++) {
-        const dateStr = current.toISOString().split('T')[0];
+        const dateStr = current.toISOString().split('T')[0]!;
         const isCurrentMonth = current.getMonth() === currentDate.getMonth();
-        const isToday = dateStr === new Date().toISOString().split('T')[0];
+        const isToday = dateStr === new Date().toISOString().split('T')[0]!;
         const status = getDateStatus(dateStr);
         const instances = instancesByDate[dateStr] || [];
         
@@ -208,7 +208,7 @@ export default function ChecklistCalendar() {
             
             {instances.length > 0 && (
               <div className="space-y-1">
-                {instances.slice(0, 2).map((instance, idx) => (
+                {instances.slice(0, 2).map((instance: CalendarInstance, idx: number) => (
                   <div key={idx} className="text-xs p-1 rounded bg-muted/80 truncate">
                     <div className="flex items-center gap-1">
                       {instance.status === 'COMPLETED' ? (

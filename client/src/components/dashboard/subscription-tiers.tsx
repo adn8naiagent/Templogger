@@ -64,7 +64,7 @@ function TierCard({
 }
 
 export default function SubscriptionTiers() {
-  const { _data: tiers } = useQuery<SubscriptionTiersType>({
+  const { data: tiers } = useQuery<SubscriptionTiersType>({
     queryKey: ["/api/subscription-tiers"],
   });
 

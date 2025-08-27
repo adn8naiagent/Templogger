@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
+import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -66,7 +67,7 @@ interface AuditItem {
 }
 
 export default function ViewAuditCompletion() {
-  const { completionId } = useParams<{ _completionId: string }>();
+  const { _completionId } = useParams<{ _completionId: string }>();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -88,13 +89,13 @@ export default function ViewAuditCompletion() {
 
   // Fetch completion details
   const { 
-    _data: completion, 
+    data: completion, 
     isLoading: completionLoading, 
     error: completionError 
   } = useQuery({
-    queryKey: ['audit-completion', completionId],
+    queryKey: ['audit-completion', _completionId],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/audit-completions/${completionId}`);
+      const response = await apiRequest('GET', `/api/audit-completions/${_completionId}`);
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error('Completion not found');
@@ -124,7 +125,7 @@ export default function ViewAuditCompletion() {
     const csvHeaders = ['Section', 'Item', 'Compliant', 'Notes', 'Action Required'];
     const csvRows = [csvHeaders.join(',')];
     
-    completion.responses.forEach(response => {
+    completion.responses.forEach((response: any) => {
       const row = [
         `"${response.sectionTitle}"`,
         `"${response.itemText}"`,
@@ -185,7 +186,7 @@ export default function ViewAuditCompletion() {
   }
 
   // Group responses by section
-  const responsesBySection = completion.responses.reduce((acc, response) => {
+  const responsesBySection = completion.responses.reduce((acc: any, response: any) => {
     if (!acc[response.sectionId]) {
       acc[response.sectionId] = {
         sectionTitle: response.sectionTitle,
@@ -196,9 +197,9 @@ export default function ViewAuditCompletion() {
     return acc;
   }, {} as Record<string, { sectionTitle: string; responses: AuditResponse[] }>);
 
-  const compliantCount = completion.responses.filter(r => r.isCompliant).length;
-  const nonCompliantCount = completion.responses.filter(r => !r.isCompliant).length;
-  const actionItems = completion.responses.filter(r => r.actionRequired && r.actionRequired.trim() !== '');
+  const compliantCount = completion.responses.filter((r: any) => r.isCompliant).length;
+  const nonCompliantCount = completion.responses.filter((r: any) => !r.isCompliant).length;
+  const actionItems = completion.responses.filter((r: any) => r.actionRequired && r.actionRequired.trim() !== '');
 
   return (
     <div className="min-h-screen bg-background">
@@ -295,8 +296,8 @@ export default function ViewAuditCompletion() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {actionItems.map((item, index) => (
-                  <div key={item.id} className="bg-white dark:bg-gray-900 rounded-lg p-4 border">
+                {actionItems.map((item: any, index: number) => (
+                  <div key={item._id} className="bg-white dark:bg-gray-900 rounded-lg p-4 border">
                     <div className="flex items-start gap-3">
                       <Badge variant="outline" className="text-xs mt-0.5">
                         {index + 1}
@@ -324,7 +325,7 @@ export default function ViewAuditCompletion() {
 
         {/* Detailed Results by Section */}
         <div className="space-y-6">
-          {Object.entries(responsesBySection).map(([sectionId, { sectionTitle, responses }], index) => (
+          {Object.entries(responsesBySection).map(([sectionId, { sectionTitle, responses }]: [string, any], index: number) => (
             <Card key={sectionId}>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -334,16 +335,16 @@ export default function ViewAuditCompletion() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">
-                      {responses.filter(r => r.isCompliant).length}/{responses.length} Compliant
+                      {responses.filter((r: any) => r.isCompliant).length}/{responses.length} Compliant
                     </Badge>
                   </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {responses.map((response, itemIndex) => (
+                  {responses.map((response: any, itemIndex: number) => (
                     <div 
-                      key={response.id}
+                      key={response._id}
                       className={`p-4 rounded-lg border-2 ${
                         response.isCompliant
                           ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950'

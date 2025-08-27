@@ -150,7 +150,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     const message = err.message || "Internal Server Error";
 
     if (!res.headersSent) {
-      res.status(_status).json({ message });
+      res.status(status).json({ message });
     }
     console.error('Error handled:', err);
   });

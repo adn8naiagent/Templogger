@@ -50,7 +50,7 @@ interface ChecklistEditorProps {
   isOpen: boolean;
   onOpenChange: (_open: boolean) => void;
   checklist?: ChecklistWithScheduleAndItems | null;
-  onSave: (_data: { name: string; description?: string; items: Omit<ChecklistItem, 'id'>[] }) => void;
+  onSave: (_data: { name: string; description?: string; items: Omit<ChecklistItem, '_id'>[] }) => void;
   isSaving: boolean;
 }
 
@@ -121,7 +121,9 @@ export default function ChecklistEditor({
 
     const reorderedItems = Array.from(items);
     const [reorderedItem] = reorderedItems.splice(result.source.index, 1);
-    reorderedItems.splice(result.destination.index, 0, reorderedItem);
+    if (reorderedItem) {
+      reorderedItems.splice(result.destination.index, 0, reorderedItem);
+    }
 
     // Update order indices
     const updatedItems = reorderedItems.map((item, index) => ({
@@ -215,7 +217,7 @@ export default function ChecklistEditor({
                 id="name"
                 placeholder="Enter checklist name..."
                 value={name}
-                onChange={(e) => setName(e.target._value)}
+                onChange={(e) => setName(e.target.value)}
                 className="mt-1"
               />
             </div>
@@ -226,7 +228,7 @@ export default function ChecklistEditor({
                 id="description"
                 placeholder="Optional description..."
                 value={description}
-                onChange={(e) => setDescription(e.target._value)}
+                onChange={(e) => setDescription(e.target.value)}
                 className="mt-1"
                 rows={3}
               />

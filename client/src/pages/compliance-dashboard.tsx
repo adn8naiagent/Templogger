@@ -81,7 +81,7 @@ export default function ComplianceDashboard() {
   const [autoRefresh, setAutoRefresh] = useState(true);
 
   // Fetch compliance overview
-  const { _data: overview, isLoading: overviewLoading, refetch: refetchOverview } = useQuery({
+  const { data: overview, isLoading: overviewLoading, refetch: refetchOverview } = useQuery({
     queryKey: ["/api/compliance/overview"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/compliance/overview");
@@ -91,7 +91,7 @@ export default function ComplianceDashboard() {
   });
 
   // Fetch due checklists
-  const { _data: dueChecklists = [], isLoading: _checklistsLoading } = useQuery({
+  const { data: dueChecklists = [], isLoading: checklistsLoading } = useQuery({
     queryKey: ["/api/checklists/due"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/checklists/due");
@@ -101,7 +101,7 @@ export default function ComplianceDashboard() {
   });
 
   // Fetch unresolved events count
-  const { _data: unresolvedCount = { count: 0 } } = useQuery({
+  const { data: unresolvedCount = { count: 0 } } = useQuery({
     queryKey: ["/api/out-of-range-events/unresolved/count"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/out-of-range-events/unresolved/count");
@@ -118,6 +118,7 @@ export default function ComplianceDashboard() {
       }, 300000); // 5 minutes
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [autoRefresh, refetchOverview]);
 
   const _getComplianceColor = (_score: number) => {
@@ -191,7 +192,7 @@ export default function ComplianceDashboard() {
     );
   }
 
-  const overdueChecklists = dueChecklists.filter(checklist => checklist.overdue);
+  const overdueChecklists = dueChecklists.filter((checklist: any) => checklist.overdue);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
@@ -414,7 +415,7 @@ export default function ComplianceDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {overview?.complianceByFridge?.map((fridge) => (
+                  {overview?.complianceByFridge?.map((fridge: any) => (
                     <div key={fridge.fridgeId} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
@@ -464,7 +465,7 @@ export default function ComplianceDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {dueChecklists.map((checklist) => (
+                  {dueChecklists.map((checklist: any) => (
                     <div key={checklist.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">

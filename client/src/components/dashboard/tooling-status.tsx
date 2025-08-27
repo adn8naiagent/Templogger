@@ -41,7 +41,7 @@ function ToolingCard({ title, icon, tools, cardKey }: ToolingCardProps) {
 }
 
 export default function ToolingStatus() {
-  const { _data: tooling } = useQuery<ToolingStatusType>({
+  const { data: tooling } = useQuery<ToolingStatusType>({
     queryKey: ["/api/tooling-status"],
   });
 
