@@ -14,7 +14,10 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "seed:checklists": "tsx server/seed-checklists.ts"
+    "seed:checklists": "tsx server/seed-checklists.ts",
+    "security:test": "snyk test",
+    "security:monitor": "snyk monitor",
+    "security:auth": "snyk auth"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -121,6 +124,7 @@
     "eslint": "^8.57.0",
     "jest": "^29.7.0",
     "postcss": "^8.4.47",
+    "snyk": "^1.1298.3",
     "tailwindcss": "^3.4.17",
     "ts-jest": "^29.1.2",
     "tsx": "^4.19.1",

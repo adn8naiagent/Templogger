@@ -28,7 +28,7 @@ async function seedAdminUser() {
       firstName: "Admin",
       lastName: "User",
       role: "admin",
-      subscriptionTier: "enterprise"
+      subscriptionStatus: "enterprise"
     });
 
     console.log(`✅ Admin user created successfully:`);

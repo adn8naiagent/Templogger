@@ -483,6 +483,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const logData = {
+        userId: req.userId,
         fridgeId,
         timeWindowId: timeWindowId || null,
         minTempReading,
@@ -1139,6 +1140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const timeWindow = await storage.createTimeWindow({
+        userId,
         fridgeId,
         label,
         startTime,
@@ -1551,9 +1553,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         nextCalibrationDue: nextDue,
         performedBy,
         calibrationStandard: calibrationStandard || null,
-        beforeCalibrationReading: beforeCalibrationReading ? parseFloat(beforeCalibrationReading) : null,
-        afterCalibrationReading: afterCalibrationReading ? parseFloat(afterCalibrationReading) : null,
-        accuracy: accuracy ? parseFloat(accuracy) : null,
+        beforeCalibrationReading: beforeCalibrationReading || null,
+        afterCalibrationReading: afterCalibrationReading || null,
+        accuracy: accuracy || null,
         notes: notes || null,
         certificateFileName: null, // TODO: Implement file upload
         certificateFilePath: null,
@@ -1593,9 +1595,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         nextCalibrationDue: nextDue,
         performedBy,
         calibrationStandard: calibrationStandard || null,
-        beforeCalibrationReading: beforeCalibrationReading ? parseFloat(beforeCalibrationReading) : null,
-        afterCalibrationReading: afterCalibrationReading ? parseFloat(afterCalibrationReading) : null,
-        accuracy: accuracy ? parseFloat(accuracy) : null,
+        beforeCalibrationReading: beforeCalibrationReading || null,
+        afterCalibrationReading: afterCalibrationReading || null,
+        accuracy: accuracy || null,
         notes: notes || null,
       };
 

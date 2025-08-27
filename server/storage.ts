@@ -316,6 +316,7 @@ export class DatabaseStorage implements IStorage {
       // Insert new time windows if any
       if (Array.isArray(newTimeWindows) && newTimeWindows.length > 0) {
         const timeWindowInserts = newTimeWindows.map((tw: any) => ({
+          userId,
           fridgeId: id,
           label: tw.label,
           checkType: tw.checkType,
@@ -407,6 +408,7 @@ export class DatabaseStorage implements IStorage {
   async getAllTemperatureLogsForUser(userId: string): Promise<(TemperatureLog & { fridgeName: string })[]> {
     const result = await this.db.select({
       id: temperatureLogs.id,
+      userId: temperatureLogs.userId,
       fridgeId: temperatureLogs.fridgeId,
       timeWindowId: temperatureLogs.timeWindowId,
       temperature: temperatureLogs.currentTempReading,
@@ -1319,7 +1321,7 @@ export class DatabaseStorage implements IStorage {
   async deleteAuditTemplate(templateId: string, userId: string): Promise<boolean> {
     const result = await this.db.delete(auditTemplates)
       .where(and(eq(auditTemplates.id, templateId), eq(auditTemplates.userId, userId)));
-    return result.rowCount > 0;
+    return result.length > 0;
   }
 
   async createDefaultAuditTemplate(userId: string): Promise<AuditTemplate> {
@@ -1351,21 +1353,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAuditCompletions(userId: string, filters?: { templateId?: string; startDate?: Date; endDate?: Date; completedBy?: string }): Promise<(AuditCompletion & { responses: AuditResponse[]; complianceRate: number })[]> {
-    let query = this.db.select().from(auditCompletions)
-      .where(eq(auditCompletions.userId, userId));
-
+    // Build where conditions
+    const whereConditions = [eq(auditCompletions.userId, userId)];
+    
     if (filters?.templateId) {
-      query = query.where(eq(auditCompletions.templateId, filters.templateId));
+      whereConditions.push(eq(auditCompletions.templateId, filters.templateId));
     }
     if (filters?.startDate) {
-      query = query.where(sql`${auditCompletions.completedAt} >= ${filters.startDate}`);
+      whereConditions.push(sql`${auditCompletions.completedAt} >= ${filters.startDate}`);
     }
     if (filters?.endDate) {
-      query = query.where(sql`${auditCompletions.completedAt} <= ${filters.endDate}`);
+      whereConditions.push(sql`${auditCompletions.completedAt} <= ${filters.endDate}`);
     }
     if (filters?.completedBy) {
-      query = query.where(eq(auditCompletions.completedBy, filters.completedBy));
+      whereConditions.push(eq(auditCompletions.completedBy, filters.completedBy));
     }
+
+    const query = this.db.select().from(auditCompletions)
+      .where(and(...whereConditions));
 
     const completions = await query.orderBy(desc(auditCompletions.completedAt));
 
@@ -1378,7 +1383,7 @@ export class DatabaseStorage implements IStorage {
           ? Math.round((responses.filter(r => r.isCompliant).length / responses.length) * 100)
           : 0;
 
-        return { ...completion, responses, complianceRate };
+        return { ...completion, responses, complianceRate } as any;
       })
     );
 
@@ -1457,7 +1462,7 @@ export class DatabaseStorage implements IStorage {
   async deleteCalibrationRecord(id: string, userId: string): Promise<boolean> {
     const result = await this.db.delete(calibrationRecords)
       .where(and(eq(calibrationRecords.id, id), eq(calibrationRecords.userId, userId)));
-    return result.rowCount > 0;
+    return result.length > 0;
   }
 
   async getLatestCalibrationForFridge(fridgeId: string, userId: string): Promise<CalibrationRecord | undefined> {

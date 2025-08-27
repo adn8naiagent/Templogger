@@ -92,9 +92,9 @@ export default function EditFridge() {
       setMinTemp(fridge.minTemp);
       setMaxTemp(fridge.maxTemp);
       setEnableScheduledChecks(fridge.enableScheduledChecks ?? true);
-      setCheckFrequency(fridge.checkFrequency || 'twice');
-      setExcludedDays(fridge.excludedDays || []);
-      setTimeWindows(fridge.timeWindows || []);
+      setCheckFrequency((fridge.checkFrequency as "once" | "twice" | "multiple") || 'twice');
+      setExcludedDays((fridge.excludedDays as number[]) || []);
+      setTimeWindows([]);
     }
   }, [fridge]);
 

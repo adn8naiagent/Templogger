@@ -272,6 +272,7 @@ export const insertLabelSchema = createInsertSchema(labels).pick({
 });
 
 export const insertTemperatureLogSchema = createInsertSchema(temperatureLogs).pick({
+  userId: true,
   fridgeId: true,
   timeWindowId: true,
   minTempReading: true,
@@ -286,6 +287,7 @@ export const insertTemperatureLogSchema = createInsertSchema(temperatureLogs).pi
 });
 
 export const insertTimeWindowSchema = createInsertSchema(timeWindows).pick({
+  userId: true,
   fridgeId: true,
   label: true,
   checkType: true,
@@ -345,6 +347,7 @@ export const insertOutOfRangeEventSchema = createInsertSchema(outOfRangeEvents).
 });
 
 export const insertCalibrationRecordSchema = createInsertSchema(calibrationRecords).pick({
+  userId: true,
   fridgeId: true,
   calibrationDate: true,
   nextCalibrationDue: true,

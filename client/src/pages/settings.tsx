@@ -23,10 +23,7 @@ export default function Settings() {
   // Update settings mutation
   const updateSettingsMutation = useMutation({
     mutationFn: async (settings: { darkMode: boolean }) => {
-      return apiRequest("/api/user/settings", {
-        method: "PUT", 
-        body: JSON.stringify(settings),
-      });
+      return apiRequest("PUT", "/api/user/settings", settings);
     },
     onSuccess: () => {
       toast({
@@ -125,7 +122,7 @@ export default function Settings() {
                 <div>
                   <h3 className="font-medium">Current Plan</h3>
                   <p className="text-sm text-muted-foreground capitalize">
-                    {user?.subscriptionTier || 'free'} tier
+                    {user?.subscriptionStatus || 'free'} tier
                   </p>
                 </div>
                 <Button variant="outline" size="sm">

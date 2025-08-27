@@ -293,10 +293,10 @@ export default function AdminSubscriptions() {
                         </div>
                       </TableCell>
                       <TableCell>{user.email}</TableCell>
-                      <TableCell>{getSubscriptionBadge(user.subscriptionTier)}</TableCell>
+                      <TableCell>{getSubscriptionBadge(user.subscriptionStatus || 'free')}</TableCell>
                       <TableCell>
                         <span className="font-semibold text-green-600">
-                          ${user.subscriptionTier === 'pro' ? '29' : user.subscriptionTier === 'enterprise' ? '99' : '0'}
+                          ${user.subscriptionStatus === 'pro' ? '29' : user.subscriptionStatus === 'enterprise' ? '99' : '0'}
                         </span>
                       </TableCell>
                       <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
