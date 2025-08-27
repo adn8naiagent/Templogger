@@ -301,10 +301,18 @@ export default function SelfAuditChecklists() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Button onClick={handleCreateDefaultTemplate} disabled={createDefaultMutation.isPending}>
-                <Plus className="w-4 h-4 mr-2" />
-                {createDefaultMutation.isPending ? 'Creating...' : 'Create Default Template'}
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Button onClick={handleCreateDefaultTemplate} disabled={createDefaultMutation.isPending} variant="outline">
+                  <Star className="w-4 h-4 mr-2" />
+                  {createDefaultMutation.isPending ? 'Creating...' : 'Create Default Template'}
+                </Button>
+                <Button asChild>
+                  <Link to="/self-audit/create-template">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create New Template
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -364,10 +372,18 @@ export default function SelfAuditChecklists() {
                     }
                   </p>
                   {!searchQuery && (
-                    <Button onClick={handleCreateDefaultTemplate} disabled={createDefaultMutation.isPending}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create Default Template
-                    </Button>
+                    <div className="flex items-center space-x-2 justify-center">
+                      <Button onClick={handleCreateDefaultTemplate} disabled={createDefaultMutation.isPending} variant="outline">
+                        <Star className="w-4 h-4 mr-2" />
+                        Create Default Template
+                      </Button>
+                      <Button asChild>
+                        <Link to="/self-audit/create-template">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Create New Template
+                        </Link>
+                      </Button>
+                    </div>
                   )}
                 </CardContent>
               </Card>

@@ -98,6 +98,14 @@ export async function signUp(req: Request, res: Response) {
       trialEndDate: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
     });
 
+    // Create default audit template for new user
+    try {
+      await storage.createDefaultAuditTemplate(user.id);
+    } catch (error: any) {
+      console.error("Failed to create default audit template for new user:", error);
+      // Don't fail user creation if template creation fails
+    }
+
     // Create auth token for new user
     const authToken = Buffer.from(user.id).toString('base64');
     

@@ -25,6 +25,7 @@ import {
   Upload
 } from 'lucide-react';
 import type { Fridge, TemperatureLog, CalibrationRecord, MaintenanceRecord } from '@shared/schema';
+import CalibrationManager from '@/components/calibration/calibration-manager';
 
 interface FridgeWithLogs extends Fridge {
   logs: (TemperatureLog & { fridgeName: string })[];
@@ -405,6 +406,9 @@ export default function FridgeDetail() {
             )}
           </CardContent>
         </Card>
+
+        {/* Calibration Records */}
+        <CalibrationManager fridgeId={fridge.id} fridgeName={fridge.name} />
       </div>
     </div>
   );

@@ -150,6 +150,8 @@ export interface IStorage {
     recentLog?: TemperatureLog; 
     timeWindows: TimeWindow[];
     complianceStatus: string;
+    latestCalibration?: CalibrationRecord;
+    calibrationStatus: string;
   })[]>;
   createTemperatureLogWithCompliance(logData: InsertTemperatureLog): Promise<{
     log: TemperatureLog;
@@ -185,6 +187,14 @@ export interface IStorage {
   getAuditCompletions(userId: string, filters?: { templateId?: string; startDate?: Date; endDate?: Date; completedBy?: string }): Promise<(AuditCompletion & { responses: AuditResponse[]; complianceRate: number })[]>;
   getAuditCompletion(completionId: string, userId: string): Promise<(AuditCompletion & { responses: AuditResponse[]; template?: AuditTemplate }) | undefined>;
   getAuditCompletionStats(userId: string): Promise<{ totalCompletions: number; averageCompliance: number; recentCompletions: AuditCompletion[] }>;
+
+  // Calibration record methods
+  getCalibrationRecords(fridgeId: string, userId: string): Promise<CalibrationRecord[]>;
+  getCalibrationRecord(id: string, userId: string): Promise<CalibrationRecord | undefined>;
+  createCalibrationRecord(recordData: InsertCalibrationRecord): Promise<CalibrationRecord>;
+  updateCalibrationRecord(id: string, userId: string, updates: Partial<CalibrationRecord>): Promise<CalibrationRecord | undefined>;
+  deleteCalibrationRecord(id: string, userId: string): Promise<boolean>;
+  getLatestCalibrationForFridge(fridgeId: string, userId: string): Promise<CalibrationRecord | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -832,6 +842,8 @@ export class DatabaseStorage implements IStorage {
     recentLog?: TemperatureLog; 
     timeWindows: TimeWindow[];
     complianceStatus: string;
+    latestCalibration?: CalibrationRecord;
+    calibrationStatus: string;
   })[]> {
     const userFridges = await this.getFridges(userId);
     
@@ -839,6 +851,23 @@ export class DatabaseStorage implements IStorage {
       userFridges.map(async (fridge) => {
         const recentLog = await this.getRecentTemperatureLog(fridge.id, userId);
         const fridgeTimeWindows = await this.getTimeWindows(fridge.id, userId);
+        const latestCalibration = await this.getLatestCalibrationForFridge(fridge.id, userId);
+        
+        // Calculate calibration status
+        let calibrationStatus = 'no-calibration';
+        if (latestCalibration) {
+          const nextDue = new Date(latestCalibration.nextCalibrationDue);
+          const now = new Date();
+          const daysDiff = Math.ceil((nextDue.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          
+          if (daysDiff < 0) {
+            calibrationStatus = 'overdue';
+          } else if (daysDiff <= 30) {
+            calibrationStatus = 'due-soon';
+          } else {
+            calibrationStatus = 'current';
+          }
+        }
         
         // Calculate compliance status, considering active status
         let complianceStatus = 'compliant';
@@ -871,7 +900,9 @@ export class DatabaseStorage implements IStorage {
           complianceStatus,
           complianceScore,
           isAlarm: recentLog?.isAlert || false,
-          status: complianceStatus === 'alert' ? 'critical' : complianceStatus === 'late' ? 'warning' : 'good'
+          status: complianceStatus === 'alert' ? 'critical' : complianceStatus === 'late' ? 'warning' : 'good',
+          latestCalibration,
+          calibrationStatus
         };
       })
     );
@@ -1385,6 +1416,53 @@ export class DatabaseStorage implements IStorage {
     const recentCompletions = completions.slice(0, 10);
 
     return { totalCompletions, averageCompliance, recentCompletions };
+  }
+
+  // Calibration record methods implementation
+  async getCalibrationRecords(fridgeId: string, userId: string): Promise<CalibrationRecord[]> {
+    // First verify the user owns this fridge
+    const fridge = await this.getFridge(fridgeId, userId);
+    if (!fridge) {
+      return [];
+    }
+
+    return await this.db.select().from(calibrationRecords)
+      .where(and(eq(calibrationRecords.fridgeId, fridgeId), eq(calibrationRecords.userId, userId)))
+      .orderBy(desc(calibrationRecords.calibrationDate));
+  }
+
+  async getCalibrationRecord(id: string, userId: string): Promise<CalibrationRecord | undefined> {
+    const result = await this.db.select().from(calibrationRecords)
+      .where(and(eq(calibrationRecords.id, id), eq(calibrationRecords.userId, userId)))
+      .limit(1);
+    return result[0];
+  }
+
+  async createCalibrationRecord(recordData: InsertCalibrationRecord): Promise<CalibrationRecord> {
+    const [record] = await this.db.insert(calibrationRecords).values(recordData).returning();
+    return record;
+  }
+
+  async updateCalibrationRecord(id: string, userId: string, updates: Partial<CalibrationRecord>): Promise<CalibrationRecord | undefined> {
+    const [updated] = await this.db.update(calibrationRecords)
+      .set(updates)
+      .where(and(eq(calibrationRecords.id, id), eq(calibrationRecords.userId, userId)))
+      .returning();
+    return updated;
+  }
+
+  async deleteCalibrationRecord(id: string, userId: string): Promise<boolean> {
+    const result = await this.db.delete(calibrationRecords)
+      .where(and(eq(calibrationRecords.id, id), eq(calibrationRecords.userId, userId)));
+    return result.rowCount > 0;
+  }
+
+  async getLatestCalibrationForFridge(fridgeId: string, userId: string): Promise<CalibrationRecord | undefined> {
+    const result = await this.db.select().from(calibrationRecords)
+      .where(and(eq(calibrationRecords.fridgeId, fridgeId), eq(calibrationRecords.userId, userId)))
+      .orderBy(desc(calibrationRecords.calibrationDate))
+      .limit(1);
+    return result[0];
   }
 }
 

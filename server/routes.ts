@@ -1501,6 +1501,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // =========================
+  // CALIBRATION RECORD ENDPOINTS  
+  // =========================
+
+  // Get calibration records for a fridge
+  app.get("/api/fridges/:fridgeId/calibrations", requireAuth, async (req: any, res: Response) => {
+    try {
+      const { fridgeId } = req.params;
+      const userId = req.userId;
+      
+      const records = await storage.getCalibrationRecords(fridgeId, userId);
+      res.json(records);
+    } catch (error: any) {
+      console.error("Get calibration records error:", error);
+      res.status(500).json({ error: "Failed to get calibration records" });
+    }
+  });
+
+  // Create calibration record
+  app.post("/api/calibration-records", requireAuth, async (req: any, res: Response) => {
+    try {
+      const { createCalibrationRecordSchema } = await import("@shared/schema");
+      const result = createCalibrationRecordSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Invalid input data", 
+          details: result.error.errors 
+        });
+      }
+
+      const userId = req.userId;
+      const { fridgeId, calibrationDate, performedBy, calibrationStandard, beforeCalibrationReading, afterCalibrationReading, accuracy, notes } = result.data;
+      
+      // Verify fridge ownership
+      const fridge = await storage.getFridge(fridgeId, userId);
+      if (!fridge) {
+        return res.status(404).json({ error: "Fridge not found" });
+      }
+
+      // Calculate next calibration due (1 year from calibration date)
+      const nextDue = new Date(calibrationDate);
+      nextDue.setFullYear(nextDue.getFullYear() + 1);
+
+      const recordData = {
+        userId,
+        fridgeId,
+        calibrationDate: new Date(calibrationDate),
+        nextCalibrationDue: nextDue,
+        performedBy,
+        calibrationStandard: calibrationStandard || null,
+        beforeCalibrationReading: beforeCalibrationReading ? parseFloat(beforeCalibrationReading) : null,
+        afterCalibrationReading: afterCalibrationReading ? parseFloat(afterCalibrationReading) : null,
+        accuracy: accuracy ? parseFloat(accuracy) : null,
+        notes: notes || null,
+        certificateFileName: null, // TODO: Implement file upload
+        certificateFilePath: null,
+      };
+
+      const record = await storage.createCalibrationRecord(recordData);
+      res.status(201).json(record);
+    } catch (error: any) {
+      console.error("Create calibration record error:", error);
+      res.status(500).json({ error: "Failed to create calibration record" });
+    }
+  });
+
+  // Update calibration record
+  app.put("/api/calibration-records/:recordId", requireAuth, async (req: any, res: Response) => {
+    try {
+      const { recordId } = req.params;
+      const userId = req.userId;
+      
+      const { createCalibrationRecordSchema } = await import("@shared/schema");
+      const result = createCalibrationRecordSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Invalid input data", 
+          details: result.error.errors 
+        });
+      }
+
+      const { calibrationDate, performedBy, calibrationStandard, beforeCalibrationReading, afterCalibrationReading, accuracy, notes } = result.data;
+      
+      // Calculate next calibration due (1 year from calibration date)
+      const nextDue = new Date(calibrationDate);
+      nextDue.setFullYear(nextDue.getFullYear() + 1);
+
+      const updates = {
+        calibrationDate: new Date(calibrationDate),
+        nextCalibrationDue: nextDue,
+        performedBy,
+        calibrationStandard: calibrationStandard || null,
+        beforeCalibrationReading: beforeCalibrationReading ? parseFloat(beforeCalibrationReading) : null,
+        afterCalibrationReading: afterCalibrationReading ? parseFloat(afterCalibrationReading) : null,
+        accuracy: accuracy ? parseFloat(accuracy) : null,
+        notes: notes || null,
+      };
+
+      const record = await storage.updateCalibrationRecord(recordId, userId, updates);
+      if (!record) {
+        return res.status(404).json({ error: "Calibration record not found" });
+      }
+
+      res.json(record);
+    } catch (error: any) {
+      console.error("Update calibration record error:", error);
+      res.status(500).json({ error: "Failed to update calibration record" });
+    }
+  });
+
+  // Delete calibration record
+  app.delete("/api/calibration-records/:recordId", requireAuth, async (req: any, res: Response) => {
+    try {
+      const { recordId } = req.params;
+      const userId = req.userId;
+      
+      const deleted = await storage.deleteCalibrationRecord(recordId, userId);
+      if (!deleted) {
+        return res.status(404).json({ error: "Calibration record not found" });
+      }
+
+      res.json({ message: "Calibration record deleted successfully" });
+    } catch (error: any) {
+      console.error("Delete calibration record error:", error);
+      res.status(500).json({ error: "Failed to delete calibration record" });
+    }
+  });
+
   // Export compliance report as CSV
   app.get("/api/export/compliance-report", requireAuth, async (req: any, res: Response) => {
     try {

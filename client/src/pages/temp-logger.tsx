@@ -69,6 +69,8 @@ interface Fridge {
   complianceScore: number;
   status: 'good' | 'warning' | 'critical';
   complianceStatus: string;
+  latestCalibration?: any;
+  calibrationStatus: string;
 }
 
 interface TimeWindow {
@@ -172,6 +174,27 @@ export default function TempLogger() {
     if (score > 90) return "bg-green-600 text-white";
     if (score >= 80) return "bg-amber-500 text-white";
     return "bg-red-600 text-white";
+  };
+
+  // Helper function for calibration status badge
+  const getCalibrationBadgeClass = (status: string) => {
+    switch (status) {
+      case 'current': return "bg-green-600 text-white";
+      case 'due-soon': return "bg-amber-500 text-white";
+      case 'overdue': return "bg-red-600 text-white";
+      case 'no-calibration': return "bg-slate-500 text-white";
+      default: return "bg-slate-500 text-white";
+    }
+  };
+
+  const getCalibrationStatusText = (status: string) => {
+    switch (status) {
+      case 'current': return "Calibrated";
+      case 'due-soon': return "Due Soon";
+      case 'overdue': return "Overdue";
+      case 'no-calibration': return "No Cal";
+      default: return "Unknown";
+    }
   };
 
   // Log temperature form
@@ -965,11 +988,18 @@ export default function TempLogger() {
                             )}
                           </div>
                         </div>
-                        <Badge 
-                          className={`font-medium ${getComplianceBadgeClass(fridge.complianceScore)}`}
-                        >
-                          {fridge.complianceScore}%
-                        </Badge>
+                        <div className="flex gap-2">
+                          <Badge 
+                            className={`font-medium ${getComplianceBadgeClass(fridge.complianceScore)}`}
+                          >
+                            {fridge.complianceScore}%
+                          </Badge>
+                          <Badge 
+                            className={`font-medium ${getCalibrationBadgeClass(fridge.calibrationStatus)}`}
+                          >
+                            {getCalibrationStatusText(fridge.calibrationStatus)}
+                          </Badge>
+                        </div>
                       </div>
 
                       {/* Labels */}
