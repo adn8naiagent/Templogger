@@ -3,6 +3,7 @@ import session from "express-session";
 import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
+import path from "path";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { Pool } from "@neondatabase/serverless";
@@ -160,7 +161,13 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
-    serveStatic(app);
+    // Serve static files from React build
+    app.use(express.static(path.join(__dirname, '../client/dist')));
+    
+    // Handle React routing, return index.html for all non-API routes
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+    });
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
