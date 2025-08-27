@@ -6,10 +6,12 @@
     "jest": true
   },
   "extends": [
-    "eslint:recommended"
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended"
   ],
   "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint"],
+  "plugins": ["@typescript-eslint", "react", "react-hooks"],
   "parserOptions": {
     "ecmaFeatures": {
       "jsx": true
@@ -17,12 +19,24 @@
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
   "rules": {
-    "no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+    "no-unused-vars": "off",
     "prefer-const": "error",
     "no-var": "error",
-    "no-console": "warn",
-    "no-undef": "off"
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "no-undef": "off",
+    "max-len": ["warn", { "code": 100, "ignoreUrls": true, "ignoreStrings": true, "ignoreTemplateLiterals": true, "ignoreRegExpLiterals": true }],
+    "react/react-in-jsx-scope": "off",
+    "react/prop-types": "off",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn"
   },
   "overrides": [
     {
@@ -32,7 +46,14 @@
       },
       "rules": {
         "no-console": "off",
-        "no-unused-vars": "off"
+        "@typescript-eslint/no-unused-vars": "off",
+        "max-len": "off"
+      }
+    },
+    {
+      "files": ["server/**/*"],
+      "rules": {
+        "no-console": ["error", { "allow": ["warn", "error", "log"] }]
       }
     }
   ],

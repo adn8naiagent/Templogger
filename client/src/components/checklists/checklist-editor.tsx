@@ -102,13 +102,13 @@ export default function ChecklistEditor({
   // Update item
   const updateItem = (_id: string, _updates: Partial<EditingItem>) => {
     setItems(items.map(item => 
-      item.id === id ? { ...item, ...updates } : item
+      item._id === _id ? { ...item, ..._updates } : item
     ));
   };
 
   // Remove item
   const removeItem = (_id: string) => {
-    setItems(items.filter(item => item.id !== _id));
+    setItems(items.filter(item => item._id !== _id));
     if (editingItemId === _id) {
       setEditingItemId(null);
     }
@@ -271,8 +271,8 @@ export default function ChecklistEditor({
                     >
                       {items.map((item, index) => (
                         <Draggable
-                          key={item.id}
-                          draggableId={item.id}
+                          key={item._id}
+                          draggableId={item._id}
                           index={index}
                         >
                           {(provided, snapshot) => (
@@ -322,7 +322,7 @@ export default function ChecklistEditor({
                                       </Badge>
                                     </div>
 
-                                    {editingItemId === item.id && (
+                                    {editingItemId === item._id && (
                                       <Textarea
                                         placeholder="Optional notes for this item..."
                                         value={item.note || ""}
@@ -340,11 +340,11 @@ export default function ChecklistEditor({
                                           size="sm"
                                           onClick={() => 
                                             setEditingItemId(
-                                              editingItemId === item.id ? null : item._id
+                                              editingItemId === item._id ? null : item._id
                                             )
                                           }
                                         >
-                                          {editingItemId === item.id ? "Done" : "Add Note"}
+                                          {editingItemId === item._id ? "Done" : "Add Note"}
                                         </Button>
                                         <Button
                                           type="button"

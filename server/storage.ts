@@ -180,8 +180,8 @@ export interface IStorage {
   // Self-audit methods
   getAuditTemplates(_userId: string): Promise<(AuditTemplate & { sections: (AuditSection & { items: AuditItem[] })[] })[]>;
   getAuditTemplate(_templateId: string, _userId: string): Promise<(AuditTemplate & { sections: (AuditSection & { items: AuditItem[] })[] }) | undefined>;
-  createAuditTemplate(_templateData: InsertAuditTemplate, _sectionsData: { sections: Array<{ title: string; description?: string; orderIndex: number; items: Array<{ text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }): Promise<AuditTemplate>;
-  updateAuditTemplate(_templateId: string, _userId: string, _templateData: Partial<AuditTemplate>, _sectionsData?: { sections: Array<{ id?: string; title: string; description?: string; orderIndex: number; items: Array<{ id?: string; text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }): Promise<AuditTemplate | undefined>;
+  createAuditTemplate(_templateData: InsertAuditTemplate, __sectionsData: { sections: Array<{ title: string; description?: string; orderIndex: number; items: Array<{ text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }): Promise<AuditTemplate>;
+  updateAuditTemplate(_templateId: string, _userId: string, _templateData: Partial<AuditTemplate>, __sectionsData?: { sections: Array<{ id?: string; title: string; description?: string; orderIndex: number; items: Array<{ id?: string; text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }): Promise<AuditTemplate | undefined>;
   deleteAuditTemplate(_templateId: string, _userId: string): Promise<boolean>;
   createDefaultAuditTemplate(_userId: string): Promise<AuditTemplate>;
   
@@ -823,16 +823,16 @@ export class DatabaseStorage implements IStorage {
 
   async createOutOfRangeEvent(eventData: InsertOutOfRangeEvent): Promise<OutOfRangeEvent> {
     // Get the userId from the fridge associated with this event
-    const fridge = await this.db.select({ _userId: fridges.userId })
+    const fridge = await this.db.select({ _userId: fridges._userId })
       .from(fridges)
       .where(eq(fridges._id, eventData._fridgeId))
       .limit(1);
     
     if (!fridge[0]) {
-      throw new Error(`Fridge not found: ${eventData.fridgeId}`);
+      throw new Error(`Fridge not found: ${eventData._fridgeId}`);
     }
     
-    const result = await this.db.insert(outOfRangeEvents).values({ ...eventData, _userId: fridge[0].userId }).returning();
+    const result = await this.db.insert(outOfRangeEvents).values({ ...eventData, _userId: fridge[0]._userId }).returning();
     return result[0];
   }
 
@@ -1108,18 +1108,18 @@ export class DatabaseStorage implements IStorage {
           updatedAt: fridges.updatedAt,
           lastTemperature: sql<number>`
             (SELECT temperature FROM ${temperatureLogs} 
-             WHERE fridge_id = ${fridges.id} 
+             WHERE fridge_id = ${fridges._id} 
              ORDER BY created_at DESC LIMIT 1)`,
           lastReading: sql<string>`
             (SELECT created_at FROM ${temperatureLogs} 
-             WHERE fridge_id = ${fridges.id} 
+             WHERE fridge_id = ${fridges._id} 
              ORDER BY created_at DESC LIMIT 1)`,
           logsCount: sql<number>`
             (SELECT COUNT(*) FROM ${temperatureLogs} 
-             WHERE fridge_id = ${fridges.id})`,
+             WHERE fridge_id = ${fridges._id})`,
           recentAlert: sql<boolean>`
             (SELECT is_alert FROM ${temperatureLogs} 
-             WHERE fridge_id = ${fridges.id} 
+             WHERE fridge_id = ${fridges._id} 
              ORDER BY created_at DESC LIMIT 1)`
         })
         .from(fridges)
@@ -1271,11 +1271,11 @@ export class DatabaseStorage implements IStorage {
 
   async createAuditTemplate(
     _templateData: InsertAuditTemplate, 
-    _sectionsData: { sections: Array<{ title: string; description?: string; orderIndex: number; items: Array<{ text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }
+    __sectionsData: { sections: Array<{ title: string; description?: string; orderIndex: number; items: Array<{ text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }
   ): Promise<AuditTemplate> {
     const [template] = await this.db.insert(auditTemplates).values(_templateData).returning();
 
-    for (const sectionData of sectionsData.sections) {
+    for (const sectionData of _sectionsData.sections) {
       const [section] = await this.db.insert(auditSections).values({
         _templateId: template._id,
         title: sectionData.title,
@@ -1301,7 +1301,7 @@ export class DatabaseStorage implements IStorage {
     _templateId: string, 
     _userId: string, 
     _templateData: Partial<AuditTemplate>, 
-    sectionsData?: { sections: Array<{ id?: string; title: string; description?: string; orderIndex: number; items: Array<{ id?: string; text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }
+    _sectionsData?: { sections: Array<{ id?: string; title: string; description?: string; orderIndex: number; items: Array<{ id?: string; text: string; isRequired: boolean; orderIndex: number; note?: string }> }> }
   ): Promise<AuditTemplate | undefined> {
     const [updated] = await this.db.update(auditTemplates)
       .set({ ..._templateData, updatedAt: new Date() })
@@ -1310,12 +1310,12 @@ export class DatabaseStorage implements IStorage {
 
     if (!updated) return undefined;
 
-    if (_sectionsData) {
+    if (__sectionsData) {
       // Delete existing sections and items (cascade will handle items)
       await this.db.delete(auditSections).where(eq(auditSections._templateId, _templateId));
 
       // Create new sections and items
-      for (const sectionData of sectionsData.sections) {
+      for (const sectionData of _sectionsData.sections) {
         const [section] = await this.db.insert(auditSections).values({
           _templateId: _templateId,
           title: sectionData.title,
@@ -1365,7 +1365,7 @@ export class DatabaseStorage implements IStorage {
     for (const responseData of _responsesData) {
       await this.db.insert(auditResponses).values({
         ...responseData,
-        _completionId: completion.id
+        _completionId: completion._id
       });
     }
 
@@ -1376,8 +1376,8 @@ export class DatabaseStorage implements IStorage {
     // Build where conditions
     const whereConditions = [eq(auditCompletions._userId, _userId)];
     
-    if (filters?._templateId) {
-      whereConditions.push(eq(auditCompletions._templateId, filters._templateId));
+    if (filters?.templateId) {
+      whereConditions.push(eq(auditCompletions._templateId, filters.templateId));
     }
     if (filters?.startDate) {
       whereConditions.push(sql`${auditCompletions.completedAt} >= ${filters.startDate}`);

@@ -421,7 +421,7 @@ export const resetPasswordSchema = z.object({
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 
       "Password must include uppercase, lowercase, numbers, and symbols"),
   confirmPassword: z.string(),
-}).refine((_data) => data.newPassword === data.confirmPassword, {
+}).refine((_data) => _data.newPassword === _data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
 });
@@ -442,8 +442,8 @@ export const createFridgeSchema = z.object({
     return !isNaN(num) && num >= -50 && num <= 50;
   }, "Maximum temperature must be between -50°C and 50°C"),
 }).refine((_data) => {
-  const min = parseFloat(data.minTemp);
-  const max = parseFloat(data.maxTemp);
+  const min = parseFloat(_data.minTemp);
+  const max = parseFloat(_data.maxTemp);
   return min < max;
 }, {
   message: "Minimum temperature must be less than maximum temperature",
@@ -477,9 +477,9 @@ export const logTemperatureSchema = z.object({
   correctiveAction: z.string().optional(),
   correctiveNotes: z.string().optional(),
 }).refine((_data) => {
-  const min = parseFloat(data.minTempReading);
-  const max = parseFloat(data.maxTempReading);
-  const current = parseFloat(data.currentTempReading);
+  const min = parseFloat(_data.minTempReading);
+  const max = parseFloat(_data.maxTempReading);
+  const current = parseFloat(_data.currentTempReading);
   return min <= current && current <= max;
 }, {
   message: "Current temperature must be between minimum and maximum readings",
@@ -496,8 +496,8 @@ export const createTimeWindowSchema = z.object({
   excludedDays: z.array(z.number().min(0).max(6)).default([]), // 0=Sunday, 6=Saturday
 }).refine((_data) => {
   // For specific checks, require start and end times
-  if (data.checkType === "specific") {
-    return data.startTime && data.endTime && data.startTime < data.endTime;
+  if (_data.checkType === "specific") {
+    return _data.startTime && _data.endTime && _data.startTime < _data.endTime;
   }
   return true;
 }, {

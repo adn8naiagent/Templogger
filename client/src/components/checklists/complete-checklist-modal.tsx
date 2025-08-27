@@ -91,7 +91,7 @@ export default function CompleteChecklistModal({
 
       const response = await apiRequest(
         'POST',
-        `/api/v2/instances/${instance.id}/complete`,
+        `/api/v2/instances/${instance._id}/complete`,
         _data
       );
 
@@ -136,7 +136,7 @@ export default function CompleteChecklistModal({
     
     const requiredItems = instance.items.filter(item => item.required);
     const completedRequiredItems = itemStates.filter(state => {
-      const item = instance.items.find(i => i.id === state.itemId);
+      const item = instance.items.find(i => i._id === state.itemId);
       return item?.required && state.checked;
     });
     
@@ -184,7 +184,7 @@ export default function CompleteChecklistModal({
   const requiredItems = instance.items.filter(item => item.required);
   const optionalItems = instance.items.filter(item => !item.required);
   const completedRequiredCount = itemStates.filter(state => {
-    const item = instance.items.find(i => i.id === state.itemId);
+    const item = instance.items.find(i => i._id === state.itemId);
     return item?.required && state.checked;
   }).length;
 
@@ -263,7 +263,7 @@ export default function CompleteChecklistModal({
                   if (!itemState) return null;
 
                   return (
-                    <Card key={item.id} className={`border-l-4 ${
+                    <Card key={item._id} className={`border-l-4 ${
                       itemState.checked 
                         ? 'border-l-green-500 bg-green-50/50' 
                         : 'border-l-red-500 bg-red-50/50'
@@ -293,11 +293,11 @@ export default function CompleteChecklistModal({
 
                           {/* Item-specific notes */}
                           <div>
-                            <Label htmlFor={`note-${item.id}`} className="text-sm">
+                            <Label htmlFor={`note-${item._id}`} className="text-sm">
                               Notes (optional)
                             </Label>
                             <Textarea
-                              id={`note-${item.id}`}
+                              id={`note-${item._id}`}
                               placeholder="Add notes about this item..."
                               value={itemState.note}
                               onChange={(e) => 
@@ -330,7 +330,7 @@ export default function CompleteChecklistModal({
                   if (!itemState) return null;
 
                   return (
-                    <Card key={item.id} className={`border-l-4 ${
+                    <Card key={item._id} className={`border-l-4 ${
                       itemState.checked 
                         ? 'border-l-blue-500 bg-blue-50/50' 
                         : 'border-l-gray-300'
@@ -360,11 +360,11 @@ export default function CompleteChecklistModal({
 
                           {/* Item-specific notes */}
                           <div>
-                            <Label htmlFor={`note-${item.id}`} className="text-sm">
+                            <Label htmlFor={`note-${item._id}`} className="text-sm">
                               Notes (optional)
                             </Label>
                             <Textarea
-                              id={`note-${item.id}`}
+                              id={`note-${item._id}`}
                               placeholder="Add notes about this item..."
                               value={itemState.note}
                               onChange={(e) => 

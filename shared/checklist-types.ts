@@ -112,8 +112,8 @@ export const scheduleChecklistRequestSchema = z.object({
   timezone: z.string().default("UTC")
 }).refine((_data) => {
   // DOW cadence requires daysOfWeek
-  if (data.cadence === 'DOW') {
-    return data.daysOfWeek && data.daysOfWeek.length > 0;
+  if (_data.cadence === 'DOW') {
+    return _data.daysOfWeek && _data.daysOfWeek.length > 0;
   }
   return true;
 }, {
@@ -121,8 +121,8 @@ export const scheduleChecklistRequestSchema = z.object({
   path: ["daysOfWeek"]
 }).refine((_data) => {
   // End date must be after start date if provided
-  if (data.endDate) {
-    return new Date(data.endDate) > new Date(data.startDate);
+  if (_data.endDate) {
+    return new Date(_data.endDate) > new Date(_data.startDate);
   }
   return true;
 }, {
@@ -143,7 +143,7 @@ export const calendarRequestSchema = z.object({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "From date must be in YYYY-MM-DD format"),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "To date must be in YYYY-MM-DD format")
 }).refine((_data) => {
-  return new Date(data.to) >= new Date(data.from);
+  return new Date(_data.to) >= new Date(_data.from);
 }, {
   message: "To date must be on or after from date",
   path: ["to"]

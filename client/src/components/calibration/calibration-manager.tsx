@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -49,7 +49,7 @@ import type { CalibrationRecord } from "@shared/schema";
 
 // Form validation schema
 const calibrationSchema = z.object({
-  _fridgeId: z.string().min(1, "Fridge is required"),
+  __fridgeId: z.string().min(1, "Fridge is required"),
   calibrationDate: z.string().min(1, "Calibration date is required"),
   performedBy: z.string().min(1, "Performed by is required"),
   calibrationStandard: z.string().optional(),
@@ -62,11 +62,11 @@ const calibrationSchema = z.object({
 type CalibrationForm = z.infer<typeof calibrationSchema>;
 
 interface CalibrationManagerProps {
-  _fridgeId: string;
+  __fridgeId: string;
   fridgeName: string;
 }
 
-export default function CalibrationManager({ _fridgeId, fridgeName }: CalibrationManagerProps) {
+export default function CalibrationManager({ __fridgeId, fridgeName }: CalibrationManagerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -75,7 +75,7 @@ export default function CalibrationManager({ _fridgeId, fridgeName }: Calibratio
   const form = useForm<CalibrationForm>({
     resolver: zodResolver(calibrationSchema),
     defaultValues: {
-      _fridgeId,
+      __fridgeId,
       calibrationDate: "",
       performedBy: "",
       calibrationStandard: "",
@@ -87,10 +87,10 @@ export default function CalibrationManager({ _fridgeId, fridgeName }: Calibratio
   });
 
   // Fetch calibration records
-  const { _data: records = [], isLoading } = useQuery({
-    queryKey: [`/api/fridges/${fridgeId}/calibrations`],
+  const { data: records = [], isLoading } = useQuery({
+    queryKey: [`/api/fridges/${__fridgeId}/calibrations`],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/fridges/${fridgeId}/calibrations`);
+      const response = await apiRequest('GET', `/api/fridges/${__fridgeId}/calibrations`);
       if (!response.ok) throw new Error('Failed to fetch calibration records');
       return response.json();
     },
@@ -107,7 +107,7 @@ export default function CalibrationManager({ _fridgeId, fridgeName }: Calibratio
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/fridges/${fridgeId}/calibrations`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/fridges/${_fridgeId}/calibrations`] });
       toast({
         title: "Success",
         description: "Calibration record created successfully",
@@ -127,7 +127,7 @@ export default function CalibrationManager({ _fridgeId, fridgeName }: Calibratio
   // Update calibration record mutation
   const updateMutation = useMutation({
     mutationFn: async ({ _id, _data }: { _id: string; _data: CalibrationForm }) => {
-      const response = await apiRequest('PUT', `/api/calibration-records/${id}`, _data);
+      const response = await apiRequest('PUT', `/api/calibration-records/${_id}`, _data);
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to update calibration record: ${response.status} - ${errorText}`);
@@ -135,7 +135,7 @@ export default function CalibrationManager({ _fridgeId, fridgeName }: Calibratio
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/fridges/${fridgeId}/calibrations`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/fridges/${_fridgeId}/calibrations`] });
       toast({
         title: "Success",
         description: "Calibration record updated successfully",
@@ -155,7 +155,7 @@ export default function CalibrationManager({ _fridgeId, fridgeName }: Calibratio
   // Delete calibration record mutation
   const deleteMutation = useMutation({
     mutationFn: async (_id: string) => {
-      const response = await apiRequest('DELETE', `/api/calibration-records/${id}`);
+      const response = await apiRequest('DELETE', `/api/calibration-records/${_id}`);
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to delete calibration record: ${response.status} - ${errorText}`);
@@ -163,7 +163,7 @@ export default function CalibrationManager({ _fridgeId, fridgeName }: Calibratio
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/fridges/${fridgeId}/calibrations`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/fridges/${_fridgeId}/calibrations`] });
       toast({
         title: "Success",
         description: "Calibration record deleted successfully",
@@ -180,7 +180,7 @@ export default function CalibrationManager({ _fridgeId, fridgeName }: Calibratio
 
   const onSubmit = (_data: CalibrationForm) => {
     if (editingRecord) {
-      updateMutation.mutate({ _id: editingRecord._id, data });
+      updateMutation.mutate({ _id: editingRecord._id, _data });
     } else {
       createMutation.mutate(_data);
     }
@@ -189,7 +189,7 @@ export default function CalibrationManager({ _fridgeId, fridgeName }: Calibratio
   const handleEdit = (record: CalibrationRecord) => {
     setEditingRecord(record);
     form.reset({
-      _fridgeId,
+      __fridgeId,
       calibrationDate: new Date(record.calibrationDate).toISOString().split('T')[0],
       performedBy: record.performedBy,
       calibrationStandard: record.calibrationStandard || "",
@@ -241,7 +241,7 @@ export default function CalibrationManager({ _fridgeId, fridgeName }: Calibratio
               <Button onClick={() => {
                 setEditingRecord(null);
                 form.reset({
-                  _fridgeId,
+                  __fridgeId,
                   calibrationDate: "",
                   performedBy: "",
                   calibrationStandard: "",
@@ -475,7 +475,7 @@ export default function CalibrationManager({ _fridgeId, fridgeName }: Calibratio
               {records.map((record: CalibrationRecord) => {
                 const status = getCalibrationStatus(record);
                 return (
-                  <TableRow key={record.id}>
+                  <TableRow key={record._id}>
                     <TableCell>
                       {new Date(record.calibrationDate).toLocaleDateString()}
                     </TableCell>

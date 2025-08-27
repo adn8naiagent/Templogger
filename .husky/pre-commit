@@ -1,15 +1,15 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-echo "🔒 Running pre-commit security checks..."
+echo "🔒 Running pre-commit checks..."
+
+# Run lint-staged (ESLint + Prettier on staged files)
+echo "🔍 Running lint-staged..."
+npx lint-staged
 
 # Run TypeScript checks
 echo "🔍 Running TypeScript checks..."
 npm run check
-
-# Run ESLint
-echo "🔍 Running ESLint..."
-npm run lint
 
 # Run Snyk security scan
 echo "🔍 Running security scan..."

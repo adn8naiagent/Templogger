@@ -67,8 +67,8 @@ export default function ChecklistCalendar() {
       startDate.setDate(startDate.getDate() - firstDay.getDay());
       
       // Extend to include next month days to fill the last week
-      const endDate = new Date(lastDay);
-      endDate.setDate(endDate.getDate() + (6 - lastDay.getDay()));
+      const endDate = new Date(_lastDay);
+      endDate.setDate(endDate.getDate() + (6 - _lastDay.getDay()));
       
       return {
         start: startDate.toISOString().split('T')[0],
@@ -91,7 +91,7 @@ export default function ChecklistCalendar() {
 
   // Fetch calendar data
   const { 
-    _data: calendarData, 
+    data: calendarData, 
     isLoading, 
     error 
   } = useQuery({
@@ -106,7 +106,7 @@ export default function ChecklistCalendar() {
         if (response.status === 401) {
           logout();
         }
-        throw new Error(`Failed to fetch calendar _data: ${response.status}`);
+        throw new Error(`Failed to fetch calendar data: ${response.status}`);
       }
 
       return response.json();
@@ -377,7 +377,7 @@ export default function ChecklistCalendar() {
           <div className="space-y-4">
             {selectedDate && instancesByDate[selectedDate] ? (
               instancesByDate[selectedDate].map((instance) => (
-                <Card key={instance.id}>
+                <Card key={instance._id}>
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
