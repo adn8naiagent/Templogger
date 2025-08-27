@@ -24,7 +24,7 @@ import {
   Calendar,
   Upload
 } from 'lucide-react';
-import type { Fridge, TemperatureLog, CalibrationRecord, MaintenanceRecord } from '@shared/schema';
+import type { Fridge, TemperatureLog, CalibrationRecord, MaintenanceRecord, TimeWindow } from '@shared/schema';
 import CalibrationManager from '@/components/calibration/calibration-manager';
 
 interface FridgeWithLogs extends Fridge {
@@ -44,7 +44,7 @@ export default function FridgeDetail() {
     enabled: !!id,
   });
 
-  const { data: timeWindows = [] } = useQuery({
+  const { data: timeWindows = [] } = useQuery<TimeWindow[]>({
     queryKey: [`/api/fridges/${id}/time-windows`],
     enabled: !!id,
   });
@@ -88,7 +88,7 @@ export default function FridgeDetail() {
       const row = [
         date.toLocaleDateString(),
         date.toLocaleTimeString(),
-        log.temperature.toString(),
+        log.currentTempReading.toString(),
         `"${log.personName}"`,
         log.isAlert ? 'Out of Range' : 'Normal',
         log.isOnTime ? 'Yes' : 'No',
@@ -361,7 +361,7 @@ export default function FridgeDetail() {
                           <span className={`font-medium ${
                             log.isAlert ? 'text-red-600' : 'text-green-600'
                           }`}>
-                            {log.temperature}°C
+                            {log.currentTempReading}°C
                           </span>
                         </TableCell>
                         

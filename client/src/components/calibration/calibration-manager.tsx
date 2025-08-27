@@ -45,7 +45,8 @@ import {
   User,
   Thermometer,
   FileText,
-  Upload
+  Upload,
+  ShieldCheck
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -233,7 +234,7 @@ export default function CalibrationManager({ fridgeId, fridgeName }: Calibration
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Certificate className="h-5 w-5" />
+              <ShieldCheck className="h-5 w-5" />
               Thermometer Calibration
             </CardTitle>
             <CardDescription>
@@ -457,7 +458,7 @@ export default function CalibrationManager({ fridgeId, fridgeName }: Calibration
           </div>
         ) : records.length === 0 ? (
           <div className="text-center py-8">
-            <Certificate className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <ShieldCheck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-medium mb-2">No calibration records</h3>
             <p className="text-muted-foreground mb-4">
               Add the first calibration record for this thermometer
