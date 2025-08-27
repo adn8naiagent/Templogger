@@ -49,7 +49,7 @@ import type { CalibrationRecord } from "@shared/schema";
 
 // Form validation schema
 const calibrationSchema = z.object({
-  __fridgeId: z.string().min(1, "Fridge is required"),
+  ___fridgeId: z.string().min(1, "Fridge is required"),
   calibrationDate: z.string().min(1, "Calibration date is required"),
   performedBy: z.string().min(1, "Performed by is required"),
   calibrationStandard: z.string().optional(),
@@ -62,11 +62,11 @@ const calibrationSchema = z.object({
 type CalibrationForm = z.infer<typeof calibrationSchema>;
 
 interface CalibrationManagerProps {
-  __fridgeId: string;
+  ___fridgeId: string;
   fridgeName: string;
 }
 
-export default function CalibrationManager({ __fridgeId, fridgeName }: CalibrationManagerProps) {
+export default function CalibrationManager({ ___fridgeId, fridgeName }: CalibrationManagerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -75,7 +75,7 @@ export default function CalibrationManager({ __fridgeId, fridgeName }: Calibrati
   const form = useForm<CalibrationForm>({
     resolver: zodResolver(calibrationSchema),
     defaultValues: {
-      __fridgeId,
+      ___fridgeId,
       calibrationDate: "",
       performedBy: "",
       calibrationStandard: "",
@@ -88,9 +88,9 @@ export default function CalibrationManager({ __fridgeId, fridgeName }: Calibrati
 
   // Fetch calibration records
   const { data: records = [], isLoading } = useQuery({
-    queryKey: [`/api/fridges/${__fridgeId}/calibrations`],
+    queryKey: [`/api/fridges/${___fridgeId}/calibrations`],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/fridges/${__fridgeId}/calibrations`);
+      const response = await apiRequest('GET', `/api/fridges/${___fridgeId}/calibrations`);
       if (!response.ok) throw new Error('Failed to fetch calibration records');
       return response.json();
     },
@@ -107,7 +107,7 @@ export default function CalibrationManager({ __fridgeId, fridgeName }: Calibrati
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/fridges/${_fridgeId}/calibrations`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/fridges/${__fridgeId}/calibrations`] });
       toast({
         title: "Success",
         description: "Calibration record created successfully",
@@ -135,7 +135,7 @@ export default function CalibrationManager({ __fridgeId, fridgeName }: Calibrati
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/fridges/${_fridgeId}/calibrations`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/fridges/${__fridgeId}/calibrations`] });
       toast({
         title: "Success",
         description: "Calibration record updated successfully",
@@ -163,7 +163,7 @@ export default function CalibrationManager({ __fridgeId, fridgeName }: Calibrati
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/fridges/${_fridgeId}/calibrations`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/fridges/${__fridgeId}/calibrations`] });
       toast({
         title: "Success",
         description: "Calibration record deleted successfully",
@@ -189,7 +189,7 @@ export default function CalibrationManager({ __fridgeId, fridgeName }: Calibrati
   const handleEdit = (record: CalibrationRecord) => {
     setEditingRecord(record);
     form.reset({
-      __fridgeId,
+      ___fridgeId,
       calibrationDate: new Date(record.calibrationDate).toISOString().split('T')[0],
       performedBy: record.performedBy,
       calibrationStandard: record.calibrationStandard || "",
@@ -241,7 +241,7 @@ export default function CalibrationManager({ __fridgeId, fridgeName }: Calibrati
               <Button onClick={() => {
                 setEditingRecord(null);
                 form.reset({
-                  __fridgeId,
+                  ___fridgeId,
                   calibrationDate: "",
                   performedBy: "",
                   calibrationStandard: "",
