@@ -98,9 +98,9 @@ describe("SecurityStatus Component", () => {
   it("renders loading state initially", () => {
     const queryClient = new QueryClient({
       defaultOptions: {
-        queries: { 
+        queries: {
           retry: false,
-          queryFn: () => new Promise(() => {}) // Never resolves to stay in loading
+          queryFn: () => new Promise(() => {}), // Never resolves to stay in loading
         },
       },
     });
@@ -170,7 +170,7 @@ describe("SecurityStatus Component", () => {
     expect(screen.getByText("Low:")).toBeInTheDocument();
     expect(screen.getByText("Medium:")).toBeInTheDocument();
     expect(screen.getByText("High:")).toBeInTheDocument();
-    
+
     // Check vulnerability counts are visible
     const lowBadges = screen.getAllByText("2");
     expect(lowBadges.length).toBeGreaterThan(0);
@@ -197,7 +197,7 @@ describe("SecurityStatus Component", () => {
     expect(screen.getByText("Critical Issues")).toBeInTheDocument();
     expect(screen.getByText("Critical:")).toBeInTheDocument();
     expect(screen.getByText("High:")).toBeInTheDocument();
-    
+
     // Check critical and high vulnerability counts are visible
     const criticalBadges = screen.getAllByText("2");
     expect(criticalBadges.length).toBeGreaterThan(0);
