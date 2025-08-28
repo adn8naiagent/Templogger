@@ -1,6 +1,16 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Navigation from "../navigation";
+
+const renderWithQueryClient = (component: React.ReactElement) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
+  return render(<QueryClientProvider client={queryClient}>{component}</QueryClientProvider>);
+};
 
 // Mock lucide-react icons
 jest.mock("lucide-react", () => ({
@@ -16,11 +26,26 @@ jest.mock("lucide-react", () => ({
   RefreshCw: ({ className, ...props }: { className?: string; [key: string]: unknown }) => (
     <div className={className} data-testid="refresh-icon" {...props} />
   ),
+  User: ({ className, ...props }: { className?: string; [key: string]: unknown }) => (
+    <div className={className} data-testid="user-icon" {...props} />
+  ),
+  LogOut: ({ className, ...props }: { className?: string; [key: string]: unknown }) => (
+    <div className={className} data-testid="logout-icon" {...props} />
+  ),
+  Crown: ({ className, ...props }: { className?: string; [key: string]: unknown }) => (
+    <div className={className} data-testid="crown-icon" {...props} />
+  ),
+  Shield: ({ className, ...props }: { className?: string; [key: string]: unknown }) => (
+    <div className={className} data-testid="shield-icon" {...props} />
+  ),
+  Star: ({ className, ...props }: { className?: string; [key: string]: unknown }) => (
+    <div className={className} data-testid="star-icon" {...props} />
+  ),
 }));
 
 describe("Navigation Component", () => {
   it("renders all navigation elements correctly", () => {
-    render(<Navigation />);
+    renderWithQueryClient(<Navigation />);
 
     // Check logo and title
     expect(screen.getByTestId("logo-icon")).toBeInTheDocument();
@@ -39,7 +64,7 @@ describe("Navigation Component", () => {
   });
 
   it("applies correct styling classes", () => {
-    render(<Navigation />);
+    renderWithQueryClient(<Navigation />);
 
     const nav = screen.getByRole("navigation");
     expect(nav).toHaveClass("bg-card", "border-b", "border-border", "sticky", "top-0", "z-50");
@@ -60,7 +85,7 @@ describe("Navigation Component", () => {
     const mockOnRefresh = jest.fn();
     const user = userEvent.setup();
 
-    render(<Navigation onRefresh={mockOnRefresh} />);
+    renderWithQueryClient(<Navigation onRefresh={mockOnRefresh} />);
 
     const refreshButton = screen.getByTestId("button-refresh");
     await user.click(refreshButton);
@@ -71,7 +96,7 @@ describe("Navigation Component", () => {
   it("handles missing onRefresh prop gracefully", async () => {
     const user = userEvent.setup();
 
-    render(<Navigation />);
+    renderWithQueryClient(<Navigation />);
 
     const refreshButton = screen.getByTestId("button-refresh");
     await user.click(refreshButton);
@@ -81,7 +106,7 @@ describe("Navigation Component", () => {
   });
 
   it("renders all icons correctly", () => {
-    render(<Navigation />);
+    renderWithQueryClient(<Navigation />);
 
     expect(screen.getByTestId("zap-icon")).toBeInTheDocument();
     expect(screen.getByTestId("refresh-icon")).toBeInTheDocument();
@@ -90,7 +115,7 @@ describe("Navigation Component", () => {
   });
 
   it("has correct button variants and sizes", () => {
-    render(<Navigation />);
+    renderWithQueryClient(<Navigation />);
 
     const refreshButton = screen.getByTestId("button-refresh");
     const settingsButton = screen.getByTestId("button-settings");
@@ -103,7 +128,7 @@ describe("Navigation Component", () => {
   });
 
   it("displays avatar with correct fallback", () => {
-    render(<Navigation />);
+    renderWithQueryClient(<Navigation />);
 
     const avatar = screen.getByTestId("avatar-user");
     expect(avatar).toHaveClass("w-8", "h-8");
@@ -116,14 +141,14 @@ describe("Navigation Component", () => {
 
   describe("Responsive Layout", () => {
     it("has responsive padding classes", () => {
-      render(<Navigation />);
+      renderWithQueryClient(<Navigation />);
 
       const container = screen.getByRole("navigation").querySelector(".max-w-7xl");
       expect(container).toHaveClass("px-4", "sm:px-6", "lg:px-8");
     });
 
     it("maintains correct height and spacing", () => {
-      render(<Navigation />);
+      renderWithQueryClient(<Navigation />);
 
       const flexContainer = screen.getByRole("navigation").querySelector(".flex.justify-between");
       expect(flexContainer).toHaveClass("h-16");
@@ -138,12 +163,12 @@ describe("Navigation Component", () => {
 
   describe("Accessibility", () => {
     it("uses semantic navigation element", () => {
-      render(<Navigation />);
+      renderWithQueryClient(<Navigation />);
       expect(screen.getByRole("navigation")).toBeInTheDocument();
     });
 
     it("has accessible button elements", () => {
-      render(<Navigation />);
+      renderWithQueryClient(<Navigation />);
 
       const buttons = screen.getAllByRole("button");
       expect(buttons).toHaveLength(3); // refresh, settings, theme buttons
@@ -157,7 +182,7 @@ describe("Navigation Component", () => {
       const mockOnRefresh = jest.fn();
       const user = userEvent.setup();
 
-      render(<Navigation onRefresh={mockOnRefresh} />);
+      renderWithQueryClient(<Navigation onRefresh={mockOnRefresh} />);
 
       const refreshButton = screen.getByTestId("button-refresh");
       refreshButton.focus();
@@ -170,12 +195,12 @@ describe("Navigation Component", () => {
 
   describe("Edge Cases", () => {
     it("handles undefined onRefresh prop", () => {
-      render(<Navigation onRefresh={undefined} />);
+      renderWithQueryClient(<Navigation onRefresh={undefined} />);
       expect(screen.getByTestId("button-refresh")).toBeInTheDocument();
     });
 
     it("handles null onRefresh prop", () => {
-      render(<Navigation onRefresh={undefined} />);
+      renderWithQueryClient(<Navigation onRefresh={undefined} />);
       expect(screen.getByTestId("button-refresh")).toBeInTheDocument();
     });
   });
@@ -185,7 +210,7 @@ describe("Navigation Component", () => {
       // Mock console.error to avoid noise in test output
       const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
-      render(<Navigation />);
+      renderWithQueryClient(<Navigation />);
       expect(screen.getByTestId("app-title")).toBeInTheDocument();
 
       consoleSpy.mockRestore();
@@ -195,7 +220,7 @@ describe("Navigation Component", () => {
       const mockOnRefresh = jest.fn();
       const user = userEvent.setup();
 
-      render(<Navigation onRefresh={mockOnRefresh} />);
+      renderWithQueryClient(<Navigation onRefresh={mockOnRefresh} />);
 
       const refreshButton = screen.getByTestId("button-refresh");
       await user.click(refreshButton);
@@ -208,7 +233,7 @@ describe("Navigation Component", () => {
 
   describe("Visual Elements", () => {
     it("displays correct text content", () => {
-      render(<Navigation />);
+      renderWithQueryClient(<Navigation />);
 
       expect(screen.getByText("Fullstack Foundation")).toBeInTheDocument();
       expect(screen.getByText("Active")).toBeInTheDocument();
@@ -216,7 +241,7 @@ describe("Navigation Component", () => {
     });
 
     it("has correct color schemes for status badge", () => {
-      render(<Navigation />);
+      renderWithQueryClient(<Navigation />);
 
       const statusBadge = screen.getByTestId("status-badge");
       expect(statusBadge).toHaveClass(

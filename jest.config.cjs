@@ -22,9 +22,10 @@ module.exports = {
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/client/src/$1",
     "^@shared/(.*)$": "<rootDir>/shared/$1",
+    "^wouter$": "<rootDir>/__mocks__/wouter.js",
   },
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
   transformIgnorePatterns: [
-    "node_modules/(?!(wouter|regexparam))"
+    "node_modules/(?!(wouter|regexparam)/)"
   ],
 };

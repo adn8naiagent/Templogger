@@ -36,10 +36,14 @@ export default function QuickActions() {
   const { toast } = useToast();
 
   const handleAction = (action: string) => {
-    toast({
-      title: "Action Triggered",
-      description: `${action} action has been initiated.`,
-    });
+    try {
+      toast({
+        title: "Action Triggered",
+        description: `${action} action has been initiated.`,
+      });
+    } catch (error) {
+      console.error("Toast failed:", error);
+    }
   };
 
   return (
