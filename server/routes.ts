@@ -78,10 +78,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Return user without password
       const { password: _, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
+      return res.json(userWithoutPassword);
     } catch (error) {
       console.error("Get profile error:", error);
-      res.status(500).json({ error: "Failed to get user profile" });
+      return res.status(500).json({ error: "Failed to get user profile" });
     }
   });
 
@@ -116,13 +116,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
 
-      res.json({
+      return res.json({
         message: "Profile updated successfully",
         user: updatedUser,
       });
     } catch (error) {
       console.error("Update profile error:", error);
-      res.status(500).json({ error: "Failed to update profile" });
+      return res.status(500).json({ error: "Failed to update profile" });
     }
   });
 
@@ -140,13 +140,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
 
-      res.json({
+      return res.json({
         message: "Settings updated successfully",
         user: updatedUser,
       });
     } catch (error) {
       console.error("Update settings error:", error);
-      res.status(500).json({ error: "Failed to update settings" });
+      return res.status(500).json({ error: "Failed to update settings" });
     }
   });
 
@@ -170,10 +170,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
 
-      res.json({ message: "Password updated successfully" });
+      return res.json({ message: "Password updated successfully" });
     } catch (error) {
       console.error("Reset password error:", error);
-      res.status(500).json({ error: "Failed to update password" });
+      return res.status(500).json({ error: "Failed to update password" });
     }
   });
 
@@ -184,15 +184,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const deleted = await storage.deleteUser(userId!);
+      const deleted = await storage.deleteUser(userId);
       if (!deleted) {
         return res.status(404).json({ error: "User not found" });
       }
 
-      res.json({ message: "Account deleted successfully" });
+      return res.json({ message: "Account deleted successfully" });
     } catch (error) {
       console.error("Delete account error:", error);
-      res.status(500).json({ error: "Failed to delete account" });
+      return res.status(500).json({ error: "Failed to delete account" });
     }
   });
 
@@ -200,9 +200,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/user/export", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -230,10 +227,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         csvContent += `"${log.fridgeName}","${log.currentTempReading}","${log.personName}","${date.toLocaleDateString()}","${date.toLocaleTimeString()}","${log.isAlert ? "ALERT" : "Normal"}"\n`;
       });
 
-      res.send(csvContent);
+      return res.send(csvContent);
     } catch (error) {
       console.error("Export data error:", error);
-      res.status(500).json({ error: "Failed to export user data" });
+      return res.status(500).json({ error: "Failed to export user data" });
     }
   });
 
@@ -243,9 +240,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/create-subscription", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -306,7 +300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const latestInvoice = subscription.latest_invoice as Stripe.Invoice;
-      res.json({
+      return res.json({
         subscriptionId: subscription.id,
         clientSecret: (latestInvoice as Stripe.Invoice & { 
           payment_intent?: { client_secret?: string } 
@@ -314,7 +308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Create subscription error:", error);
-      res.status(500).json({ error: "Failed to create subscription" });
+      return res.status(500).json({ error: "Failed to create subscription" });
     }
   });
 
@@ -336,19 +330,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           subscriptionStatus: "paid",
         });
 
-        res.json({
+        return res.json({
           message: "Subscription activated successfully",
           status: "active",
         });
       } else {
-        res.status(400).json({
+        return res.status(400).json({
           error: "Subscription payment not completed",
           status: subscription.status,
         });
       }
     } catch (error) {
       console.error("Subscription success error:", error);
-      res.status(500).json({ error: "Failed to activate subscription" });
+      return res.status(500).json({ error: "Failed to activate subscription" });
     }
   });
 
@@ -356,9 +350,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/subscription-status", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -385,14 +376,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      res.json({
+      return res.json({
         subscriptionStatus: user.subscriptionStatus,
         trialEndDate: user.trialEndDate,
         stripeStatus,
       });
     } catch (error) {
       console.error("Get subscription status error:", error);
-      res.status(500).json({ error: "Failed to get subscription status" });
+      return res.status(500).json({ error: "Failed to get subscription status" });
     }
   });
 
@@ -400,10 +391,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/users", requireAdmin, async (req, res) => {
     try {
       const users = await storage.getAllUsers();
-      res.json(users);
+      return res.json(users);
     } catch (error) {
       console.error("Admin get users error:", error);
-      res.status(500).json({ error: "Failed to get users" });
+      return res.status(500).json({ error: "Failed to get users" });
     }
   });
 
@@ -418,13 +409,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
 
-      res.json({
+      return res.json({
         message: "User updated successfully",
         user: updatedUser,
       });
     } catch (error) {
       console.error("Admin update user error:", error);
-      res.status(500).json({ error: "Failed to update user" });
+      return res.status(500).json({ error: "Failed to update user" });
     }
   });
 
@@ -437,10 +428,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
 
-      res.json({ message: "User deleted successfully" });
+      return res.json({ message: "User deleted successfully" });
     } catch (error) {
       console.error("Admin delete user error:", error);
-      res.status(500).json({ error: "Failed to delete user" });
+      return res.status(500).json({ error: "Failed to delete user" });
     }
   });
 
@@ -453,11 +444,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const fridges = await storage.getFridges(userId!);
-      res.json(fridges);
+      const fridges = await storage.getFridges(userId);
+      return res.json(fridges);
     } catch (error) {
       console.error("Get fridges error:", error);
-      res.status(500).json({ error: "Failed to get fridges" });
+      return res.status(500).json({ error: "Failed to get fridges" });
     }
   });
 
@@ -479,7 +470,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const newFridge = await storage.createFridge({
-        _userId: userId!,
+        _userId: userId,
         name,
         location,
         notes,
@@ -489,13 +480,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maxTemp,
       });
 
-      res.status(201).json({
+      return res.status(201).json({
         message: "Fridge created successfully",
         fridge: newFridge,
       });
     } catch (error) {
       console.error("Create fridge error:", error);
-      res.status(500).json({ error: "Failed to create fridge" });
+      return res.status(500).json({ error: "Failed to create fridge" });
     }
   });
 
@@ -528,7 +519,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } = result.data;
 
       // Verify fridge ownership
-      const fridge = await storage.getFridge(_fridgeId, userId!);
+      const fridge = await storage.getFridge(_fridgeId, userId);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
@@ -554,7 +545,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const logData = {
-        _userId: req.userId!,
+        _userId: userId,
         _fridgeId: _fridgeId,
         timeWindowId: timeWindowId || null,
         minTempReading,
@@ -570,10 +561,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const result_log = await storage.createTemperatureLogWithCompliance(logData);
 
-      res.json(result_log);
+      return res.json(result_log);
     } catch (error) {
       console.error("Create temperature log error:", error);
-      res.status(500).json({ error: "Failed to log temperature" });
+      return res.status(500).json({ error: "Failed to log temperature" });
     }
   });
 
@@ -585,11 +576,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const logs = await storage.getTemperatureLogs(fridgeId, userId!);
-      res.json(logs);
+      const logs = await storage.getTemperatureLogs(fridgeId!, userId);
+      return res.json(logs);
     } catch (error) {
       console.error("Get temperature logs error:", error);
-      res.status(500).json({ error: "Failed to get temperature logs" });
+      return res.status(500).json({ error: "Failed to get temperature logs" });
     }
   });
 
@@ -601,12 +592,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
       console.log(`[API] getFridgesWithRecentTemps called for user: ${userId}`);
-      const fridgesWithData = await storage.getFridgesWithRecentTemps(userId!);
+      const fridgesWithData = await storage.getFridgesWithRecentTemps(userId);
       console.log(`[API] Returning ${fridgesWithData.length} fridges`);
-      res.json(fridgesWithData);
+      return res.json(fridgesWithData);
     } catch (error) {
       console.error("Get fridges with compliance data error:", error);
-      res.status(500).json({ error: "Failed to get fridges with compliance data" });
+      return res.status(500).json({ error: "Failed to get fridges with compliance data" });
     }
   });
 
@@ -617,11 +608,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const fridges = await storage.getAllFridgesWithLogs(userId!);
-      res.json(fridges);
+      const fridges = await storage.getAllFridgesWithLogs(userId);
+      return res.json(fridges);
     } catch (error) {
       console.error("Error fetching all fridges:", error);
-      res.status(500).json({ error: "Failed to fetch fridges" });
+      return res.status(500).json({ error: "Failed to fetch fridges" });
     }
   });
 
@@ -632,14 +623,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const fridge = await storage.getFridgeWithLogs(userId!, req.params.id);
+      const fridge = await storage.getFridgeWithLogs(userId, req.params.id!);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
-      res.json(fridge);
+      return res.json(fridge);
     } catch (error) {
       console.error("Error fetching fridge:", error);
-      res.status(500).json({ error: "Failed to fetch fridge" });
+      return res.status(500).json({ error: "Failed to fetch fridge" });
     }
   });
 
@@ -650,14 +641,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const fridge = await storage.updateFridge(req.params.id, userId!, req.body);
+      const fridge = await storage.updateFridge(req.params.id!, userId, req.body);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
-      res.json(fridge);
+      return res.json(fridge);
     } catch (error) {
       console.error("Error updating fridge:", error);
-      res.status(500).json({ error: "Failed to update fridge" });
+      return res.status(500).json({ error: "Failed to update fridge" });
     }
   });
 
@@ -668,14 +659,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const fridge = await storage.deactivateFridge(userId!, req.params.id);
+      const fridge = await storage.deactivateFridge(userId, req.params.id!);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
-      res.json(fridge);
+      return res.json(fridge);
     } catch (error) {
       console.error("Error deactivating fridge:", error);
-      res.status(500).json({ error: "Failed to deactivate fridge" });
+      return res.status(500).json({ error: "Failed to deactivate fridge" });
     }
   });
 
@@ -686,14 +677,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const fridge = await storage.reactivateFridge(userId, req.params.id);
+      const fridge = await storage.reactivateFridge(userId, req.params.id!);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
-      res.json(fridge);
+      return res.json(fridge);
     } catch (error) {
       console.error("Error reactivating fridge:", error);
-      res.status(500).json({ error: "Failed to reactivate fridge" });
+      return res.status(500).json({ error: "Failed to reactivate fridge" });
     }
   });
 
@@ -704,14 +695,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const success = await storage.deleteFridge(req.params.id, userId!);
+      const success = await storage.deleteFridge(req.params.id!, userId);
       if (!success) {
         return res.status(404).json({ error: "Fridge not found" });
       }
-      res.json({ success: true });
+      return res.json({ success: true });
     } catch (error) {
       console.error("Error deleting fridge:", error);
-      res.status(500).json({ error: "Failed to delete fridge" });
+      return res.status(500).json({ error: "Failed to delete fridge" });
     }
   });
 
@@ -725,10 +716,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
       const labels = await storage.getLabels(userId);
-      res.json(labels);
+      return res.json(labels);
     } catch (error) {
       console.error("Get labels error:", error);
-      res.status(500).json({ error: "Failed to get labels" });
+      return res.status(500).json({ error: "Failed to get labels" });
     }
   });
 
@@ -749,13 +740,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const newLabel = await storage.createLabel({
         ...result.data,
-        _userId: userId!,
+        _userId: userId,
       });
 
-      res.status(201).json(newLabel);
+      return res.status(201).json(newLabel);
     } catch (error) {
       console.error("Create label error:", error);
-      res.status(500).json({ error: "Failed to create label" });
+      return res.status(500).json({ error: "Failed to create label" });
     }
   });
 
@@ -776,15 +767,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const updatedLabel = await storage.updateLabel(labelId, userId, result.data);
+      const updatedLabel = await storage.updateLabel(labelId!, userId, result.data);
       if (!updatedLabel) {
         return res.status(404).json({ error: "Label not found" });
       }
 
-      res.json(updatedLabel);
+      return res.json(updatedLabel);
     } catch (error) {
       console.error("Update label error:", error);
-      res.status(500).json({ error: "Failed to update label" });
+      return res.status(500).json({ error: "Failed to update label" });
     }
   });
 
@@ -797,15 +788,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
-      const deleted = await storage.deleteLabel(labelId, userId);
+      const deleted = await storage.deleteLabel(labelId!, userId);
       if (!deleted) {
         return res.status(404).json({ error: "Label not found" });
       }
 
-      res.json({ message: "Label deleted successfully" });
+      return res.json({ message: "Label deleted successfully" });
     } catch (error) {
       console.error("Delete label error:", error);
-      res.status(500).json({ error: "Failed to delete label" });
+      return res.status(500).json({ error: "Failed to delete label" });
     }
   });
 
@@ -851,17 +842,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const csvContent = csvRows.join("\n");
-      res.send(csvContent);
+      return res.send(csvContent);
     } catch (error) {
       console.error("Export temperature logs error:", error);
-      res.status(500).json({ error: "Failed to export temperature logs" });
+      return res.status(500).json({ error: "Failed to export temperature logs" });
     }
   });
 
   // Health check endpoint
   app.get("/api/health", async (req: Request, res: Response) => {
     try {
-      res.json({
+      return res.json({
         status: "ok",
         timestamp: new Date().toISOString(),
         services: {
@@ -870,9 +861,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       });
     } catch (error) {
-      res.status(500).json({
+      return res.status(500).json({
         status: "error",
-        message: error.message,
+        message: (error as Error).message,
       });
     }
   });
@@ -891,7 +882,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalVars = Object.keys(envVars).length;
       const configuredVars = Object.values(envVars).filter((val) => val !== "missing").length;
 
-      res.json({
+      return res.json({
         variables: envVars,
         summary: {
           total: totalVars,
@@ -900,9 +891,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       });
     } catch (error) {
-      res.status(500).json({
+      return res.status(500).json({
         status: "error",
-        message: error.message,
+        message: (error as Error).message,
       });
     }
   });
@@ -910,7 +901,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Development server status
   app.get("/api/dev-status", async (req: Request, res: Response) => {
     try {
-      res.json({
+      return res.json({
         frontend: {
           port: 3000,
           status: "running",
@@ -927,9 +918,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       });
     } catch (error) {
-      res.status(500).json({
+      return res.status(500).json({
         status: "error",
-        message: error.message,
+        message: (error as Error).message,
       });
     }
   });
@@ -937,7 +928,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // TypeScript compilation status
   app.get("/api/typescript-status", async (req: Request, res: Response) => {
     try {
-      res.json({
+      return res.json({
         client: {
           status: "clean",
           errors: 0,
@@ -955,9 +946,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       });
     } catch (error) {
-      res.status(500).json({
+      return res.status(500).json({
         status: "error",
-        message: error.message,
+        message: (error as Error).message,
       });
     }
   });
@@ -998,11 +989,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       };
 
-      res.json(services);
+      return res.json(services);
     } catch (error) {
-      res.status(500).json({
+      return res.status(500).json({
         status: "error",
-        message: error.message,
+        message: (error as Error).message,
       });
     }
   });
@@ -1046,11 +1037,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       };
 
-      res.json(tiers);
+      return res.json(tiers);
     } catch (error) {
-      res.status(500).json({
+      return res.status(500).json({
         status: "error",
-        message: error.message,
+        message: (error as Error).message,
       });
     }
   });
@@ -1058,7 +1049,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Development tooling status
   app.get("/api/tooling-status", async (req: Request, res: Response) => {
     try {
-      res.json({
+      return res.json({
         codeQuality: {
           eslint: { status: "configured", description: "TypeScript, React, Node rules" },
           prettier: { status: "active", description: "Code formatting" },
@@ -1073,9 +1064,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       });
     } catch (error) {
-      res.status(500).json({
+      return res.status(500).json({
         status: "error",
-        message: error.message,
+        message: (error as Error).message,
       });
     }
   });
@@ -1110,7 +1101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       ];
 
-      res.json({
+      return res.json({
         totalUsers,
         totalSubscriptions,
         monthlyRevenue,
@@ -1120,7 +1111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Admin stats error:", error);
-      res.status(500).json({ error: "Failed to get admin statistics" });
+      return res.status(500).json({ error: "Failed to get admin statistics" });
     }
   });
 
@@ -1135,10 +1126,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
 
-      res.json({ message: "User updated successfully", user: updatedUser });
+      return res.json({ message: "User updated successfully", user: updatedUser });
     } catch (error) {
       console.error("Update user error:", error);
-      res.status(500).json({ error: "Failed to update user" });
+      return res.status(500).json({ error: "Failed to update user" });
     }
   });
 
@@ -1152,10 +1143,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
 
-      res.json({ message: "User deleted successfully" });
+      return res.json({ message: "User deleted successfully" });
     } catch (error) {
       console.error("Delete user error:", error);
-      res.status(500).json({ error: "Failed to delete user" });
+      return res.status(500).json({ error: "Failed to delete user" });
     }
   });
 
@@ -1191,23 +1182,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       switch (service) {
         case "supabase":
           // Test database connection here
-          res.json({ status: "success", message: "Database connection successful" });
-          break;
+          return res.json({ status: "success", message: "Database connection successful" });
         case "stripe":
           // Test Stripe connection here
-          res.json({ status: "success", message: "Stripe connection successful" });
-          break;
+          return res.json({ status: "success", message: "Stripe connection successful" });
         case "claude":
           // Test Claude API connection here
-          res.json({ status: "success", message: "Claude API connection successful" });
-          break;
+          return res.json({ status: "success", message: "Claude API connection successful" });
         default:
-          res.status(400).json({ status: "error", message: "Unknown service" });
+          return res.status(400).json({ status: "error", message: "Unknown service" });
       }
     } catch (error) {
-      res.status(500).json({
+      return res.status(500).json({
         status: "error",
-        message: error.message,
+        message: (error as Error).message,
       });
     }
   });
@@ -1225,11 +1213,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
-      const timeWindows = await storage.getTimeWindows(fridgeId, userId!);
-      res.json(timeWindows);
+      const timeWindows = await storage.getTimeWindows(fridgeId!, userId);
+      return res.json(timeWindows);
     } catch (error) {
       console.error("Get time windows error:", error);
-      res.status(500).json({ error: "Failed to get time windows" });
+      return res.status(500).json({ error: "Failed to get time windows" });
     }
   });
 
@@ -1251,13 +1239,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { _fridgeId, label, startTime, endTime } = result.data;
 
       // Verify fridge ownership
-      const fridge = await storage.getFridge(_fridgeId, userId!);
+      const fridge = await storage.getFridge(_fridgeId, userId);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
 
       const timeWindow = await storage.createTimeWindow({
-        _userId: userId!,
+        _userId: userId,
         _fridgeId: _fridgeId,
         label,
         startTime,
@@ -1265,10 +1253,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isActive: true,
       });
 
-      res.json(timeWindow);
+      return res.json(timeWindow);
     } catch (error) {
       console.error("Create time window error:", error);
-      res.status(500).json({ error: "Failed to create time window" });
+      return res.status(500).json({ error: "Failed to create time window" });
     }
   });
 
@@ -1286,10 +1274,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const date = req.query.date ? new Date(req.query.date as string) : undefined;
 
       const overview = await storage.getComplianceOverview(userId, date);
-      res.json(overview);
+      return res.json(overview);
     } catch (error) {
       console.error("Get compliance overview error:", error);
-      res.status(500).json({ error: "Failed to get compliance overview" });
+      return res.status(500).json({ error: "Failed to get compliance overview" });
     }
   });
 
@@ -1301,10 +1289,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
       const count = await storage.getUnresolvedEventsCount(userId);
-      res.json({ count });
+      return res.json({ count });
     } catch (error) {
       console.error("Get unresolved events count error:", error);
-      res.status(500).json({ error: "Failed to get unresolved events count" });
+      return res.status(500).json({ error: "Failed to get unresolved events count" });
     }
   });
 
@@ -1322,10 +1310,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { fridgeId } = req.query;
 
       const checklists = await storage.getChecklists(userId, fridgeId as string);
-      res.json(checklists);
+      return res.json(checklists);
     } catch (error) {
       console.error("Get checklists error:", error);
-      res.status(500).json({ error: "Failed to get checklists" });
+      return res.status(500).json({ error: "Failed to get checklists" });
     }
   });
 
@@ -1337,10 +1325,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
       const dueChecklists = await storage.getDueChecklists(userId);
-      res.json(dueChecklists);
+      return res.json(dueChecklists);
     } catch (error) {
       console.error("Get due checklists error:", error);
-      res.status(500).json({ error: "Failed to get due checklists" });
+      return res.status(500).json({ error: "Failed to get due checklists" });
     }
   });
 
@@ -1386,10 +1374,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }));
 
       const checklist = await storage.createChecklist(checklistData, itemsData);
-      res.json(checklist);
+      return res.json(checklist);
     } catch (error) {
       console.error("Create checklist error:", error);
-      res.status(500).json({ error: "Failed to create checklist" });
+      return res.status(500).json({ error: "Failed to create checklist" });
     }
   });
 
@@ -1413,18 +1401,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { _fridgeId, completedItems, notes } = result.data;
 
       const completionData = {
-        checklistId: id,
+        checklistId: id!,
         _fridgeId: _fridgeId || null,
-        completedBy: userId!,
+        completedBy: userId,
         completedItems,
         notes: notes || null,
       };
 
       const completion = await storage.createChecklistCompletion(completionData);
-      res.json(completion);
+      return res.json(completion);
     } catch (error) {
       console.error("Complete checklist error:", error);
-      res.status(500).json({ error: "Failed to complete checklist" });
+      return res.status(500).json({ error: "Failed to complete checklist" });
     }
   });
 
@@ -1442,11 +1430,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { active } = req.query;
       const activeOnly = active === "true";
 
-      const checklists = await checklistService.listChecklists(userId!, activeOnly);
-      res.json(checklists);
+      const checklists = await checklistService.listChecklists(userId, activeOnly);
+      return res.json(checklists);
     } catch (error) {
       console.error("Get enhanced checklists error:", error);
-      res.status(500).json({ error: error.message || "Failed to get checklists" });
+      return res.status(500).json({ error: (error as Error).message || "Failed to get checklists" });
     }
   });
 
@@ -1465,12 +1453,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const checklist = await checklistService.createChecklist(userId!, result.data);
-      res.status(201).json(checklist);
+      const checklist = await checklistService.createChecklist(userId, result.data);
+      return res.status(201).json(checklist);
     } catch (error) {
       console.error("Create enhanced checklist error:", error);
-      res
-        .status(error.statusCode || 500)
+      return res
+        .status((error as any).statusCode || 500)
         .json({ error: error instanceof Error ? error.message : "Failed to create checklist" });
     }
   });
@@ -1491,12 +1479,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const checklist = await checklistService.updateChecklist(userId, id, result.data);
-      res.json(checklist);
+      const checklist = await checklistService.updateChecklist(userId, id!, result.data);
+      return res.json(checklist);
     } catch (error) {
       console.error("Update enhanced checklist error:", error);
-      res
-        .status(error.statusCode || 500)
+      return res
+        .status((error as any).statusCode || 500)
         .json({ error: error instanceof Error ? error.message : "Failed to update checklist" });
     }
   });
@@ -1517,12 +1505,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const schedule = await checklistService.createOrReplaceSchedule(userId, id, result.data);
-      res.json(schedule);
+      const schedule = await checklistService.createOrReplaceSchedule(userId, id!, result.data);
+      return res.json(schedule);
     } catch (error) {
       console.error("Schedule checklist error:", error);
-      res
-        .status(error.statusCode || 500)
+      return res
+        .status((error as any).statusCode || 500)
         .json({ error: error instanceof Error ? error.message : "Failed to schedule checklist" });
     }
   });
@@ -1544,11 +1532,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const { from, to } = result.data;
       const calendarData = await checklistService.getCalendarInstances(userId, from, to);
-      res.json(calendarData);
+      return res.json(calendarData);
     } catch (error) {
       console.error("Get calendar error:", error);
-      res
-        .status(error.statusCode || 500)
+      return res
+        .status((error as any).statusCode || 500)
         .json({ error: error instanceof Error ? error.message : "Failed to get calendar data" });
     }
   });
@@ -1570,11 +1558,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const { from, to } = result.data;
       await checklistService.generateInstances(userId, from, to);
-      res.json({ message: "Instances generated successfully" });
+      return res.json({ message: "Instances generated successfully" });
     } catch (error) {
       console.error("Generate instances error:", error);
-      res
-        .status(error.statusCode || 500)
+      return res
+        .status((error as any).statusCode || 500)
         .json({ error: error instanceof Error ? error.message : "Failed to generate instances" });
     }
   });
@@ -1595,12 +1583,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const instance = await checklistService.completeInstance(userId, instanceId, result.data);
-      res.json(instance);
+      const instance = await checklistService.completeInstance(userId, instanceId!, result.data);
+      return res.json(instance);
     } catch (error) {
       console.error("Complete instance error:", error);
-      res
-        .status(error.statusCode || 500)
+      return res
+        .status((error as any).statusCode || 500)
         .json({ error: error instanceof Error ? error.message : "Failed to complete instance" });
     }
   });
@@ -1622,11 +1610,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const { from, to, checklistId, cadence } = result.data;
       const summaries = await checklistService.getSummaries(userId, from, to, checklistId, cadence);
-      res.json(summaries);
+      return res.json(summaries);
     } catch (error) {
       console.error("Get summaries error:", error);
-      res
-        .status(error.statusCode || 500)
+      return res
+        .status((error as any).statusCode || 500)
         .json({ error: error instanceof Error ? error.message : "Failed to get summaries" });
     }
   });
@@ -1681,11 +1669,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const csvContent = csvRows.join("\n");
-      res.send(csvContent);
+      return res.send(csvContent);
     } catch (error) {
       console.error("Export checklists error:", error);
-      res
-        .status(error.statusCode || 500)
+      return res
+        .status((error as any).statusCode || 500)
         .json({ error: error instanceof Error ? error.message : "Failed to export checklists" });
     }
   });
@@ -1703,11 +1691,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
-      const records = await storage.getCalibrationRecords(fridgeId, userId);
-      res.json(records);
+      const records = await storage.getCalibrationRecords(fridgeId!, userId);
+      return res.json(records);
     } catch (error) {
       console.error("Get calibration records error:", error);
-      res.status(500).json({ error: "Failed to get calibration records" });
+      return res.status(500).json({ error: "Failed to get calibration records" });
     }
   });
 
@@ -1739,7 +1727,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } = result.data;
 
       // Verify fridge ownership
-      const fridge = await storage.getFridge(_fridgeId, userId!);
+      const fridge = await storage.getFridge(_fridgeId, userId);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
@@ -1749,7 +1737,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       nextDue.setFullYear(nextDue.getFullYear() + 1);
 
       const recordData = {
-        _userId: userId!,
+        _userId: userId,
         _fridgeId,
         calibrationDate: new Date(calibrationDate),
         nextCalibrationDue: nextDue,
@@ -1764,7 +1752,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const record = await storage.createCalibrationRecord(recordData);
-      res.status(201).json(record);
+      return res.status(201).json(record);
     } catch (error) {
       console.error("Create calibration record error:", error);
       return res.status(500).json({ error: "Failed to create calibration record" });
@@ -1814,12 +1802,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes: notes || null,
       };
 
-      const record = await storage.updateCalibrationRecord(recordId, userId, updates);
+      const record = await storage.updateCalibrationRecord(recordId!, userId, updates);
       if (!record) {
         return res.status(404).json({ error: "Calibration record not found" });
       }
 
-      res.json(record);
+      return res.json(record);
     } catch (error) {
       console.error("Update calibration record error:", error);
       return res.status(500).json({ error: "Failed to update calibration record" });
@@ -1835,15 +1823,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
-      const deleted = await storage.deleteCalibrationRecord(recordId, userId);
+      const deleted = await storage.deleteCalibrationRecord(recordId!, userId);
       if (!deleted) {
         return res.status(404).json({ error: "Calibration record not found" });
       }
 
-      res.json({ message: "Calibration record deleted successfully" });
+      return res.json({ message: "Calibration record deleted successfully" });
     } catch (error) {
       console.error("Delete calibration record error:", error);
-      res.status(500).json({ error: "Failed to delete calibration record" });
+      return res.status(500).json({ error: "Failed to delete calibration record" });
     }
   });
 
@@ -2005,10 +1993,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const csvContent = csvRows.join("\n");
-      res.send(csvContent);
+      return res.send(csvContent);
     } catch (error) {
       console.error("Export compliance report error:", error);
-      res.status(500).json({ error: "Failed to export compliance report" });
+      return res.status(500).json({ error: "Failed to export compliance report" });
     }
   });
 
@@ -2024,10 +2012,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
       const templates = await storage.getAuditTemplates(userId);
-      res.json(templates);
+      return res.json(templates);
     } catch (error) {
       console.error("Get audit templates error:", error);
-      res.status(500).json({ error: "Failed to get audit templates" });
+      return res.status(500).json({ error: "Failed to get audit templates" });
     }
   });
 
@@ -2040,12 +2028,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const { templateId } = req.params;
 
-      const template = await storage.getAuditTemplate(templateId, userId);
+      const template = await storage.getAuditTemplate(templateId!, userId);
       if (!template) {
         return res.status(404).json({ error: "Template not found" });
       }
 
-      res.json(template);
+      return res.json(template);
     } catch (error) {
       console.error("Get audit template error:", error);
       return res.status(500).json({ error: "Failed to get audit template" });
@@ -2070,14 +2058,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const templateData = {
-        _userId: userId!,
+        _userId: userId,
         name: result.data.name,
         description: result.data.description,
         isDefault: false,
       };
 
       const template = await storage.createAuditTemplate(templateData, result.data);
-      res.status(201).json(template);
+      return res.status(201).json(template);
     } catch (error) {
       console.error("Create audit template error:", error);
       return res.status(500).json({ error: "Failed to create audit template" });
@@ -2106,7 +2094,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sectionsData = sections ? { sections } : undefined;
 
       const template = await storage.updateAuditTemplate(
-        templateId,
+        templateId!,
         userId,
         templateData,
         sectionsData
@@ -2115,7 +2103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Template not found" });
       }
 
-      res.json(template);
+      return res.json(template);
     } catch (error) {
       console.error("Update audit template error:", error);
       return res.status(500).json({ error: "Failed to update audit template" });
@@ -2131,12 +2119,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const { templateId } = req.params;
 
-      const success = await storage.deleteAuditTemplate(templateId, userId);
+      const success = await storage.deleteAuditTemplate(templateId!, userId);
       if (!success) {
         return res.status(404).json({ error: "Template not found" });
       }
 
-      res.json({ message: "Template deleted successfully" });
+      return res.json({ message: "Template deleted successfully" });
     } catch (error) {
       console.error("Delete audit template error:", error);
       return res.status(500).json({ error: "Failed to delete audit template" });
@@ -2151,7 +2139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
       const template = await storage.createDefaultAuditTemplate(userId);
-      res.status(201).json(template);
+      return res.status(201).json(template);
     } catch (error) {
       console.error("Create default audit template error:", error);
       return res.status(500).json({ error: "Failed to create default audit template" });
@@ -2207,19 +2195,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const complianceRate = calculateComplianceRate(responsesData);
 
       const completionData = {
-        _userId: userId!,
+        _userId: userId,
         _templateId: result.data._templateId,
         templateName: template.name,
-        completedBy: userId!,
+        completedBy: userId,
         notes: result.data.notes,
         complianceRate: complianceRate.toString(),
       };
 
       const completion = await storage.createAuditCompletion(completionData, responsesData);
-      res.status(201).json(completion);
+      return res.status(201).json(completion);
     } catch (error) {
       console.error("Complete audit error:", error);
-      res.status(500).json({ error: "Failed to complete audit" });
+      return res.status(500).json({ error: "Failed to complete audit" });
     }
   });
 
@@ -2239,10 +2227,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.query.completedBy) filters.completedBy = req.query.completedBy as string;
 
       const completions = await storage.getAuditCompletions(userId, filters);
-      res.json(completions);
+      return res.json(completions);
     } catch (error) {
       console.error("Get audit completions error:", error);
-      res.status(500).json({ error: "Failed to get audit completions" });
+      return res.status(500).json({ error: "Failed to get audit completions" });
     }
   });
 
@@ -2255,15 +2243,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const { completionId } = req.params;
 
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-      const completion = await storage.getAuditCompletion(completionId, userId);
+      const completion = await storage.getAuditCompletion(completionId!, userId);
       if (!completion) {
         return res.status(404).json({ error: "Completion not found" });
       }
 
-      res.json(completion);
+      return res.json(completion);
     } catch (error) {
       console.error("Get audit completion error:", error);
       return res.status(500).json({ error: "Failed to get audit completion" });
@@ -2278,10 +2263,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
       const stats = await storage.getAuditCompletionStats(userId);
-      res.json(stats);
+      return res.json(stats);
     } catch (error) {
       console.error("Get audit stats error:", error);
-      res.status(500).json({ error: "Failed to get audit statistics" });
+      return res.status(500).json({ error: "Failed to get audit statistics" });
     }
   });
 
@@ -2301,10 +2286,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const statusFile = path.join(process.cwd(), ".security-status.json");
         const statusContent = await fs.readFile(statusFile, "utf-8");
         const status = JSON.parse(statusContent);
-        res.json(status);
+        return res.json(status);
       } catch {
         // If no status file exists, return default status
-        res.json({
+        return res.json({
           vulnerabilities: { low: 0, medium: 0, high: 0, critical: 0 },
           lastScan: null,
           packagesScanned: 0,
@@ -2314,7 +2299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error("Get security status error:", error);
-      res.status(500).json({ error: "Failed to get security status" });
+      return res.status(500).json({ error: "Failed to get security status" });
     }
   });
 
