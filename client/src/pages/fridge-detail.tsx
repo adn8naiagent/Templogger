@@ -462,7 +462,7 @@ export default function FridgeDetail() {
         </Card>
 
         {/* Calibration Records */}
-        <CalibrationManager fridgeId={fridge._id} fridgeName={fridge.name} />
+        <CalibrationManager ___fridgeId={fridge._id} fridgeName={fridge.name} />
       </div>
     </div>
   );

@@ -197,7 +197,7 @@ export default function ViewAuditCompletion() {
           responses: [],
         };
       }
-      acc[response.sectionId].responses.push(response);
+      acc[response.sectionId]?.responses.push(response);
       return acc;
     },
     {} as Record<string, { sectionTitle: string; responses: AuditResponse[] }>

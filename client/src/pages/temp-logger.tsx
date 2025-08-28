@@ -185,7 +185,7 @@ export default function TempLogger() {
 
       if (missedWindow) {
         setIsLateEntry(true);
-        setSelectedTimeWindowId(missedWindow._id);
+        _setSelectedTimeWindowId(missedWindow._id);
       }
     }
   }, [timeWindows, currentTimeWindow, selectedFridgeId]);
@@ -294,7 +294,7 @@ export default function TempLogger() {
       queryClient.invalidateQueries({ queryKey: ["/api/fridges/recent-temps"] });
       tempForm.reset();
       setSelectedFridgeId("");
-      setSelectedTimeWindowId("");
+      _setSelectedTimeWindowId("");
       setIsLateEntry(false);
       setShowCorrectiveActions(false);
     },
@@ -372,7 +372,7 @@ export default function TempLogger() {
         tempForm.setValue("timeWindowId", missedWindow._id);
         tempForm.setValue("isOnTime", false);
         setIsLateEntry(true);
-        setSelectedTimeWindowId(missedWindow._id);
+        _setSelectedTimeWindowId(missedWindow._id);
       }
     }
   }, [selectedFridgeId, timeWindows, currentTimeWindow, tempForm]);

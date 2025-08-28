@@ -253,11 +253,11 @@ export default function EditFridge() {
       location: location.trim() || null,
       notes: notes.trim() || null,
       color,
-      minTemp: parseFloat(minTemp),
-      maxTemp: parseFloat(maxTemp),
+      minTemp: minTemp,
+      maxTemp: maxTemp,
       enableScheduledChecks,
       checkFrequency: enableScheduledChecks ? checkFrequency : null,
-      excludedDays: enableScheduledChecks ? excludedDays : [],
+      excludedDays: enableScheduledChecks ? excludedDays.map(String) : [],
       timeWindows: enableScheduledChecks && checkFrequency === "multiple" ? timeWindows : [],
     };
 

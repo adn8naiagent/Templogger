@@ -138,7 +138,7 @@ app.use((req, res, next) => {
 });
 
 // Additional session error handling
-app.use((err: Error | unknown, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   if (err && err.message && err.message.includes("session")) {
     console.error("Session middleware error:", err);
     // Continue without session in case of database connection error
@@ -150,8 +150,8 @@ app.use((err: Error | unknown, req: Request, res: Response, next: NextFunction) 
 (async () => {
   const server = await registerRoutes(app);
 
-  app.use((err: Error | unknown, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
+  app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+    const status = (err as any).status || (err as any).statusCode || 500;
     const message = err.message || "Internal Server Error";
 
     if (!res.headersSent) {

@@ -120,7 +120,7 @@ export default function SelfAuditChecklists() {
         const errorText = await response.text();
         const error = new Error(`Failed to fetch templates: ${response.status} - ${errorText}`);
         if (response.status === 401) {
-          logout();
+          _logout();
         }
         throw error;
       }
@@ -204,8 +204,8 @@ export default function SelfAuditChecklists() {
   };
 
   const handleEditTemplate = (template: AuditTemplate) => {
-    setSelectedTemplate(template);
-    setIsTemplateEditorOpen(true);
+    _setSelectedTemplate(template);
+    _setIsTemplateEditorOpen(true);
   };
 
   const handleDeleteTemplate = (_templateId: string) => {
