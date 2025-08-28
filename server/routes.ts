@@ -1458,7 +1458,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Create enhanced checklist error:", error);
       return res
-        .status((error as any).statusCode || 500)
+        .status((error && typeof error === 'object' && 'statusCode' in error && typeof error.statusCode === 'number') ? error.statusCode : 500)
         .json({ error: error instanceof Error ? error.message : "Failed to create checklist" });
     }
   });
@@ -1484,7 +1484,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Update enhanced checklist error:", error);
       return res
-        .status((error as any).statusCode || 500)
+        .status((error && typeof error === 'object' && 'statusCode' in error && typeof error.statusCode === 'number') ? error.statusCode : 500)
         .json({ error: error instanceof Error ? error.message : "Failed to update checklist" });
     }
   });
@@ -1510,7 +1510,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Schedule checklist error:", error);
       return res
-        .status((error as any).statusCode || 500)
+        .status((error && typeof error === 'object' && 'statusCode' in error && typeof error.statusCode === 'number') ? error.statusCode : 500)
         .json({ error: error instanceof Error ? error.message : "Failed to schedule checklist" });
     }
   });
@@ -1536,7 +1536,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Get calendar error:", error);
       return res
-        .status((error as any).statusCode || 500)
+        .status((error && typeof error === 'object' && 'statusCode' in error && typeof error.statusCode === 'number') ? error.statusCode : 500)
         .json({ error: error instanceof Error ? error.message : "Failed to get calendar data" });
     }
   });
@@ -1562,7 +1562,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Generate instances error:", error);
       return res
-        .status((error as any).statusCode || 500)
+        .status((error && typeof error === 'object' && 'statusCode' in error && typeof error.statusCode === 'number') ? error.statusCode : 500)
         .json({ error: error instanceof Error ? error.message : "Failed to generate instances" });
     }
   });
@@ -1588,7 +1588,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Complete instance error:", error);
       return res
-        .status((error as any).statusCode || 500)
+        .status((error && typeof error === 'object' && 'statusCode' in error && typeof error.statusCode === 'number') ? error.statusCode : 500)
         .json({ error: error instanceof Error ? error.message : "Failed to complete instance" });
     }
   });
@@ -1614,7 +1614,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Get summaries error:", error);
       return res
-        .status((error as any).statusCode || 500)
+        .status((error && typeof error === 'object' && 'statusCode' in error && typeof error.statusCode === 'number') ? error.statusCode : 500)
         .json({ error: error instanceof Error ? error.message : "Failed to get summaries" });
     }
   });
@@ -1673,7 +1673,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Export checklists error:", error);
       return res
-        .status((error as any).statusCode || 500)
+        .status((error && typeof error === 'object' && 'statusCode' in error && typeof error.statusCode === 'number') ? error.statusCode : 500)
         .json({ error: error instanceof Error ? error.message : "Failed to export checklists" });
     }
   });
