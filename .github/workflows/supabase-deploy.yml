@@ -58,14 +58,15 @@ jobs:
           node-version: "20"
           cache: "npm"
 
-      - name: Install Supabase CLI
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Verify CLI installation
         run: |
-          # Install Supabase CLI using GitHub releases
-          SUPABASE_VERSION="1.207.2"
-          wget -O supabase.tar.gz "https://github.com/supabase/cli/releases/download/v${SUPABASE_VERSION}/supabase_${SUPABASE_VERSION}_linux_amd64.tar.gz"
-          tar -xzf supabase.tar.gz
-          sudo mv supabase /usr/local/bin/
           supabase --version
+          which supabase
 
       - name: Verify migration files exist
         run: |
