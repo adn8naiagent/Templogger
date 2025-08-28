@@ -24,12 +24,7 @@ module.exports = {
     "^@shared/(.*)$": "<rootDir>/shared/$1",
   },
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
-  transformIgnorePatterns: ["node_modules/(?!(.*\\.mjs$))"],
-  globals: {
-    "ts-jest": {
-      tsconfig: {
-        jsx: "react-jsx",
-      },
-    },
-  },
+  transformIgnorePatterns: [
+    "node_modules/(?!(wouter|regexparam))"
+  ],
 };
