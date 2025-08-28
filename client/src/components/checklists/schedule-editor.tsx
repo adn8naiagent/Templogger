@@ -193,9 +193,7 @@ export default function ScheduleEditor({ isOpen, onOpenChange, checklist }: Sche
 
     const preview = [];
     const start = new Date(startDate);
-    const end = endDate
-      ? new Date(endDate)
-      : new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from start
+    const end = endDate ? new Date(endDate) : new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000); // eslint-disable-line max-len
 
     const today = new Date();
     const current = new Date(Math.max(start.getTime(), today.getTime()));

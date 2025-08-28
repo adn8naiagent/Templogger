@@ -151,9 +151,10 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   const server = await registerRoutes(app);
 
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-    const status = ('status' in err ? (err as { status: number }).status : undefined) || 
-                   ('statusCode' in err ? (err as { statusCode: number }).statusCode : undefined) || 
-                   500;
+    const status =
+      ("status" in err ? (err as { status: number }).status : undefined) ||
+      ("statusCode" in err ? (err as { statusCode: number }).statusCode : undefined) ||
+      500;
     const message = err.message || "Internal Server Error";
 
     if (!res.headersSent) {
