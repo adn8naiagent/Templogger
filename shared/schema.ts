@@ -26,6 +26,7 @@ export const users = pgTable("users", {
   darkMode: boolean("dark_mode").default(false),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
+  test: text("test"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

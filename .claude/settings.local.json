@@ -30,7 +30,10 @@
       "Bash(git commit:*)",
       "WebSearch",
       "Bash(npm update:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(chmod:*)",
+      "Bash(supabase:*)",
+      "Bash(~/bin/supabase:*)"
     ],
     "deny": [],
     "ask": []
