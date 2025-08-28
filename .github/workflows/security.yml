@@ -34,7 +34,7 @@ jobs:
         run: npm run lint
 
       - name: Setup Snyk
-        uses: snyk/actions/setup@master
+        uses: snyk/actions/setup@0.4.0
 
       - name: Run Snyk security scan
         env:
