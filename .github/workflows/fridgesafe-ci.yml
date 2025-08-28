@@ -34,9 +34,16 @@ jobs:
         run: npm ci
 
       - name: 🔒 Run Snyk security scan
-        run: npm run security:test
+        run: npm run security:test 2>&1 | tee security-errors.log
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      
+      - name: 📤 Upload security errors
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-errors
+          path: security-errors.log
 
   # Parallel Quality Checks
   lint:
@@ -58,7 +65,14 @@ jobs:
         run: npm ci
 
       - name: 🔍 Run ESLint
-        run: npm run lint
+        run: npm run lint 2>&1 | tee lint-errors.log
+        
+      - name: 📤 Upload lint errors
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-errors
+          path: lint-errors.log
 
   prettier:
     name: Prettier Code Format
@@ -79,7 +93,14 @@ jobs:
         run: npm ci
 
       - name: 🎨 Check code formatting
-        run: npm run format:check
+        run: npm run format:check 2>&1 | tee prettier-errors.log
+        
+      - name: 📤 Upload prettier errors
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prettier-errors
+          path: prettier-errors.log
 
   typecheck:
     name: TypeScript Type Check
@@ -100,7 +121,14 @@ jobs:
         run: npm ci
 
       - name: 🔍 TypeScript compilation check
-        run: npm run type-check
+        run: npm run type-check 2>&1 | tee typecheck-errors.log
+        
+      - name: 📤 Upload typecheck errors
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: typecheck-errors
+          path: typecheck-errors.log
 
   # Unit Tests Job
   test:
@@ -146,7 +174,14 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fridgesafe_test
           NODE_ENV: test
           SESSION_SECRET: test-secret
-        run: npm run test
+        run: npm run test 2>&1 | tee jest-errors.log
+        
+      - name: 📤 Upload Jest errors
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jest-errors
+          path: jest-errors.log
 
   # Build Application Job
   build:
@@ -168,9 +203,16 @@ jobs:
         run: npm ci
 
       - name: 🏗️ Build application with Vite
-        run: npm run build
+        run: npm run build 2>&1 | tee build-errors.log
         env:
           VITE_STRIPE_PUBLIC_KEY: ${{ secrets.VITE_STRIPE_PUBLIC_KEY }}
+          
+      - name: 📤 Upload build errors
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-errors
+          path: build-errors.log
 
       - name: 📋 Build summary
         run: |
@@ -206,6 +248,14 @@ jobs:
     if: always()
 
     steps:
+      - name: 📥 Download error artifacts
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: "*-errors"
+          path: errors/
+          merge-multiple: true
+          
       - name: 📊 Generate Pipeline Summary
         run: |
           echo "# 🔍 FridgeSafe CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
@@ -341,40 +391,99 @@ jobs:
           echo "| 🚀 Deployment | $DEPLOYMENT_STATUS | Production deployment readiness |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          # Show error details for failed jobs
+          # Show detailed error information for failed jobs
+          if [[ "${{ needs.security.result }}" == "failure" ]]; then
+            echo "### ❌ Security Scan Errors" >> $GITHUB_STEP_SUMMARY
+            if [[ -f "errors/security-errors.log" ]]; then
+              echo "<details><summary>Click to expand security scan details</summary>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              cat errors/security-errors.log >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              echo "</details>" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "Security vulnerabilities detected. Check the security job logs for details." >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
           if [[ "${{ needs.lint.result }}" == "failure" ]]; then
             echo "### ❌ ESLint Errors" >> $GITHUB_STEP_SUMMARY
-            echo "ESLint found code quality issues. Check the lint job logs for details." >> $GITHUB_STEP_SUMMARY
+            if [[ -f "errors/lint-errors.log" ]]; then
+              echo "<details><summary>Click to expand ESLint error details</summary>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              cat errors/lint-errors.log >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              echo "</details>" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "ESLint found code quality issues. Check the lint job logs for details." >> $GITHUB_STEP_SUMMARY
+            fi
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
           
           if [[ "${{ needs.prettier.result }}" == "failure" ]]; then
             echo "### ❌ Prettier Errors" >> $GITHUB_STEP_SUMMARY
-            echo "Code formatting issues detected. Run \`npm run format\` to fix." >> $GITHUB_STEP_SUMMARY
+            if [[ -f "errors/prettier-errors.log" ]]; then
+              echo "<details><summary>Click to expand Prettier formatting details</summary>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              cat errors/prettier-errors.log >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              echo "</details>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "💡 **Fix command**: \`npm run format\`" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "Code formatting issues detected. Run \`npm run format\` to fix." >> $GITHUB_STEP_SUMMARY
+            fi
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
           
           if [[ "${{ needs.typecheck.result }}" == "failure" ]]; then
             echo "### ❌ TypeScript Errors" >> $GITHUB_STEP_SUMMARY
-            echo "TypeScript compilation failed. Check the typecheck job logs for details." >> $GITHUB_STEP_SUMMARY
+            if [[ -f "errors/typecheck-errors.log" ]]; then
+              echo "<details><summary>Click to expand TypeScript error details</summary>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              cat errors/typecheck-errors.log >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              echo "</details>" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "TypeScript compilation failed. Check the typecheck job logs for details." >> $GITHUB_STEP_SUMMARY
+            fi
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
           
           if [[ "${{ needs.test.result }}" == "failure" ]]; then
             echo "### ❌ Jest Test Errors" >> $GITHUB_STEP_SUMMARY
-            echo "One or more tests failed. Check the test job logs for details." >> $GITHUB_STEP_SUMMARY
+            if [[ -f "errors/jest-errors.log" ]]; then
+              echo "<details><summary>Click to expand Jest test failure details</summary>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              # Extract failed test information
+              grep -A 5 -B 2 "FAIL\|●\|✕" errors/jest-errors.log | head -100 >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              echo "</details>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "💡 **Debug command**: \`npm run test -- --verbose\`" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "One or more tests failed. Check the test job logs for details." >> $GITHUB_STEP_SUMMARY
+            fi
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
           
           if [[ "${{ needs.build.result }}" == "failure" ]]; then
             echo "### ❌ Build Errors" >> $GITHUB_STEP_SUMMARY
-            echo "Application build failed. Check the build job logs for details." >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          if [[ "${{ needs.security.result }}" == "failure" ]]; then
-            echo "### ❌ Security Scan Errors" >> $GITHUB_STEP_SUMMARY
-            echo "Security vulnerabilities detected. Check the security job logs for details." >> $GITHUB_STEP_SUMMARY
+            if [[ -f "errors/build-errors.log" ]]; then
+              echo "<details><summary>Click to expand build error details</summary>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              cat errors/build-errors.log >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              echo "</details>" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "Application build failed. Check the build job logs for details." >> $GITHUB_STEP_SUMMARY
+            fi
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
           

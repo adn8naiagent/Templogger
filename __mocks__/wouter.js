@@ -1,17 +1,17 @@
 // Mock for wouter router
 module.exports = {
   Link: ({ children, href, ...props }) => {
-    const React = require('react');
-    return React.createElement('a', { href, ...props }, children);
+    const React = require("react");
+    return React.createElement("a", { href, ...props }, children);
   },
-  useLocation: () => ['/', () => {}],
+  useLocation: () => ["/", () => {}],
   useRoute: () => [false, {}],
   Router: ({ children }) => {
-    const React = require('react');
-    return React.createElement('div', null, children);
+    const React = require("react");
+    return React.createElement("div", null, children);
   },
-  Route: ({ path, component: Component, children, ...props }) => {
-    const React = require('react');
-    return React.createElement('div', props, Component ? React.createElement(Component) : children);
+  Route: ({ _path, component: Component, children, ...props }) => {
+    const React = require("react");
+    return React.createElement("div", props, Component ? React.createElement(Component) : children);
   },
 };
