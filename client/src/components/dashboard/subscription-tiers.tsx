@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { formatPrice } from "@/lib/subscription";
-import type { SubscriptionTiers } from "@/lib/subscription";
+import type { SubscriptionTiers as SubscriptionTiersType } from "@/lib/subscription";
 
 interface TierCardProps {
   name: string;
@@ -16,18 +16,35 @@ interface TierCardProps {
   tierKey: string;
 }
 
-function TierCard({ name, price, currency, interval, popular, features, limitations, tierKey }: TierCardProps) {
+function TierCard({
+  name,
+  price,
+  currency,
+  interval,
+  popular,
+  features,
+  limitations,
+  tierKey,
+}: TierCardProps) {
   return (
-    <div className={`p-6 ${popular ? 'bg-primary/5 dark:bg-primary/10' : ''}`} data-testid={`tier-${tierKey}`}>
+    <div
+      className={`p-6 ${popular ? "bg-primary/5 dark:bg-primary/10" : ""}`}
+      data-testid={`tier-${tierKey}`}
+    >
       <div className="flex items-center space-x-2 mb-4">
-        <div className={`w-3 h-3 rounded-full ${
-          tierKey === 'free' ? 'bg-gray-400' : 
-          tierKey === 'pro' ? 'bg-primary' : 
-          'bg-purple-600'
-        }`}></div>
-        <h4 className="font-semibold" data-testid={`name-${tierKey}`}>{name}</h4>
+        <div
+          className={`w-3 h-3 rounded-full ${
+            tierKey === "free" ? "bg-gray-400" : tierKey === "pro" ? "bg-primary" : "bg-purple-600"
+          }`}
+        ></div>
+        <h4 className="font-semibold" data-testid={`name-${tierKey}`}>
+          {name}
+        </h4>
         {popular && (
-          <Badge className="bg-primary text-primary-foreground" data-testid={`badge-popular-${tierKey}`}>
+          <Badge
+            className="bg-primary text-primary-foreground"
+            data-testid={`badge-popular-${tierKey}`}
+          >
             Popular
           </Badge>
         )}
@@ -38,13 +55,21 @@ function TierCard({ name, price, currency, interval, popular, features, limitati
       </p>
       <ul className="space-y-2 text-sm text-muted-foreground">
         {features.map((feature, index) => (
-          <li key={index} className="flex items-center space-x-2" data-testid={`feature-${tierKey}-${index}`}>
+          <li
+            key={index}
+            className="flex items-center space-x-2"
+            data-testid={`feature-${tierKey}-${index}`}
+          >
             <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
             <span>{feature}</span>
           </li>
         ))}
         {limitations?.map((limitation, index) => (
-          <li key={index} className="flex items-center space-x-2" data-testid={`limitation-${tierKey}-${index}`}>
+          <li
+            key={index}
+            className="flex items-center space-x-2"
+            data-testid={`limitation-${tierKey}-${index}`}
+          >
             <X className="w-4 h-4 text-gray-400" />
             <span>{limitation}</span>
           </li>
@@ -55,7 +80,7 @@ function TierCard({ name, price, currency, interval, popular, features, limitati
 }
 
 export default function SubscriptionTiers() {
-  const { data: tiers } = useQuery<SubscriptionTiers>({
+  const { data: tiers } = useQuery<SubscriptionTiersType>({
     queryKey: ["/api/subscription-tiers"],
   });
 
@@ -67,7 +92,10 @@ export default function SubscriptionTiers() {
       <Card>
         <CardHeader className="border-b">
           <CardTitle data-testid="title-tier-structure">Tier Structure</CardTitle>
-          <p className="text-sm text-muted-foreground mt-1" data-testid="description-tier-structure">
+          <p
+            className="text-sm text-muted-foreground mt-1"
+            data-testid="description-tier-structure"
+          >
             Basic subscription model implementation
           </p>
         </CardHeader>

@@ -11,11 +11,42 @@ interface StatusCardProps {
   details: Array<{ label: string; status: "success" | "error" | "active" }>;
 }
 
+interface DevStatus {
+  frontend?: {
+    port: number;
+    status: string;
+  };
+  backend?: {
+    port: number;
+    status: string;
+  };
+  hotReload?: {
+    vite: string;
+    nodemon: string;
+  };
+}
+
+interface TsStatus {
+  client?: {
+    status: string;
+  };
+  server?: {
+    status: string;
+  };
+}
+
+interface EnvStatus {
+  summary?: {
+    configured: number;
+    status: string;
+  };
+}
+
 function StatusCard({ title, description, icon, status, details }: StatusCardProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "online":
-      case "clean": 
+      case "clean":
       case "loaded":
       case "active":
         return "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200";
@@ -24,8 +55,8 @@ function StatusCard({ title, description, icon, status, details }: StatusCardPro
     }
   };
 
-  const getDetailIcon = (status: "success" | "error" | "active") => {
-    switch (status) {
+  const getDetailIcon = (_status: "success" | "error" | "active") => {
+    switch (_status) {
       case "success":
         return "✓";
       case "active":
@@ -35,8 +66,8 @@ function StatusCard({ title, description, icon, status, details }: StatusCardPro
     }
   };
 
-  const getDetailColor = (status: "success" | "error" | "active") => {
-    switch (status) {
+  const getDetailColor = (_status: "success" | "error" | "active") => {
+    switch (_status) {
       case "success":
       case "active":
         return "text-green-600 dark:text-green-400";
@@ -46,29 +77,35 @@ function StatusCard({ title, description, icon, status, details }: StatusCardPro
   };
 
   return (
-    <Card data-testid={`card-${title.toLowerCase().replace(/\s+/g, '-')}`}>
+    <Card data-testid={`card-${title.toLowerCase().replace(/\s+/g, "-")}`}>
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-            {icon}
-          </div>
+          <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">{icon}</div>
           <Badge className={getStatusColor(status)} data-testid={`status-${status}`}>
             {status.charAt(0).toUpperCase() + status.slice(1)}
           </Badge>
         </div>
-        <h3 className="text-lg font-semibold mb-1" data-testid={`title-${title.toLowerCase().replace(/\s+/g, '-')}`}>
+        <h3
+          className="text-lg font-semibold mb-1"
+          data-testid={`title-${title.toLowerCase().replace(/\s+/g, "-")}`}
+        >
           {title}
         </h3>
-        <p className="text-sm text-muted-foreground mb-3" data-testid={`description-${title.toLowerCase().replace(/\s+/g, '-')}`}>
+        <p
+          className="text-sm text-muted-foreground mb-3"
+          data-testid={`description-${title.toLowerCase().replace(/\s+/g, "-")}`}
+        >
           {description}
         </p>
         <div className="space-y-2">
           {details.map((detail, index) => (
-            <div key={index} className="flex justify-between text-sm" data-testid={`detail-${index}`}>
+            <div
+              key={index}
+              className="flex justify-between text-sm"
+              data-testid={`detail-${index}`}
+            >
               <span>{detail.label}</span>
-              <span className={getDetailColor(detail.status)}>
-                {getDetailIcon(detail.status)}
-              </span>
+              <span className={getDetailColor(detail.status)}>{getDetailIcon(detail.status)}</span>
             </div>
           ))}
         </div>
@@ -78,15 +115,15 @@ function StatusCard({ title, description, icon, status, details }: StatusCardPro
 }
 
 export default function ProjectOverview() {
-  const { data: devStatus } = useQuery({
+  const { data: devStatus } = useQuery<DevStatus>({
     queryKey: ["/api/dev-status"],
   });
 
-  const { data: tsStatus } = useQuery({
-    queryKey: ["/api/typescript-status"], 
+  const { data: tsStatus } = useQuery<TsStatus>({
+    queryKey: ["/api/typescript-status"],
   });
 
-  const { data: envStatus } = useQuery({
+  const { data: envStatus } = useQuery<EnvStatus>({
     queryKey: ["/api/env-status"],
   });
 
@@ -110,13 +147,13 @@ export default function ProjectOverview() {
           icon={<Server className="w-5 h-5 text-green-600 dark:text-green-400" />}
           status="online"
           details={[
-            { 
-              label: `Frontend (${devStatus?.frontend?.port || 3000})`, 
-              status: devStatus?.frontend?.status === "running" ? "active" : "error" 
+            {
+              label: `Frontend (${devStatus?.frontend?.port || 3000})`,
+              status: devStatus?.frontend?.status === "running" ? "active" : "error",
             },
-            { 
-              label: `Backend (${devStatus?.backend?.port || 5000})`, 
-              status: devStatus?.backend?.status === "running" ? "active" : "error" 
+            {
+              label: `Backend (${devStatus?.backend?.port || 5000})`,
+              status: devStatus?.backend?.status === "running" ? "active" : "error",
             },
           ]}
         />
@@ -127,13 +164,13 @@ export default function ProjectOverview() {
           icon={<Code className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
           status="clean"
           details={[
-            { 
-              label: "Client", 
-              status: tsStatus?.client?.status === "clean" ? "success" : "error" 
+            {
+              label: "Client",
+              status: tsStatus?.client?.status === "clean" ? "success" : "error",
             },
-            { 
-              label: "Server", 
-              status: tsStatus?.server?.status === "clean" ? "success" : "error" 
+            {
+              label: "Server",
+              status: tsStatus?.server?.status === "clean" ? "success" : "error",
             },
           ]}
         />
@@ -144,13 +181,13 @@ export default function ProjectOverview() {
           icon={<Key className="w-5 h-5 text-purple-600 dark:text-purple-400" />}
           status="loaded"
           details={[
-            { 
-              label: `${envStatus?.summary?.configured || 0} Variables`, 
-              status: envStatus?.summary?.status === "complete" ? "success" : "error" 
+            {
+              label: `${envStatus?.summary?.configured || 0} Variables`,
+              status: envStatus?.summary?.status === "complete" ? "success" : "error",
             },
-            { 
-              label: "Validation", 
-              status: envStatus?.summary?.status === "complete" ? "success" : "error" 
+            {
+              label: "Validation",
+              status: envStatus?.summary?.status === "complete" ? "success" : "error",
             },
           ]}
         />
@@ -161,13 +198,13 @@ export default function ProjectOverview() {
           icon={<Zap className="w-5 h-5 text-orange-600 dark:text-orange-400" />}
           status="active"
           details={[
-            { 
-              label: "Vite HMR", 
-              status: devStatus?.hotReload?.vite === "active" ? "active" : "error" 
+            {
+              label: "Vite HMR",
+              status: devStatus?.hotReload?.vite === "active" ? "active" : "error",
             },
-            { 
-              label: "Nodemon", 
-              status: devStatus?.hotReload?.nodemon === "active" ? "active" : "error" 
+            {
+              label: "Nodemon",
+              status: devStatus?.hotReload?.nodemon === "active" ? "active" : "error",
             },
           ]}
         />

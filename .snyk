@@ -1,0 +1,32 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.25.0
+
+# Configuration
+ignore:
+  # Example: ignore a specific vulnerability for development dependencies
+  # 'SNYK-JS-LODASH-567746':
+  #   - '*':
+  #       reason: Development dependency only
+  #       expires: '2024-12-31T23:59:59.999Z'
+
+# Configuration for Snyk Code (SAST)
+code:
+  # Ignore rules for specific files or patterns
+  exclude:
+    - "dist/**"
+    - "build/**"
+    - "node_modules/**"
+    - "*.test.js"
+    - "*.test.ts"
+    - "*.test.tsx"
+    - "test/**"
+    - "tests/**"
+    - "__tests__/**"
+    
+# Language settings
+language-settings:
+  javascript:
+    # Skip files with these extensions for JavaScript scanning
+    ignore-patterns:
+      - "*.min.js"
+      - "*.bundle.js"

@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ShieldCheck, Rocket, CheckCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -9,20 +9,34 @@ interface ToolingCardProps {
   cardKey: string;
 }
 
+interface ToolingStatusType {
+  codeQuality?: Record<string, { status: string; description: string }>;
+  buildDeploy?: Record<string, { status: string; description: string }>;
+}
+
 function ToolingCard({ title, icon, tools, cardKey }: ToolingCardProps) {
   return (
     <Card data-testid={`card-${cardKey}`}>
       <CardContent className="p-6">
-        <h3 className="text-lg font-semibold mb-4 flex items-center space-x-2" data-testid={`title-${cardKey}`}>
+        <h3
+          className="text-lg font-semibold mb-4 flex items-center space-x-2"
+          data-testid={`title-${cardKey}`}
+        >
           {icon}
           <span>{title}</span>
         </h3>
         <div className="space-y-4">
           {Object.entries(tools).map(([toolName, tool]) => (
-            <div key={toolName} className="flex items-center justify-between" data-testid={`tool-${toolName}`}>
+            <div
+              key={toolName}
+              className="flex items-center justify-between"
+              data-testid={`tool-${toolName}`}
+            >
               <div className="flex items-center space-x-3">
                 <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
-                <span className="text-sm" data-testid={`name-${toolName}`}>{toolName}</span>
+                <span className="text-sm" data-testid={`name-${toolName}`}>
+                  {toolName}
+                </span>
               </div>
               <span className="text-xs text-muted-foreground" data-testid={`status-${toolName}`}>
                 {tool.status}
@@ -36,7 +50,7 @@ function ToolingCard({ title, icon, tools, cardKey }: ToolingCardProps) {
 }
 
 export default function ToolingStatus() {
-  const { data: tooling } = useQuery({
+  const { data: tooling } = useQuery<ToolingStatusType>({
     queryKey: ["/api/tooling-status"],
   });
 

@@ -1,38 +1,45 @@
+/* eslint-disable max-len */
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger 
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { 
-  Shield, 
-  Users, 
-  Crown, 
-  Star, 
-  Trash2, 
+import {
+  Shield,
+  Users,
+  // Crown,
+  Star,
+  Trash2,
   Search,
   ArrowLeft,
-  Edit
+  Edit,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -40,7 +47,7 @@ import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 
 interface AdminUser {
-  id: string;
+  _id: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -57,28 +64,7 @@ export default function AdminUsers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
 
-  // Redirect if not admin
-  if ((currentUser as any)?.role !== 'admin') {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center">Access Denied</CardTitle>
-            <CardDescription className="text-center">
-              You need administrator privileges to access this page.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Link href="/">
-              <Button>Return Home</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Fetch all users
+  // All hooks must come first, before any conditional logic
   const { data: users = [], isLoading: usersLoading } = useQuery({
     queryKey: ["/api/admin/users"],
     queryFn: async () => {
@@ -92,8 +78,14 @@ export default function AdminUsers() {
 
   // Update user mutation
   const updateUserMutation = useMutation({
-    mutationFn: async ({ userId, updates }: { userId: string; updates: { role?: string; subscriptionStatus?: string } }) => {
-      return apiRequest("PUT", `/api/admin/users/${userId}`, updates);
+    mutationFn: async ({
+      _userId,
+      _updates,
+    }: {
+      _userId: string;
+      _updates: { role?: string; subscriptionStatus?: string };
+    }) => {
+      return apiRequest("PUT", `/api/admin/users/${_userId}`, _updates);
     },
     onSuccess: () => {
       toast({
@@ -103,7 +95,7 @@ export default function AdminUsers() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       setEditingUser(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message,
@@ -114,8 +106,8 @@ export default function AdminUsers() {
 
   // Delete user mutation
   const deleteUserMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      return apiRequest("DELETE", `/api/admin/users/${userId}`);
+    mutationFn: async (_userId: string) => {
+      return apiRequest("DELETE", `/api/admin/users/${_userId}`);
     },
     onSuccess: () => {
       toast({
@@ -124,7 +116,7 @@ export default function AdminUsers() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message,
@@ -133,19 +125,46 @@ export default function AdminUsers() {
     },
   });
 
+  // Then conditional logic and early returns
+  if (currentUser?.role !== "admin") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center">Access Denied</CardTitle>
+            <CardDescription className="text-center">
+              You need administrator privileges to access this page.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Link to="/">
+              <Button>Return Home</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // Filter users based on search
-  const filteredUsers = users.filter((user: AdminUser) =>
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.lastName.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = users.filter(
+    (user: AdminUser) =>
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.lastName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getSubscriptionBadge = (status: string) => {
-    switch (status) {
+  const getSubscriptionBadge = (_status: string) => {
+    switch (_status) {
       case "trial":
         return <Badge variant="secondary">Trial</Badge>;
       case "paid":
-        return <Badge className="bg-green-600"><Star className="h-3 w-3 mr-1" />Paid</Badge>;
+        return (
+          <Badge className="bg-green-600">
+            <Star className="h-3 w-3 mr-1" />
+            Paid
+          </Badge>
+        );
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
@@ -154,7 +173,12 @@ export default function AdminUsers() {
   const getRoleBadge = (role: string) => {
     switch (role) {
       case "admin":
-        return <Badge variant="destructive"><Shield className="h-3 w-3 mr-1" />Admin</Badge>;
+        return (
+          <Badge variant="destructive">
+            <Shield className="h-3 w-3 mr-1" />
+            Admin
+          </Badge>
+        );
       case "user":
         return <Badge variant="outline">User</Badge>;
       default:
@@ -167,7 +191,7 @@ export default function AdminUsers() {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-4 mb-4">
-          <Link href="/admin/dashboard">
+          <Link to="/admin/dashboard">
             <Button variant="ghost" size="sm" data-testid="button-back-dashboard">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
@@ -191,14 +215,14 @@ export default function AdminUsers() {
             <div className="text-2xl font-bold">{users.length}</div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Admin Users</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {users.filter((u: AdminUser) => u.role === 'admin').length}
+              {users.filter((u: AdminUser) => u.role === "admin").length}
             </div>
           </CardContent>
         </Card>
@@ -209,7 +233,7 @@ export default function AdminUsers() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {users.filter((u: AdminUser) => u.subscriptionStatus === 'trial').length}
+              {users.filter((u: AdminUser) => u.subscriptionStatus === "trial").length}
             </div>
           </CardContent>
         </Card>
@@ -220,7 +244,7 @@ export default function AdminUsers() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {users.filter((u: AdminUser) => u.subscriptionStatus === 'paid').length}
+              {users.filter((u: AdminUser) => u.subscriptionStatus === "paid").length}
             </div>
           </CardContent>
         </Card>
@@ -235,9 +259,7 @@ export default function AdminUsers() {
                 <Users className="h-5 w-5" />
                 All Users
               </CardTitle>
-              <CardDescription>
-                View and manage all system users
-              </CardDescription>
+              <CardDescription>View and manage all system users</CardDescription>
             </div>
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -272,12 +294,12 @@ export default function AdminUsers() {
                 </TableHeader>
                 <TableBody>
                   {filteredUsers.map((user: AdminUser) => (
-                    <TableRow key={user.id}>
+                    <TableRow key={user._id}>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
                             <span className="text-sm font-bold text-blue-600">
-                              {user.firstName?.charAt(0) || 'U'}
+                              {user.firstName?.charAt(0) || "U"}
                             </span>
                           </div>
                           <span className="font-medium">
@@ -295,19 +317,19 @@ export default function AdminUsers() {
                             variant="ghost"
                             size="sm"
                             onClick={() => setEditingUser(user)}
-                            data-testid={`button-edit-${user.id}`}
+                            data-testid={`button-edit-${user._id}`}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          
-                          {user.id !== (currentUser as any)?.id && (
+
+                          {user._id !== currentUser?._id && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
                                   className="text-red-600 hover:text-red-700"
-                                  data-testid={`button-delete-${user.id}`}
+                                  data-testid={`button-delete-${user._id}`}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -316,14 +338,15 @@ export default function AdminUsers() {
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>Delete User</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Are you sure you want to delete {user.firstName} {user.lastName}? 
-                                    This will permanently delete their account and all associated data.
+                                    Are you sure you want to delete {user.firstName} {user.lastName}
+                                    ? This will permanently delete their account and all associated
+                                    data.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
-                                    onClick={() => deleteUserMutation.mutate(user.id)}
+                                    onClick={() => deleteUserMutation.mutate(user._id)}
                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                   >
                                     Delete User
@@ -348,7 +371,9 @@ export default function AdminUsers() {
         <AlertDialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Edit User: {editingUser.firstName} {editingUser.lastName}</AlertDialogTitle>
+              <AlertDialogTitle>
+                Edit User: {editingUser.firstName} {editingUser.lastName}
+              </AlertDialogTitle>
               <AlertDialogDescription>
                 Update user role and subscription status
               </AlertDialogDescription>
@@ -373,7 +398,9 @@ export default function AdminUsers() {
                 <label className="text-sm font-medium">Subscription Status</label>
                 <Select
                   defaultValue={editingUser.subscriptionStatus}
-                  onValueChange={(value) => setEditingUser({ ...editingUser, subscriptionStatus: value })}
+                  onValueChange={(value) =>
+                    setEditingUser({ ...editingUser, subscriptionStatus: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -388,13 +415,15 @@ export default function AdminUsers() {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => updateUserMutation.mutate({
-                  userId: editingUser.id,
-                  updates: {
-                    role: editingUser.role,
-                    subscriptionStatus: editingUser.subscriptionStatus
-                  }
-                })}
+                onClick={() =>
+                  updateUserMutation.mutate({
+                    _userId: editingUser._id,
+                    _updates: {
+                      role: editingUser.role,
+                      subscriptionStatus: editingUser.subscriptionStatus,
+                    },
+                  })
+                }
                 disabled={updateUserMutation.isPending}
               >
                 {updateUserMutation.isPending ? "Updating..." : "Update User"}

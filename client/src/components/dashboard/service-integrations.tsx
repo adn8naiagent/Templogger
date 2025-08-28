@@ -6,6 +6,19 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+interface ServiceData {
+  name: string;
+  status: "connected" | "disconnected";
+  description: string;
+  features: Record<string, string>;
+}
+
+interface ServicesResponse {
+  supabase?: ServiceData;
+  stripe?: ServiceData;
+  claude?: ServiceData;
+}
+
 interface ServiceCardProps {
   name: string;
   description: string;
@@ -18,7 +31,7 @@ interface ServiceCardProps {
 function ServiceCard({ name, description, icon, status, features, serviceKey }: ServiceCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const testConnection = useMutation({
     mutationFn: async () => {
       return apiRequest("POST", `/api/test-connection/${serviceKey}`);
@@ -59,7 +72,9 @@ function ServiceCard({ name, description, icon, status, features, serviceKey }: 
             {icon}
           </div>
           <div>
-            <h3 className="font-semibold" data-testid={`title-${serviceKey}`}>{name}</h3>
+            <h3 className="font-semibold" data-testid={`title-${serviceKey}`}>
+              {name}
+            </h3>
             <p className="text-sm text-muted-foreground" data-testid={`description-${serviceKey}`}>
               {description}
             </p>
@@ -73,7 +88,11 @@ function ServiceCard({ name, description, icon, status, features, serviceKey }: 
             </Badge>
           </div>
           {Object.entries(features).map(([feature, value]) => (
-            <div key={feature} className="flex items-center justify-between" data-testid={`feature-${feature}`}>
+            <div
+              key={feature}
+              className="flex items-center justify-between"
+              data-testid={`feature-${feature}`}
+            >
               <span className="text-sm">{feature}</span>
               <span className="text-green-600 dark:text-green-400 text-sm">{value}</span>
             </div>
@@ -94,7 +113,7 @@ function ServiceCard({ name, description, icon, status, features, serviceKey }: 
 }
 
 export default function ServiceIntegrations() {
-  const { data: services } = useQuery({
+  const { data: services } = useQuery<ServicesResponse>({
     queryKey: ["/api/services-status"],
   });
 

@@ -2,12 +2,26 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useLocation } from "wouter";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+// import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Loader2, UserPlus, AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { signUpSchema, type SignUpData } from "@shared/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -30,25 +44,26 @@ export default function Signup() {
   });
 
   const signupMutation = useMutation({
-    mutationFn: async (data: SignUpData) => {
-      const response = await apiRequest("POST", "/api/auth/signup", data);
+    mutationFn: async (_data: SignUpData) => {
+      const response = await apiRequest("POST", "/api/auth/signup", _data);
       return response.json();
     },
     onSuccess: async (data) => {
       // Store the auth token in localStorage
       if (data.authToken) {
-        localStorage.setItem('authToken', data.authToken);
+        localStorage.setItem("authToken", data.authToken);
       }
-      
+
       toast({
         title: "Account created!",
-        description: "Welcome! Your account has been created successfully. Let's set up your first fridge!",
+        description:
+          "Welcome! Your account has been created successfully. Let&apos;s set up your first fridge!",
       });
-      
+
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       setLocation("/");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Sign up failed",
         description: error.message || "Failed to create account",
@@ -57,13 +72,13 @@ export default function Signup() {
     },
   });
 
-  const onSubmit = (data: SignUpData) => {
-    signupMutation.mutate(data);
+  const onSubmit = (_data: SignUpData) => {
+    signupMutation.mutate(_data);
   };
 
   const password = form.watch("password");
   const [showPassword, setShowPassword] = useState(false);
-  
+
   const passwordStrength = {
     hasLength: password?.length >= 8,
     hasUpper: /[A-Z]/.test(password || ""),
@@ -73,7 +88,10 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4" data-testid="signup-container">
+    <div
+      className="min-h-screen flex items-center justify-center bg-background p-4"
+      data-testid="signup-container"
+    >
       <Card className="w-full max-w-md" data-testid="signup-card">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center" data-testid="signup-title">
@@ -83,7 +101,7 @@ export default function Signup() {
             Enter your details to create a new account
           </CardDescription>
         </CardHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} data-testid="signup-form">
             <CardContent className="space-y-4">
@@ -179,27 +197,57 @@ export default function Signup() {
                       </div>
                     </FormControl>
                     <FormMessage />
-                    
+
                     {password && (
                       <div className="space-y-1 text-xs" data-testid="password-requirements">
-                        <div className={`flex items-center space-x-1 ${passwordStrength.hasLength ? 'text-green-600' : 'text-muted-foreground'}`}>
-                          {passwordStrength.hasLength ? <CheckCircle2 className="h-3 w-3" /> : <div className="h-3 w-3 border rounded-full" />}
+                        <div
+                          className={`flex items-center space-x-1 ${passwordStrength.hasLength ? "text-green-600" : "text-muted-foreground"}`}
+                        >
+                          {passwordStrength.hasLength ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : (
+                            <div className="h-3 w-3 border rounded-full" />
+                          )}
                           <span>At least 8 characters</span>
                         </div>
-                        <div className={`flex items-center space-x-1 ${passwordStrength.hasUpper ? 'text-green-600' : 'text-muted-foreground'}`}>
-                          {passwordStrength.hasUpper ? <CheckCircle2 className="h-3 w-3" /> : <div className="h-3 w-3 border rounded-full" />}
+                        <div
+                          className={`flex items-center space-x-1 ${passwordStrength.hasUpper ? "text-green-600" : "text-muted-foreground"}`}
+                        >
+                          {passwordStrength.hasUpper ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : (
+                            <div className="h-3 w-3 border rounded-full" />
+                          )}
                           <span>One uppercase letter</span>
                         </div>
-                        <div className={`flex items-center space-x-1 ${passwordStrength.hasLower ? 'text-green-600' : 'text-muted-foreground'}`}>
-                          {passwordStrength.hasLower ? <CheckCircle2 className="h-3 w-3" /> : <div className="h-3 w-3 border rounded-full" />}
+                        <div
+                          className={`flex items-center space-x-1 ${passwordStrength.hasLower ? "text-green-600" : "text-muted-foreground"}`}
+                        >
+                          {passwordStrength.hasLower ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : (
+                            <div className="h-3 w-3 border rounded-full" />
+                          )}
                           <span>One lowercase letter</span>
                         </div>
-                        <div className={`flex items-center space-x-1 ${passwordStrength.hasNumber ? 'text-green-600' : 'text-muted-foreground'}`}>
-                          {passwordStrength.hasNumber ? <CheckCircle2 className="h-3 w-3" /> : <div className="h-3 w-3 border rounded-full" />}
+                        <div
+                          className={`flex items-center space-x-1 ${passwordStrength.hasNumber ? "text-green-600" : "text-muted-foreground"}`}
+                        >
+                          {passwordStrength.hasNumber ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : (
+                            <div className="h-3 w-3 border rounded-full" />
+                          )}
                           <span>One number</span>
                         </div>
-                        <div className={`flex items-center space-x-1 ${passwordStrength.hasSymbol ? 'text-green-600' : 'text-muted-foreground'}`}>
-                          {passwordStrength.hasSymbol ? <CheckCircle2 className="h-3 w-3" /> : <div className="h-3 w-3 border rounded-full" />}
+                        <div
+                          className={`flex items-center space-x-1 ${passwordStrength.hasSymbol ? "text-green-600" : "text-muted-foreground"}`}
+                        >
+                          {passwordStrength.hasSymbol ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : (
+                            <div className="h-3 w-3 border rounded-full" />
+                          )}
                           <span>One symbol (@$!%*?&)</span>
                         </div>
                       </div>
@@ -240,7 +288,11 @@ export default function Signup() {
 
               <div className="text-center text-sm text-muted-foreground">
                 Already have an account?{" "}
-                <Link href="/auth/login" className="text-primary hover:underline" data-testid="link-login">
+                <Link
+                  to="/auth/login"
+                  className="text-primary hover:underline"
+                  data-testid="link-login"
+                >
                   Sign in
                 </Link>
               </div>

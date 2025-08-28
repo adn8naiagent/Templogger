@@ -1,0 +1,592 @@
+
+> rest-express@1.0.0 lint
+> eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0
+
+
+/home/runner/workspace/client/src/components/calibration/calibration-manager.tsx
+  438:77  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  490:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/client/src/components/checklists/__tests__/checklist-dashboard.test.tsx
+   25:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   34:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   35:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   36:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   37:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   38:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   39:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   40:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   41:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   42:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   43:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   44:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  227:75  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  228:87  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  229:87  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/client/src/components/checklists/checklist-dashboard.tsx
+  149:14  warning  '_' is defined but never used                          @typescript-eslint/no-unused-vars
+  448:1   warning  This line has a length of 105. Maximum allowed is 100  max-len
+
+/home/runner/workspace/client/src/components/checklists/checklist-editor.tsx
+  303:1  warning  This line has a length of 104. Maximum allowed is 100  max-len
+  320:1  warning  This line has a length of 105. Maximum allowed is 100  max-len
+  332:1  warning  This line has a length of 104. Maximum allowed is 100  max-len
+
+/home/runner/workspace/client/src/components/checklists/complete-checklist-modal.tsx
+  201:1  warning  This line has a length of 119. Maximum allowed is 100  max-len
+  410:1  warning  This line has a length of 115. Maximum allowed is 100  max-len
+  411:1  warning  This line has a length of 112. Maximum allowed is 100  max-len
+
+/home/runner/workspace/client/src/components/dashboard/__tests__/quick-actions.test.tsx
+  15:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  16:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  17:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  18:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/client/src/components/dashboard/project-structure.tsx
+  34:29  warning  'status' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+/home/runner/workspace/client/src/components/layout/__tests__/navigation.test.tsx
+    7:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+    8:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+    9:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   10:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  165:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/client/src/components/security/__tests__/security-status.test.tsx
+  11:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  12:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  13:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  14:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  15:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  16:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  17:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/client/src/components/security/security-status.tsx
+  82:1  warning  This line has a length of 116. Maximum allowed is 100  max-len
+
+/home/runner/workspace/client/src/components/ui/__tests__/alert.test.tsx
+  203:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  209:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  215:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/client/src/components/ui/__tests__/badge.test.tsx
+  196:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  202:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  208:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  240:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  248:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/client/src/components/ui/__tests__/button.test.tsx
+  146:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  152:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  158:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/client/src/components/ui/__tests__/card.test.tsx
+  193:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  208:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/client/src/components/ui/__tests__/input.test.tsx
+  168:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  187:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  193:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/client/src/components/ui/sidebar.tsx
+  93:7  warning  React Hook React.useCallback has a missing dependency: '_open'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/runner/workspace/client/src/hooks/use-toast.ts
+  22:7  warning  'actionTypes' is assigned a value but only used as a type. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/home/runner/workspace/client/src/pages/account.tsx
+   50:1   warning  This line has a length of 114. Maximum allowed is 100  max-len
+   84:22  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  105:22  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  126:22  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  155:14  warning  '_' is defined but never used                          @typescript-eslint/no-unused-vars
+
+/home/runner/workspace/client/src/pages/add-fridge.tsx
+  125:22  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  433:1   warning  This line has a length of 106. Maximum allowed is 100  max-len
+  544:1   warning  This line has a length of 107. Maximum allowed is 100  max-len
+  607:1   warning  This line has a length of 131. Maximum allowed is 100  max-len
+  618:1   warning  This line has a length of 107. Maximum allowed is 100  max-len
+
+/home/runner/workspace/client/src/pages/admin/dashboard.tsx
+   29:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   34:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   45:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  186:77  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  194:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/client/src/pages/admin/subscriptions.tsx
+  52:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/client/src/pages/admin/users.tsx
+   74:1   warning  This line has a length of 129. Maximum allowed is 100  max-len
+   85:22  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  106:22  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  116:23  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  303:57  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  319:1   warning  This line has a length of 102. Maximum allowed is 100  max-len
+  320:1   warning  This line has a length of 103. Maximum allowed is 100  max-len
+  351:1   warning  This line has a length of 108. Maximum allowed is 100  max-len
+  376:1   warning  This line has a length of 106. Maximum allowed is 100  max-len
+
+/home/runner/workspace/client/src/pages/auth/login.tsx
+  51:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/client/src/pages/auth/signup.tsx
+  51:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/client/src/pages/checklists.tsx
+   96:1   warning  This line has a length of 105. Maximum allowed is 100                                       max-len
+  119:12  warning  'checklistsError' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  383:1   warning  This line has a length of 101. Maximum allowed is 100                                       max-len
+  390:1   warning  This line has a length of 108. Maximum allowed is 100                                       max-len
+  392:1   warning  This line has a length of 106. Maximum allowed is 100                                       max-len
+
+/home/runner/workspace/client/src/pages/complete-self-audit.tsx
+  140:1    warning  This line has a length of 111. Maximum allowed is 100  max-len
+  140:103  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  163:74   warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  175:74   warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  341:23   warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  341:31   warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  342:28   warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  364:33   warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  364:41   warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  365:35   warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  536:1    warning  This line has a length of 114. Maximum allowed is 100  max-len
+
+/home/runner/workspace/client/src/pages/compliance-dashboard.tsx
+   94:48  warning  'checklistsLoading' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  174:14  warning  '_' is defined but never used                                                                 @typescript-eslint/no-unused-vars
+  195:62  warning  Unexpected any. Specify a different type                                                      @typescript-eslint/no-explicit-any
+  255:66  warning  Unexpected any. Specify a different type                                                      @typescript-eslint/no-explicit-any
+  255:94  warning  Unexpected any. Specify a different type                                                      @typescript-eslint/no-explicit-any
+  262:33  warning  Unexpected any. Specify a different type                                                      @typescript-eslint/no-explicit-any
+  263:33  warning  Unexpected any. Specify a different type                                                      @typescript-eslint/no-explicit-any
+  264:33  warning  Unexpected any. Specify a different type                                                      @typescript-eslint/no-explicit-any
+  265:62  warning  Unexpected any. Specify a different type                                                      @typescript-eslint/no-explicit-any
+  282:29  warning  Unexpected any. Specify a different type                                                      @typescript-eslint/no-explicit-any
+  418:63  warning  Unexpected any. Specify a different type                                                      @typescript-eslint/no-explicit-any
+  468:50  warning  Unexpected any. Specify a different type                                                      @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/client/src/pages/edit-fridge.tsx
+  145:31  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  158:22  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  181:22  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  204:22  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  227:22  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  635:1   warning  This line has a length of 181. Maximum allowed is 100  max-len
+  673:1   warning  This line has a length of 113. Maximum allowed is 100  max-len
+  677:1   warning  This line has a length of 107. Maximum allowed is 100  max-len
+
+/home/runner/workspace/client/src/pages/fridge-detail.tsx
+   51:17  warning  'calibrationRecords' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   56:17  warning  'maintenanceRecords' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  410:87  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/client/src/pages/self-audit-checklists.tsx
+    7:10  warning  'Separator' is defined but never used. Allowed unused vars must match /^_/u                         @typescript-eslint/no-unused-vars
+   10:3   warning  'Dialog' is defined but never used. Allowed unused vars must match /^_/u                            @typescript-eslint/no-unused-vars
+   11:3   warning  'DialogContent' is defined but never used. Allowed unused vars must match /^_/u                     @typescript-eslint/no-unused-vars
+   12:3   warning  'DialogDescription' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+   13:3   warning  'DialogHeader' is defined but never used. Allowed unused vars must match /^_/u                      @typescript-eslint/no-unused-vars
+   14:3   warning  'DialogTitle' is defined but never used. Allowed unused vars must match /^_/u                       @typescript-eslint/no-unused-vars
+   15:3   warning  'DialogTrigger' is defined but never used. Allowed unused vars must match /^_/u                     @typescript-eslint/no-unused-vars
+   27:3   warning  'Settings' is defined but never used. Allowed unused vars must match /^_/u                          @typescript-eslint/no-unused-vars
+   32:3   warning  'Filter' is defined but never used. Allowed unused vars must match /^_/u                            @typescript-eslint/no-unused-vars
+   33:3   warning  'Download' is defined but never used. Allowed unused vars must match /^_/u                          @typescript-eslint/no-unused-vars
+   35:3   warning  'User' is defined but never used. Allowed unused vars must match /^_/u                              @typescript-eslint/no-unused-vars
+   36:3   warning  'LogOut' is defined but never used. Allowed unused vars must match /^_/u                            @typescript-eslint/no-unused-vars
+   37:3   warning  'Shield' is defined but never used. Allowed unused vars must match /^_/u                            @typescript-eslint/no-unused-vars
+   38:3   warning  'Crown' is defined but never used. Allowed unused vars must match /^_/u                             @typescript-eslint/no-unused-vars
+   41:3   warning  'Copy' is defined but never used. Allowed unused vars must match /^_/u                              @typescript-eslint/no-unused-vars
+   88:11  warning  'user' is assigned a value but never used. Allowed unused vars must match /^_/u                     @typescript-eslint/no-unused-vars
+   92:10  warning  'selectedTemplate' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+   93:10  warning  'isTemplateEditorOpen' is assigned a value but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+   94:10  warning  'isCompletionViewOpen' is assigned a value but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+   94:32  warning  'setIsCompletionViewOpen' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  115:12  warning  'templatesError' is assigned a value but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  380:72  warning  'idx' is defined but never used. Allowed unused args must match /^_/u                               @typescript-eslint/no-unused-vars
+  445:1   warning  This line has a length of 107. Maximum allowed is 100                                               max-len
+  495:1   warning  This line has a length of 151. Maximum allowed is 100                                               max-len
+  512:1   warning  This line has a length of 126. Maximum allowed is 100                                               max-len
+
+/home/runner/workspace/client/src/pages/settings.tsx
+  35:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/client/src/pages/subscribe.tsx
+   6:52  warning  'CardDescription' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  21:13  warning  'setLocation' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  48:14  warning  '_' is defined but never used                                                           @typescript-eslint/no-unused-vars
+  48:17  warning  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/client/src/pages/temp-logger.tsx
+   35:3   warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u                                                @typescript-eslint/no-unused-vars
+   36:3   warning  'Palette' is defined but never used. Allowed unused vars must match /^_/u                                                 @typescript-eslint/no-unused-vars
+   37:3   warning  'Tag' is defined but never used. Allowed unused vars must match /^_/u                                                     @typescript-eslint/no-unused-vars
+   40:3   warning  'CheckSquare' is defined but never used. Allowed unused vars must match /^_/u                                             @typescript-eslint/no-unused-vars
+   71:23  warning  Unexpected any. Specify a different type                                                                                  @typescript-eslint/no-explicit-any
+   97:10  warning  'selectedTimeWindowId' is assigned a value but never used. Allowed unused vars must match /^_/u                           @typescript-eslint/no-unused-vars
+  121:3   warning  Unexpected console statement                                                                                              no-console
+  122:3   warning  Unexpected console statement                                                                                              no-console
+  123:3   warning  Unexpected console statement                                                                                              no-console
+  169:6   warning  React Hook useEffect has a missing dependency: 'selectedFridgeId'. Either include it or remove the dependency array       react-hooks/exhaustive-deps
+  218:1   warning  This line has a length of 120. Maximum allowed is 100                                                                     max-len
+  266:22  warning  Unexpected any. Specify a different type                                                                                  @typescript-eslint/no-explicit-any
+  294:28  warning  Unexpected any. Specify a different type                                                                                  @typescript-eslint/no-explicit-any
+  317:6   warning  React Hook useEffect has a missing dependency: 'checkTemperatureRange'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  677:1   warning  This line has a length of 118. Maximum allowed is 100                                                                     max-len
+  725:1   warning  This line has a length of 155. Maximum allowed is 100                                                                     max-len
+  898:1   warning  This line has a length of 147. Maximum allowed is 100                                                                     max-len
+
+/home/runner/workspace/client/src/pages/view-audit-completion.tsx
+    7:10   warning  'Separator' is defined but never used. Allowed unused vars must match /^_/u                    @typescript-eslint/no-unused-vars
+   14:3    warning  'User' is defined but never used. Allowed unused vars must match /^_/u                         @typescript-eslint/no-unused-vars
+   17:3    warning  'Eye' is defined but never used. Allowed unused vars must match /^_/u                          @typescript-eslint/no-unused-vars
+   73:11   warning  'user' is assigned a value but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+  116:9    warning  'getComplianceBadge' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  128:45   warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  189:64   warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  189:79   warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  200:58   warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  201:61   warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  202:55   warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  240:1    warning  This line has a length of 141. Maximum allowed is 100                                          max-len
+  299:41   warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  328:1    warning  This line has a length of 127. Maximum allowed is 100                                          max-len
+  328:103  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  338:1    warning  This line has a length of 103. Maximum allowed is 100                                          max-len
+  338:45   warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  345:45   warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/client/src/pages/view-fridges.tsx
+  147:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  148:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  149:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  158:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/server/auth.ts
+    4:43  warning  'SignUpData' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+    4:60  warning  'SignInData' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   29:12  warning  '_' is defined but never used                                                 @typescript-eslint/no-unused-vars
+   34:11  warning  Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+   39:1   warning  This line has a length of 111. Maximum allowed is 100                         max-len
+   52:12  warning  '_' is defined but never used                                                 @typescript-eslint/no-unused-vars
+   62:13  warning  Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+   64:12  warning  '_' is defined but never used                                                 @typescript-eslint/no-unused-vars
+  104:21  warning  Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+  120:19  warning  Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+  162:19  warning  Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+  192:14  warning  '_' is defined but never used                                                 @typescript-eslint/no-unused-vars
+  204:19  warning  Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/server/checklist-service.ts
+   51:1   warning  This line has a length of 113. Maximum allowed is 100                          max-len
+   63:71  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+   63:76  warning  'index' is defined but never used. Allowed unused args must match /^_/u        @typescript-eslint/no-unused-vars
+   63:83  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+   76:14  warning  '_' is defined but never used                                                  @typescript-eslint/no-unused-vars
+   82:1   warning  This line has a length of 134. Maximum allowed is 100                          max-len
+  110:1   warning  This line has a length of 132. Maximum allowed is 100                          max-len
+  176:1   warning  This line has a length of 101. Maximum allowed is 100                          max-len
+  188:14  warning  '_' is defined but never used                                                  @typescript-eslint/no-unused-vars
+  228:14  warning  '_' is defined but never used                                                  @typescript-eslint/no-unused-vars
+  256:24  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+  257:24  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+  268:48  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+  268:75  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+  272:47  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+  272:58  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+  363:14  warning  '_' is defined but never used                                                  @typescript-eslint/no-unused-vars
+  369:1   warning  This line has a length of 111. Maximum allowed is 100                          max-len
+  375:14  warning  '_' is defined but never used                                                  @typescript-eslint/no-unused-vars
+  404:14  warning  '_' is defined but never used                                                  @typescript-eslint/no-unused-vars
+  420:1   warning  This line has a length of 116. Maximum allowed is 100                          max-len
+  555:1   warning  This line has a length of 119. Maximum allowed is 100                          max-len
+  555:42  warning  'checklistId' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  555:63  warning  'from' is defined but never used. Allowed unused args must match /^_/u         @typescript-eslint/no-unused-vars
+  555:77  warning  'to' is defined but never used. Allowed unused args must match /^_/u           @typescript-eslint/no-unused-vars
+  585:5   warning  'completions' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  586:5   warning  'instanceId' is defined but never used. Allowed unused args must match /^_/u   @typescript-eslint/no-unused-vars
+
+/home/runner/workspace/server/index.ts
+    8:21  warning  'serveStatic' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+    9:10  warning  'Pool' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+   13:7   warning  'PgSession' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   92:12  warning  Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  107:44  warning  Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  135:15  warning  Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  148:17  warning  Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/server/replitAuth.ts
+   47:9   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   57:11  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  131:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  153:12  warning  '_' is defined but never used             @typescript-eslint/no-unused-vars
+
+/home/runner/workspace/server/routes.ts
+     5:10  warning  'body' is defined but never used. Allowed unused vars must match /^_/u                         @typescript-eslint/no-unused-vars
+     8:3   warning  'changePasswordSchema' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+    15:3   warning  'insertOutOfRangeEventSchema' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+    16:3   warning  'userRoles' is defined but never used. Allowed unused vars must match /^_/u                    @typescript-eslint/no-unused-vars
+    17:8   warning  'User' is defined but never used. Allowed unused vars must match /^_/u                         @typescript-eslint/no-unused-vars
+    42:10  warning  'handleValidationErrors' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+    64:57  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+    75:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+    82:57  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   113:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   120:58  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   134:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   141:64  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   158:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   165:60  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   174:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   181:56  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   209:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   218:65  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   275:60  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   280:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   287:66  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   311:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   318:64  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   334:48  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   347:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   354:57  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   358:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   365:65  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   379:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   386:68  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   395:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   404:52  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   409:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   416:53  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   444:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   451:62  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   462:1   warning  This line has a length of 182. Maximum allowed is 100                                          max-len
+   503:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   510:67  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   516:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   523:65  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   530:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   537:56  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   542:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   549:55  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   557:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   564:57  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   572:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   579:68  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   587:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   594:66  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   602:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   609:58  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   617:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   626:51  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   631:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   638:52  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   655:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   662:60  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   681:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   688:63  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   699:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   706:68  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   738:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   755:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   785:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   812:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   840:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   885:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   939:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   964:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+   973:57  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1010:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1017:65  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1028:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1035:68  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1045:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1096:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1109:75  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1116:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1123:58  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1152:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1163:64  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1170:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1177:81  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1182:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1193:55  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1200:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1207:59  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1212:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1219:56  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1258:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1265:69  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1290:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1301:58  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1309:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1316:59  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1329:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1336:62  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1350:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1357:72  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1371:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1378:56  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1392:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1399:67  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1413:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1420:79  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1434:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1441:57  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1455:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1462:65  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1500:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1511:75  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1518:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1525:65  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1537:1   warning  This line has a length of 159. Maximum allowed is 100                                          max-len
+  1566:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1573:74  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1587:1   warning  This line has a length of 148. Maximum allowed is 100                                          max-len
+  1610:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1617:77  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1628:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1635:69  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1770:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1781:60  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1786:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1793:72  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1804:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1811:61  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1833:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1840:72  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1857:1   warning  This line has a length of 105. Maximum allowed is 100                                          max-len
+  1863:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1870:75  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1881:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1888:69  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1893:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1900:63  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1921:52  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1922:46  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1951:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1958:62  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1961:15  warning  'auditFiltersSchema' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  1963:22  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1971:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1978:76  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1989:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  1996:56  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  2001:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  2008:60  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  2024:16  warning  'fileError' is defined but never used                                                          @typescript-eslint/no-unused-vars
+  2034:21  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+
+/home/runner/workspace/server/scheduling-utils.ts
+    3:3   warning  'ScheduleWindow' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+   23:33  warning  'timezone' is assigned a value but never used. Allowed unused args must match /^_/u           @typescript-eslint/no-unused-vars
+   37:1   warning  This line has a length of 107. Maximum allowed is 100                                         max-len
+   44:1   warning  This line has a length of 109. Maximum allowed is 100                                         max-len
+   70:1   warning  This line has a length of 107. Maximum allowed is 100                                         max-len
+   77:1   warning  This line has a length of 109. Maximum allowed is 100                                         max-len
+  103:1   warning  This line has a length of 107. Maximum allowed is 100                                         max-len
+  256:1   warning  This line has a length of 107. Maximum allowed is 100                                         max-len
+  260:11  warning  'daysToFirstMonday' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  331:1   warning  This line has a length of 120. Maximum allowed is 100                                         max-len
+
+/home/runner/workspace/server/seed-checklists.ts
+   73:1   warning  This line has a length of 102. Maximum allowed is 100                               max-len
+  130:1   warning  This line has a length of 104. Maximum allowed is 100                               max-len
+  166:1   warning  This line has a length of 106. Maximum allowed is 100                               max-len
+  178:1   warning  This line has a length of 110. Maximum allowed is 100                               max-len
+  203:1   warning  This line has a length of 104. Maximum allowed is 100                               max-len
+  203:36  warning  'checklistService' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  235:1   warning  This line has a length of 110. Maximum allowed is 100                               max-len
+
+/home/runner/workspace/server/storage.ts
+    78:1   warning  This line has a length of 101. Maximum allowed is 100  max-len
+    92:1   warning  This line has a length of 102. Maximum allowed is 100  max-len
+    98:1   warning  This line has a length of 113. Maximum allowed is 100  max-len
+   103:1   warning  This line has a length of 103. Maximum allowed is 100  max-len
+   105:1   warning  This line has a length of 106. Maximum allowed is 100  max-len
+   106:1   warning  This line has a length of 114. Maximum allowed is 100  max-len
+   134:1   warning  This line has a length of 106. Maximum allowed is 100  max-len
+   135:1   warning  This line has a length of 108. Maximum allowed is 100  max-len
+   136:1   warning  This line has a length of 102. Maximum allowed is 100  max-len
+   137:1   warning  This line has a length of 110. Maximum allowed is 100  max-len
+   142:1   warning  This line has a length of 102. Maximum allowed is 100  max-len
+   171:1   warning  This line has a length of 111. Maximum allowed is 100  max-len
+   172:1   warning  This line has a length of 106. Maximum allowed is 100  max-len
+   175:51  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+   176:66  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+   177:65  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+   178:65  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+   181:1   warning  This line has a length of 123. Maximum allowed is 100  max-len
+   182:1   warning  This line has a length of 153. Maximum allowed is 100  max-len
+   183:1   warning  This line has a length of 270. Maximum allowed is 100  max-len
+   184:1   warning  This line has a length of 350. Maximum allowed is 100  max-len
+   189:1   warning  This line has a length of 129. Maximum allowed is 100  max-len
+   190:1   warning  This line has a length of 218. Maximum allowed is 100  max-len
+   191:1   warning  This line has a length of 160. Maximum allowed is 100  max-len
+   192:1   warning  This line has a length of 147. Maximum allowed is 100  max-len
+   198:1   warning  This line has a length of 134. Maximum allowed is 100  max-len
+   200:1   warning  This line has a length of 108. Maximum allowed is 100  max-len
+   257:14  warning  '_' is defined but never used                          @typescript-eslint/no-unused-vars
+   264:1   warning  This line has a length of 119. Maximum allowed is 100  max-len
+   270:58  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+   300:62  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+   321:59  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+   360:1   warning  This line has a length of 108. Maximum allowed is 100  max-len
+   375:1   warning  This line has a length of 105. Maximum allowed is 100  max-len
+   386:14  warning  '_' is defined but never used                          @typescript-eslint/no-unused-vars
+   402:1   warning  This line has a length of 106. Maximum allowed is 100  max-len
+   412:1   warning  This line has a length of 109. Maximum allowed is 100  max-len
+   460:1   warning  This line has a length of 120. Maximum allowed is 100  max-len
+   464:1   warning  This line has a length of 111. Maximum allowed is 100  max-len
+   475:14  warning  '_' is defined but never used                          @typescript-eslint/no-unused-vars
+   499:1   warning  This line has a length of 110. Maximum allowed is 100  max-len
+   518:1   warning  This line has a length of 113. Maximum allowed is 100  max-len
+   519:1   warning  This line has a length of 107. Maximum allowed is 100  max-len
+   523:1   warning  This line has a length of 121. Maximum allowed is 100  max-len
+   615:1   warning  This line has a length of 119. Maximum allowed is 100  max-len
+   623:1   warning  This line has a length of 103. Maximum allowed is 100  max-len
+   652:1   warning  This line has a length of 101. Maximum allowed is 100  max-len
+   667:1   warning  This line has a length of 113. Maximum allowed is 100  max-len
+   689:1   warning  This line has a length of 115. Maximum allowed is 100  max-len
+   703:1   warning  This line has a length of 107. Maximum allowed is 100  max-len
+   721:1   warning  This line has a length of 117. Maximum allowed is 100  max-len
+   742:14  warning  '_' is defined but never used                          @typescript-eslint/no-unused-vars
+   748:1   warning  This line has a length of 107. Maximum allowed is 100  max-len
+   759:1   warning  This line has a length of 109. Maximum allowed is 100  max-len
+   760:1   warning  This line has a length of 143. Maximum allowed is 100  max-len
+   784:1   warning  This line has a length of 106. Maximum allowed is 100  max-len
+   835:1   warning  This line has a length of 123. Maximum allowed is 100  max-len
+  1030:1   warning  This line has a length of 117. Maximum allowed is 100  max-len
+  1058:1   warning  This line has a length of 112. Maximum allowed is 100  max-len
+  1094:57  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  1135:72  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  1183:71  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  1202:71  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  1222:1   warning  This line has a length of 130. Maximum allowed is 100  max-len
+  1249:1   warning  This line has a length of 160. Maximum allowed is 100  max-len
+  1274:1   warning  This line has a length of 190. Maximum allowed is 100  max-len
+  1304:1   warning  This line has a length of 216. Maximum allowed is 100  max-len
+  1362:1   warning  This line has a length of 136. Maximum allowed is 100  max-len
+  1375:1   warning  This line has a length of 224. Maximum allowed is 100  max-len
+  1406:64  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  1413:1   warning  This line has a length of 167. Maximum allowed is 100  max-len
+  1434:1   warning  This line has a length of 154. Maximum allowed is 100  max-len
+  1441:1   warning  This line has a length of 106. Maximum allowed is 100  max-len
+  1458:1   warning  This line has a length of 103. Maximum allowed is 100  max-len
+  1474:1   warning  This line has a length of 141. Maximum allowed is 100  max-len
+  1488:1   warning  This line has a length of 115. Maximum allowed is 100  max-len
+  1490:1   warning  This line has a length of 103. Maximum allowed is 100  max-len
+
+/home/runner/workspace/shared/checklist-types.ts
+   21:1  warning  This line has a length of 104. Maximum allowed is 100  max-len
+  167:1  warning  This line has a length of 102. Maximum allowed is 100  max-len
+
+✖ 496 problems (0 errors, 496 warnings)
+
+ESLint found too many warnings (maximum: 0).

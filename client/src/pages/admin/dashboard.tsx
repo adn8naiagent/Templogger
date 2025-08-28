@@ -1,11 +1,22 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+// import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Users, CreditCard, Activity, DollarSign, UserPlus, AlertTriangle } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+import { Users, CreditCard, Activity, DollarSign, AlertTriangle } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,9 +34,15 @@ export default function AdminDashboard() {
   const { user, isLoading } = useAuth();
   const { toast } = useToast();
 
-  // Redirect if not admin
+  // All hooks must come first, before any conditional logic
+  const { data: stats, isLoading: statsLoading } = useQuery<AdminStats>({
+    queryKey: ["/api/admin/stats"],
+    enabled: user?.role === "admin",
+  });
+
+  // Then effects and other hooks
   useEffect(() => {
-    if (!isLoading && (!user || (user as any).role !== "admin")) {
+    if (!isLoading && (!user || user.role !== "admin")) {
       toast({
         title: "Access Denied",
         description: "You need admin privileges to access this page.",
@@ -36,12 +53,7 @@ export default function AdminDashboard() {
     }
   }, [user, isLoading, toast]);
 
-  const { data: stats, isLoading: statsLoading } = useQuery<AdminStats>({
-    queryKey: ["/api/admin/stats"],
-    enabled: (user as any)?.role === "admin",
-  });
-
-  if (isLoading || !user || (user as any).role !== "admin") {
+  if (isLoading || !user || user.role !== "admin") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -59,16 +71,16 @@ export default function AdminDashboard() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
-            <p className="text-muted-foreground">TempGuard Pro Administration</p>
+            <p className="text-muted-foreground">FridgeSafe Administration</p>
           </div>
           <div className="flex gap-2">
-            <Link href="/admin/users">
+            <Link to="/admin/users">
               <Button variant="outline" data-testid="button-manage-users">
                 <Users className="h-4 w-4 mr-2" />
                 Manage Users
               </Button>
             </Link>
-            <Link href="/">
+            <Link to="/">
               <Button variant="outline" data-testid="button-back-to-app">
                 Back to App
               </Button>
@@ -84,7 +96,9 @@ export default function AdminDashboard() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{statsLoading ? "..." : stats?.totalUsers || 0}</div>
+              <div className="text-2xl font-bold">
+                {statsLoading ? "..." : stats?.totalUsers || 0}
+              </div>
               <p className="text-xs text-muted-foreground">Registered accounts</p>
             </CardContent>
           </Card>
@@ -95,7 +109,9 @@ export default function AdminDashboard() {
               <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{statsLoading ? "..." : stats?.totalSubscriptions || 0}</div>
+              <div className="text-2xl font-bold">
+                {statsLoading ? "..." : stats?.totalSubscriptions || 0}
+              </div>
               <p className="text-xs text-muted-foreground">Active subscribers</p>
             </CardContent>
           </Card>
@@ -119,7 +135,9 @@ export default function AdminDashboard() {
               <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{statsLoading ? "..." : stats?.activeAlerts || 0}</div>
+              <div className="text-2xl font-bold">
+                {statsLoading ? "..." : stats?.activeAlerts || 0}
+              </div>
               <p className="text-xs text-muted-foreground">Temperature alerts</p>
             </CardContent>
           </Card>
@@ -182,20 +200,32 @@ export default function AdminDashboard() {
                           dataKey="count"
                           label={({ tier, count }) => `${tier}: ${count}`}
                         >
-                          {(stats?.subscriptionBreakdown || []).map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
+                          {(stats?.subscriptionBreakdown || []).map(
+                            (
+                              entry: { tier: string; count: number; color: string },
+                              index: number
+                            ) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            )
+                          )}
                         </Pie>
                         <Tooltip />
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="space-y-2">
-                      {(stats?.subscriptionBreakdown || []).map((item, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
-                          <span className="text-sm">{item.tier}: {item.count}</span>
-                        </div>
-                      ))}
+                      {(stats?.subscriptionBreakdown || []).map(
+                        (item: { tier: string; count: number; color: string }, index: number) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: item.color }}
+                            ></div>
+                            <span className="text-sm">
+                              {item.tier}: {item.count}
+                            </span>
+                          </div>
+                        )
+                      )}
                     </div>
                   </div>
                 )}
@@ -212,14 +242,18 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Link href="/admin/users">
+              <Link to="/admin/users">
                 <Button className="w-full" variant="outline" data-testid="button-user-management">
                   <Users className="h-4 w-4 mr-2" />
                   User Management
                 </Button>
               </Link>
-              <Link href="/admin/subscriptions">
-                <Button className="w-full" variant="outline" data-testid="button-subscription-management">
+              <Link to="/admin/subscriptions">
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  data-testid="button-subscription-management"
+                >
                   <CreditCard className="h-4 w-4 mr-2" />
                   Subscription Management
                 </Button>

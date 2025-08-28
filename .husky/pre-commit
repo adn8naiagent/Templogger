@@ -1,0 +1,22 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔒 Running pre-commit checks..."
+
+# Run lint-staged (ESLint + Prettier on staged files)
+echo "🔍 Running lint-staged..."
+npx lint-staged
+
+# Run TypeScript checks
+echo "🔍 Running TypeScript type checking..."
+npm run type-check
+
+# Run Snyk security scan
+echo "🔍 Running security scan..."
+if [ "$SNYK_TOKEN" ]; then
+  snyk test --severity-threshold=high
+else
+  echo "⚠️  SNYK_TOKEN not set, skipping security scan"
+fi
+
+echo "✅ Pre-commit checks completed"

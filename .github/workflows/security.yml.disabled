@@ -1,0 +1,62 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run security scan daily at 2 AM UTC
+    - cron: "0 2 * * *"
+
+jobs:
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript check
+        run: npm run check
+
+      - name: Run ESLint security rules
+        run: npm run lint
+
+      # - name: Setup Snyk
+      #   uses: snyk/actions/setup@0.4.0
+
+      # - name: Run Snyk security scan
+      #   env:
+      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      #   run: |
+      #     snyk test --severity-threshold=high --fail-on=upgradable
+
+      # - name: Run Snyk code analysis
+      #   env:
+      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      #   run: |
+      #     snyk code test
+
+      # - name: Monitor project with Snyk
+      #   env:
+      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      #   run: |
+      #     snyk monitor
+      #   if: github.ref == 'refs/heads/main'
+
+      # - name: Upload security results to GitHub
+      #   uses: github/codeql-action/upload-sarif@v4
+      #   with:
+      #     sarif_file: snyk.sarif
+      #   if: always()

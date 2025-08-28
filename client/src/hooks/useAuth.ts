@@ -1,10 +1,15 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import type { User } from "@shared/schema";
 
 export function useAuth() {
   const queryClient = useQueryClient();
-  
-  const { data: user, isLoading } = useQuery({
+
+  const {
+    data: user,
+    isLoading,
+    refetch,
+  } = useQuery<User>({
     queryKey: ["/api/auth/user"],
     retry: false,
   });
@@ -12,15 +17,16 @@ export function useAuth() {
   const logout = async () => {
     try {
       // Clear the token from localStorage
-      localStorage.removeItem('authToken');
-      
+      localStorage.removeItem("authToken");
+
       // Call the server logout endpoint
       await apiRequest("POST", "/api/auth/signout");
-      
+
       // Invalidate all queries to clear cached data
       queryClient.clear();
     } catch (error) {
       // Even if server call fails, clear local data
+      // eslint-disable-next-line no-console
       console.error("Logout error:", error);
     }
   };
@@ -30,5 +36,6 @@ export function useAuth() {
     isLoading,
     isAuthenticated: !!user,
     logout,
+    refetch,
   };
 }

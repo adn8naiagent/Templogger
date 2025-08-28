@@ -1,0 +1,492 @@
+name: FridgeSafe CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: "20"
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+  STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+  VITE_STRIPE_PUBLIC_KEY: ${{ secrets.VITE_STRIPE_PUBLIC_KEY }}
+  CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+
+jobs:
+  # Security Check Job
+  security:
+    name: Snyk Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📂 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔒 Run Snyk security scan
+        run: npm run security:test 2>&1 | tee security-errors.log
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      
+      - name: 📤 Upload security errors
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-errors
+          path: security-errors.log
+
+  # Parallel Quality Checks
+  lint:
+    name: ESLint Code Quality
+    runs-on: ubuntu-latest
+    needs: [security]
+
+    steps:
+      - name: 📂 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔍 Run ESLint
+        run: npm run lint 2>&1 | tee lint-errors.log
+        
+      - name: 📤 Upload lint errors
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-errors
+          path: lint-errors.log
+
+  prettier:
+    name: Prettier Code Format
+    runs-on: ubuntu-latest
+    needs: [security]
+
+    steps:
+      - name: 📂 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🎨 Check code formatting
+        run: npm run format:check 2>&1 | tee prettier-errors.log
+        
+      - name: 📤 Upload prettier errors
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prettier-errors
+          path: prettier-errors.log
+
+  typecheck:
+    name: TypeScript Type Check
+    runs-on: ubuntu-latest
+    needs: [security]
+
+    steps:
+      - name: 📂 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔍 TypeScript compilation check
+        run: npm run type-check 2>&1 | tee typecheck-errors.log
+        
+      - name: 📤 Upload typecheck errors
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: typecheck-errors
+          path: typecheck-errors.log
+
+  # Unit Tests Job
+  test:
+    name: Jest Unit Tests
+    runs-on: ubuntu-latest
+    needs: [lint, prettier, typecheck]
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fridgesafe_test
+          POSTGRES_USER: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: 📂 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🗄️ Setup test database
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fridgesafe_test
+        run: npm run db:push
+
+      - name: 🧪 Run Jest tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fridgesafe_test
+          NODE_ENV: test
+          SESSION_SECRET: test-secret
+        run: npm run test 2>&1 | tee jest-errors.log
+        
+      - name: 📤 Upload Jest errors
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jest-errors
+          path: jest-errors.log
+
+  # Build Application Job
+  build:
+    name: Vite Build Application
+    runs-on: ubuntu-latest
+    needs: [test]
+
+    steps:
+      - name: 📂 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🏗️ Build application with Vite
+        run: npm run build 2>&1 | tee build-errors.log
+        env:
+          VITE_STRIPE_PUBLIC_KEY: ${{ secrets.VITE_STRIPE_PUBLIC_KEY }}
+          
+      - name: 📤 Upload build errors
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-errors
+          path: build-errors.log
+
+      - name: 📋 Build summary
+        run: |
+          echo "### 🏗️ Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ✅ Success" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build size**: $(du -sh dist/ | cut -f1)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Files created**: $(find dist/ -type f | wc -l)" >> $GITHUB_STEP_SUMMARY
+
+  # Deployment Status Job
+  deployment:
+    name: Deployment Status
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: 📂 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🚀 Deployment ready
+        run: |
+          echo "### 🚀 Deployment Status" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: Production" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ✅ Ready for deployment" >> $GITHUB_STEP_SUMMARY
+
+  # Pipeline Summary Job
+  summary:
+    name: Pipeline Summary
+    runs-on: ubuntu-latest
+    needs: [security, lint, prettier, typecheck, test, build, deployment]
+    if: always()
+
+    steps:
+      - name: 📥 Download error artifacts
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: "*-errors"
+          path: errors/
+          merge-multiple: true
+          
+      - name: 📊 Generate Pipeline Summary
+        run: |
+          echo "# 🔍 FridgeSafe CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Count results
+          PASSED=0
+          FAILED=0
+          SKIPPED=0
+          
+          # Security job
+          if [[ "${{ needs.security.result }}" == "success" ]]; then
+            SECURITY_STATUS="✅ Passed"
+            PASSED=$((PASSED + 1))
+          elif [[ "${{ needs.security.result }}" == "failure" ]]; then
+            SECURITY_STATUS="❌ Failed"
+            FAILED=$((FAILED + 1))
+          elif [[ "${{ needs.security.result }}" == "skipped" ]]; then
+            SECURITY_STATUS="⏭️ Skipped"
+            SKIPPED=$((SKIPPED + 1))
+          else
+            SECURITY_STATUS="⚪ ${{ needs.security.result }}"
+          fi
+          
+          # Lint job
+          if [[ "${{ needs.lint.result }}" == "success" ]]; then
+            LINT_STATUS="✅ Passed"
+            PASSED=$((PASSED + 1))
+          elif [[ "${{ needs.lint.result }}" == "failure" ]]; then
+            LINT_STATUS="❌ Failed"
+            FAILED=$((FAILED + 1))
+          elif [[ "${{ needs.lint.result }}" == "skipped" ]]; then
+            LINT_STATUS="⏭️ Skipped"
+            SKIPPED=$((SKIPPED + 1))
+          else
+            LINT_STATUS="⚪ ${{ needs.lint.result }}"
+          fi
+          
+          # Prettier job
+          if [[ "${{ needs.prettier.result }}" == "success" ]]; then
+            PRETTIER_STATUS="✅ Passed"
+            PASSED=$((PASSED + 1))
+          elif [[ "${{ needs.prettier.result }}" == "failure" ]]; then
+            PRETTIER_STATUS="❌ Failed"
+            FAILED=$((FAILED + 1))
+          elif [[ "${{ needs.prettier.result }}" == "skipped" ]]; then
+            PRETTIER_STATUS="⏭️ Skipped"
+            SKIPPED=$((SKIPPED + 1))
+          else
+            PRETTIER_STATUS="⚪ ${{ needs.prettier.result }}"
+          fi
+          
+          # TypeCheck job
+          if [[ "${{ needs.typecheck.result }}" == "success" ]]; then
+            TYPECHECK_STATUS="✅ Passed"
+            PASSED=$((PASSED + 1))
+          elif [[ "${{ needs.typecheck.result }}" == "failure" ]]; then
+            TYPECHECK_STATUS="❌ Failed"
+            FAILED=$((FAILED + 1))
+          elif [[ "${{ needs.typecheck.result }}" == "skipped" ]]; then
+            TYPECHECK_STATUS="⏭️ Skipped"
+            SKIPPED=$((SKIPPED + 1))
+          else
+            TYPECHECK_STATUS="⚪ ${{ needs.typecheck.result }}"
+          fi
+          
+          # Test job
+          if [[ "${{ needs.test.result }}" == "success" ]]; then
+            TEST_STATUS="✅ Passed"
+            PASSED=$((PASSED + 1))
+          elif [[ "${{ needs.test.result }}" == "failure" ]]; then
+            TEST_STATUS="❌ Failed"
+            FAILED=$((FAILED + 1))
+          elif [[ "${{ needs.test.result }}" == "skipped" ]]; then
+            TEST_STATUS="⏭️ Skipped"
+            SKIPPED=$((SKIPPED + 1))
+          else
+            TEST_STATUS="⚪ ${{ needs.test.result }}"
+          fi
+          
+          # Build job
+          if [[ "${{ needs.build.result }}" == "success" ]]; then
+            BUILD_STATUS="✅ Passed"
+            PASSED=$((PASSED + 1))
+          elif [[ "${{ needs.build.result }}" == "failure" ]]; then
+            BUILD_STATUS="❌ Failed"
+            FAILED=$((FAILED + 1))
+          elif [[ "${{ needs.build.result }}" == "skipped" ]]; then
+            BUILD_STATUS="⏭️ Skipped"
+            SKIPPED=$((SKIPPED + 1))
+          else
+            BUILD_STATUS="⚪ ${{ needs.build.result }}"
+          fi
+          
+          # Deployment job (optional)
+          if [[ "${{ needs.deployment.result }}" == "success" ]]; then
+            DEPLOYMENT_STATUS="✅ Passed"
+            PASSED=$((PASSED + 1))
+          elif [[ "${{ needs.deployment.result }}" == "failure" ]]; then
+            DEPLOYMENT_STATUS="❌ Failed"  
+            FAILED=$((FAILED + 1))
+          elif [[ "${{ needs.deployment.result }}" == "skipped" ]]; then
+            DEPLOYMENT_STATUS="⏭️ Skipped"
+            SKIPPED=$((SKIPPED + 1))
+          else
+            DEPLOYMENT_STATUS="⚪ ${{ needs.deployment.result }}"
+          fi
+          
+          # Overall status
+          if [[ $FAILED -gt 0 ]]; then
+            OVERALL_STATUS="❌ Pipeline Failed"
+          elif [[ $PASSED -gt 0 && $FAILED -eq 0 ]]; then
+            OVERALL_STATUS="✅ Pipeline Passed"
+          else
+            OVERALL_STATUS="⚪ Pipeline Status Unknown"
+          fi
+          
+          # Write summary header
+          echo "## $OVERALL_STATUS" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Total**: $PASSED passed, $FAILED failed, $SKIPPED skipped" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Write summary table
+          echo "| Job | Status | Details |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔒 Security Scan | $SECURITY_STATUS | Snyk vulnerability scanning |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔍 ESLint | $LINT_STATUS | Code quality and style checking |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🎨 Prettier | $PRETTIER_STATUS | Code formatting verification |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔧 TypeScript | $TYPECHECK_STATUS | Type checking and compilation |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🧪 Jest Tests | $TEST_STATUS | Unit and integration tests |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🏗️ Build | $BUILD_STATUS | Application build with Vite |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🚀 Deployment | $DEPLOYMENT_STATUS | Production deployment readiness |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Show detailed error information for failed jobs
+          if [[ "${{ needs.security.result }}" == "failure" ]]; then
+            echo "### ❌ Security Scan Errors" >> $GITHUB_STEP_SUMMARY
+            if [[ -f "errors/security-errors.log" ]]; then
+              echo "<details><summary>Click to expand security scan details</summary>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              cat errors/security-errors.log >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              echo "</details>" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "Security vulnerabilities detected. Check the security job logs for details." >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.lint.result }}" == "failure" ]]; then
+            echo "### ❌ ESLint Errors" >> $GITHUB_STEP_SUMMARY
+            if [[ -f "errors/lint-errors.log" ]]; then
+              echo "<details><summary>Click to expand ESLint error details</summary>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              cat errors/lint-errors.log >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              echo "</details>" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "ESLint found code quality issues. Check the lint job logs for details." >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.prettier.result }}" == "failure" ]]; then
+            echo "### ❌ Prettier Errors" >> $GITHUB_STEP_SUMMARY
+            if [[ -f "errors/prettier-errors.log" ]]; then
+              echo "<details><summary>Click to expand Prettier formatting details</summary>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              cat errors/prettier-errors.log >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              echo "</details>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "💡 **Fix command**: \`npm run format\`" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "Code formatting issues detected. Run \`npm run format\` to fix." >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.typecheck.result }}" == "failure" ]]; then
+            echo "### ❌ TypeScript Errors" >> $GITHUB_STEP_SUMMARY
+            if [[ -f "errors/typecheck-errors.log" ]]; then
+              echo "<details><summary>Click to expand TypeScript error details</summary>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              cat errors/typecheck-errors.log >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              echo "</details>" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "TypeScript compilation failed. Check the typecheck job logs for details." >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.test.result }}" == "failure" ]]; then
+            echo "### ❌ Jest Test Errors" >> $GITHUB_STEP_SUMMARY
+            if [[ -f "errors/jest-errors.log" ]]; then
+              echo "<details><summary>Click to expand Jest test failure details</summary>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              # Extract failed test information
+              grep -A 5 -B 2 "FAIL\|●\|✕" errors/jest-errors.log | head -100 >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              echo "</details>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "💡 **Debug command**: \`npm run test -- --verbose\`" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "One or more tests failed. Check the test job logs for details." >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.build.result }}" == "failure" ]]; then
+            echo "### ❌ Build Errors" >> $GITHUB_STEP_SUMMARY
+            if [[ -f "errors/build-errors.log" ]]; then
+              echo "<details><summary>Click to expand build error details</summary>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              cat errors/build-errors.log >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              echo "</details>" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "Application build failed. Check the build job logs for details." >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Add timestamp
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Generated at $(date -u '+%Y-%m-%d %H:%M:%S UTC')*" >> $GITHUB_STEP_SUMMARY

@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Folder, FileText, CheckCircle } from "lucide-react";
 
 interface StructureItemProps {
@@ -9,10 +9,10 @@ interface StructureItemProps {
 
 function StructureItem({ name, type, level }: StructureItemProps) {
   const marginLeft = level * 16;
-  
+
   return (
-    <div 
-      className="flex items-center space-x-2" 
+    <div
+      className="flex items-center space-x-2"
       style={{ marginLeft: `${marginLeft}px` }}
       data-testid={`structure-item-${name}`}
     >
@@ -31,14 +31,22 @@ interface ConfigFileProps {
   status: "configured" | "missing";
 }
 
-function ConfigFile({ name, status }: ConfigFileProps) {
+function ConfigFile({ name, status: _status }: ConfigFileProps) {
   return (
-    <div className="flex items-center justify-between p-3 bg-muted rounded-lg" data-testid={`config-file-${name}`}>
+    <div
+      className="flex items-center justify-between p-3 bg-muted rounded-lg"
+      data-testid={`config-file-${name}`}
+    >
       <div className="flex items-center space-x-3">
         <FileText className="w-4 h-4 text-muted-foreground" />
-        <span className="text-sm" data-testid={`filename-${name}`}>{name}</span>
+        <span className="text-sm" data-testid={`filename-${name}`}>
+          {name}
+        </span>
       </div>
-      <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" data-testid={`status-${name}`} />
+      <CheckCircle
+        className="w-4 h-4 text-green-600 dark:text-green-400"
+        data-testid={`status-${name}`}
+      />
     </div>
   );
 }
@@ -82,7 +90,10 @@ export default function ProjectStructure() {
               <h3 className="text-lg font-semibold mb-4" data-testid="title-monorepo-structure">
                 Monorepo Structure
               </h3>
-              <div className="bg-muted rounded-lg p-4 font-mono text-sm" data-testid="structure-tree">
+              <div
+                className="bg-muted rounded-lg p-4 font-mono text-sm"
+                data-testid="structure-tree"
+              >
                 <div className="space-y-1">
                   {structure.map((item, index) => (
                     <StructureItem

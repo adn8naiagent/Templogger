@@ -1,7 +1,8 @@
 import bcrypt from "bcrypt";
 import { Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
-import { signUpSchema, signInSchema, type SignUpData, type SignInData } from "@shared/schema";
+import { signUpSchema, signInSchema } from "@shared/schema";
+import "./types";
 
 // Password hashing
 export async function hashPassword(password: string): Promise<string> {
@@ -13,67 +14,72 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 }
 
 // Authentication middleware - updated for token-based auth
-export function requireAuth(req: Request, res: Response, next: NextFunction) {
+export function requireAuth(req: Request, res: Response, next: NextFunction): Response | void {
   const authHeader = req.headers.authorization;
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
   const token = authHeader.substring(7);
   let userId: string;
-  
+
   try {
     // Decode the token (simple base64 decode for now)
-    userId = Buffer.from(token, 'base64').toString();
-  } catch (error) {
+    userId = Buffer.from(token, "base64").toString();
+  } catch {
     return res.status(401).json({ message: "Invalid token" });
   }
-  
+
   // Add userId to request object for downstream use
-  (req as any).userId = userId;
+  req.userId = userId;
   next();
 }
 
 // Admin middleware - updated for token-based auth
-export async function requireAdmin(req: Request, res: Response, next: NextFunction) {
+// eslint-disable-next-line max-len
+export async function requireAdmin(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> {
   const authHeader = req.headers.authorization;
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Authentication required" });
   }
 
   const token = authHeader.substring(7);
   let userId: string;
-  
+
   try {
     // Decode the token
-    userId = Buffer.from(token, 'base64').toString();
-  } catch (error) {
+    userId = Buffer.from(token, "base64").toString();
+  } catch {
     return res.status(401).json({ error: "Invalid token" });
   }
-  
+
   try {
     const user = await storage.getUser(userId);
     if (!user || user.role !== "admin") {
       return res.status(403).json({ error: "Admin access required" });
     }
     req.user = user;
-    (req as any).userId = userId;
+    req.userId = userId;
     next();
-  } catch (error) {
-    res.status(500).json({ error: "Failed to verify admin status" });
+  } catch {
+    return res.status(500).json({ error: "Failed to verify admin status" });
   }
 }
 
 // Sign up route handler
-export async function signUp(req: Request, res: Response) {
+export async function signUp(req: Request, res: Response): Promise<Response | void> {
   try {
     const result = signUpSchema.safeParse(req.body);
     if (!result.success) {
-      return res.status(400).json({ 
-        error: "Validation failed", 
-        details: result.error.errors 
+      return res.status(400).json({
+        error: "Validation failed",
+        details: result.error.errors,
       });
     }
 
@@ -87,39 +93,50 @@ export async function signUp(req: Request, res: Response) {
 
     // Hash password and create user
     const hashedPassword = await hashPassword(password);
+    const now = new Date();
     const user = await storage.createUser({
       email,
       password: hashedPassword,
       firstName,
       lastName,
       role: "user",
+      trialStartDate: now,
+      trialEndDate: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
     });
 
+    // Create default audit template for new user
+    try {
+      await storage.createDefaultAuditTemplate(user._id);
+    } catch (error: Error | unknown) {
+      console.error("Failed to create default audit template for new user:", error);
+      // Don't fail user creation if template creation fails
+    }
+
     // Create auth token for new user
-    const authToken = Buffer.from(user.id).toString('base64');
-    
+    const authToken = Buffer.from(user._id).toString("base64");
+
     console.log("signUp - new user created:", user.email);
-    
+
     // Return user without password and include the auth token
     const { password: _, ...userWithoutPassword } = user;
-    res.status(201).json({ 
-      ...userWithoutPassword, 
-      authToken 
+    res.status(201).json({
+      ...userWithoutPassword,
+      authToken,
     });
-  } catch (error: any) {
+  } catch (error: Error | unknown) {
     console.error("Sign up error:", error);
-    res.status(500).json({ error: "Failed to create account" });
+    return res.status(500).json({ error: "Failed to create account" });
   }
 }
 
 // Sign in route handler
-export async function signIn(req: Request, res: Response) {
+export async function signIn(req: Request, res: Response): Promise<Response | void> {
   try {
     const result = signInSchema.safeParse(req.body);
     if (!result.success) {
-      return res.status(400).json({ 
-        error: "Validation failed", 
-        details: result.error.errors 
+      return res.status(400).json({
+        error: "Validation failed",
+        details: result.error.errors,
       });
     }
 
@@ -138,47 +155,47 @@ export async function signIn(req: Request, res: Response) {
     }
 
     // Create a simple token for the user (using userId as token for simplicity)
-    const authToken = Buffer.from(user.id).toString('base64');
-    
+    const authToken = Buffer.from(user._id).toString("base64");
+
     console.log("signIn - user authenticated:", user.email);
-    
+
     // Return user without password and include the auth token
     const { password: _, ...userWithoutPassword } = user;
-    res.json({ 
-      ...userWithoutPassword, 
-      authToken 
+    res.json({
+      ...userWithoutPassword,
+      authToken,
     });
-  } catch (error: any) {
+  } catch (error: Error | unknown) {
     console.error("Sign in error:", error);
-    res.status(500).json({ error: "Failed to sign in" });
+    return res.status(500).json({ error: "Failed to sign in" });
   }
 }
 
 // Sign out route handler - for token-based auth, this is just a client-side operation
-export async function signOut(req: Request, res: Response) {
+export async function signOut(req: Request, res: Response): Promise<Response> {
   // With token-based auth, logout is primarily handled on the client side
   // Server just confirms the logout request
   console.log("signOut - logout confirmed");
-  res.json({ message: "Signed out successfully" });
+  return res.json({ message: "Signed out successfully" });
 }
 
 // Get current user route handler
-export async function getCurrentUser(req: Request, res: Response) {
+export async function getCurrentUser(req: Request, res: Response): Promise<Response | void> {
   try {
     // Check for auth token in Authorization header
     const authHeader = req.headers.authorization;
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
     let userId: string;
-    
+
     try {
       // Decode the token (simple base64 decode for now)
-      userId = Buffer.from(token, 'base64').toString();
-    } catch (error) {
+      userId = Buffer.from(token, "base64").toString();
+    } catch {
       return res.status(401).json({ message: "Invalid token" });
     }
 
@@ -190,8 +207,8 @@ export async function getCurrentUser(req: Request, res: Response) {
     // Return user without password
     const { password: _, ...userWithoutPassword } = user;
     res.json(userWithoutPassword);
-  } catch (error: any) {
+  } catch (error: Error | unknown) {
     console.error("Get user error:", error);
-    res.status(500).json({ error: "Failed to get user" });
+    return res.status(500).json({ error: "Failed to get user" });
   }
 }
