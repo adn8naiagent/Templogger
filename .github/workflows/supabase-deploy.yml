@@ -88,6 +88,7 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_DB_URL: "postgresql://postgres:${{ secrets.SUPABASE_DB_PASSWORD }}@db.${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co:5432/postgres"
         run: |
           echo "🚀 Linking to Supabase production project..."
           supabase link --project-ref $SUPABASE_PROJECT_REF
@@ -95,8 +96,8 @@ jobs:
           echo "📊 Checking migration status..."
           supabase migration list
 
-          echo "⬆️ Applying pending migrations..."
-          supabase migration up --debug
+          echo "⬆️ Applying pending migrations to remote database..."
+          supabase db push --debug
 
           echo "✅ Production migrations completed successfully!"
 
