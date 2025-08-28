@@ -60,7 +60,7 @@ jobs:
 
       - name: Install Supabase CLI
         run: |
-          npm install -g @supabase/cli
+          npm install -g supabase
           supabase --version
 
       - name: Verify migration files exist
