@@ -34,7 +34,7 @@ jobs:
         run: npm ci
 
       - name: 🔒 Run Snyk security scan
-        run: npx snyk test
+        run: npm run security:test
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
@@ -100,7 +100,7 @@ jobs:
         run: npm ci
 
       - name: 🔍 TypeScript compilation check
-        run: npm run check
+        run: npm run type-check
 
   # Unit Tests Job
   test:
