@@ -184,7 +184,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const deleted = await storage.deleteUser(userId);
+      const deleted = await storage.deleteUser(userId!);
       if (!deleted) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -413,7 +413,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { userId } = req.params;
       const { role, subscriptionStatus } = req.body;
 
-      const updatedUser = await storage.updateUser(userId, { role, subscriptionStatus });
+      const updatedUser = await storage.updateUser(userId!, { role, subscriptionStatus });
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -432,7 +432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/users/:userId", requireAdmin, async (req, res) => {
     try {
       const { userId } = req.params;
-      const deleted = await storage.deleteUser(userId);
+      const deleted = await storage.deleteUser(userId!);
       if (!deleted) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -453,7 +453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const fridges = await storage.getFridges(userId);
+      const fridges = await storage.getFridges(userId!);
       res.json(fridges);
     } catch (error) {
       console.error("Get fridges error:", error);
@@ -479,7 +479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const newFridge = await storage.createFridge({
-        _userId: userId,
+        _userId: userId!,
         name,
         location,
         notes,
@@ -528,7 +528,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } = result.data;
 
       // Verify fridge ownership
-      const fridge = await storage.getFridge(_fridgeId, userId);
+      const fridge = await storage.getFridge(_fridgeId, userId!);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
@@ -585,7 +585,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const logs = await storage.getTemperatureLogs(fridgeId, userId);
+      const logs = await storage.getTemperatureLogs(fridgeId, userId!);
       res.json(logs);
     } catch (error) {
       console.error("Get temperature logs error:", error);
@@ -601,7 +601,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
       console.log(`[API] getFridgesWithRecentTemps called for user: ${userId}`);
-      const fridgesWithData = await storage.getFridgesWithRecentTemps(userId);
+      const fridgesWithData = await storage.getFridgesWithRecentTemps(userId!);
       console.log(`[API] Returning ${fridgesWithData.length} fridges`);
       res.json(fridgesWithData);
     } catch (error) {
@@ -617,7 +617,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const fridges = await storage.getAllFridgesWithLogs(userId);
+      const fridges = await storage.getAllFridgesWithLogs(userId!);
       res.json(fridges);
     } catch (error) {
       console.error("Error fetching all fridges:", error);
@@ -632,7 +632,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const fridge = await storage.getFridgeWithLogs(userId, req.params.id);
+      const fridge = await storage.getFridgeWithLogs(userId!, req.params.id);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
@@ -650,7 +650,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const fridge = await storage.updateFridge(req.params.id, userId, req.body);
+      const fridge = await storage.updateFridge(req.params.id, userId!, req.body);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
@@ -668,7 +668,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const fridge = await storage.deactivateFridge(userId, req.params.id);
+      const fridge = await storage.deactivateFridge(userId!, req.params.id);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
@@ -704,7 +704,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const success = await storage.deleteFridge(req.params.id, userId);
+      const success = await storage.deleteFridge(req.params.id, userId!);
       if (!success) {
         return res.status(404).json({ error: "Fridge not found" });
       }
@@ -749,7 +749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const newLabel = await storage.createLabel({
         ...result.data,
-        _userId: userId,
+        _userId: userId!,
       });
 
       res.status(201).json(newLabel);
@@ -1130,7 +1130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { userId } = req.params;
       const { role, subscriptionStatus } = req.body;
 
-      const updatedUser = await storage.updateUser(userId, { role, subscriptionStatus });
+      const updatedUser = await storage.updateUser(userId!, { role, subscriptionStatus });
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -1147,7 +1147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
 
-      const deleted = await storage.deleteUser(userId);
+      const deleted = await storage.deleteUser(userId!);
       if (!deleted) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -1225,7 +1225,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
-      const timeWindows = await storage.getTimeWindows(fridgeId, userId);
+      const timeWindows = await storage.getTimeWindows(fridgeId, userId!);
       res.json(timeWindows);
     } catch (error) {
       console.error("Get time windows error:", error);
@@ -1251,13 +1251,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { _fridgeId, label, startTime, endTime } = result.data;
 
       // Verify fridge ownership
-      const fridge = await storage.getFridge(_fridgeId, userId);
+      const fridge = await storage.getFridge(_fridgeId, userId!);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
 
       const timeWindow = await storage.createTimeWindow({
-        _userId: userId,
+        _userId: userId!,
         _fridgeId: _fridgeId,
         label,
         startTime,
@@ -1415,7 +1415,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const completionData = {
         checklistId: id,
         _fridgeId: _fridgeId || null,
-        completedBy: userId,
+        completedBy: userId!,
         completedItems,
         notes: notes || null,
       };
@@ -1442,7 +1442,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { active } = req.query;
       const activeOnly = active === "true";
 
-      const checklists = await checklistService.listChecklists(userId, activeOnly);
+      const checklists = await checklistService.listChecklists(userId!, activeOnly);
       res.json(checklists);
     } catch (error) {
       console.error("Get enhanced checklists error:", error);
@@ -1465,7 +1465,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      const checklist = await checklistService.createChecklist(userId, result.data);
+      const checklist = await checklistService.createChecklist(userId!, result.data);
       res.status(201).json(checklist);
     } catch (error) {
       console.error("Create enhanced checklist error:", error);
@@ -1739,7 +1739,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } = result.data;
 
       // Verify fridge ownership
-      const fridge = await storage.getFridge(_fridgeId, userId);
+      const fridge = await storage.getFridge(_fridgeId, userId!);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
       }
@@ -1749,7 +1749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       nextDue.setFullYear(nextDue.getFullYear() + 1);
 
       const recordData = {
-        _userId: userId,
+        _userId: userId!,
         _fridgeId,
         calibrationDate: new Date(calibrationDate),
         nextCalibrationDue: nextDue,
@@ -2070,7 +2070,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const templateData = {
-        _userId: userId,
+        _userId: userId!,
         name: result.data.name,
         description: result.data.description,
         isDefault: false,
@@ -2207,10 +2207,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const complianceRate = calculateComplianceRate(responsesData);
 
       const completionData = {
-        _userId: userId,
+        _userId: userId!,
         _templateId: result.data._templateId,
         templateName: template.name,
-        completedBy: userId,
+        completedBy: userId!,
         notes: result.data.notes,
         complianceRate: complianceRate.toString(),
       };
