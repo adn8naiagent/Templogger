@@ -8,14 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
-  DialogFooter
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -41,7 +41,7 @@ import {
   CheckCircle,
   FileText,
   Upload,
-  ShieldCheck
+  ShieldCheck,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -90,8 +90,8 @@ export default function CalibrationManager({ ___fridgeId, fridgeName }: Calibrat
   const { data: records = [], isLoading } = useQuery({
     queryKey: [`/api/fridges/${___fridgeId}/calibrations`],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/fridges/${___fridgeId}/calibrations`);
-      if (!response.ok) throw new Error('Failed to fetch calibration records');
+      const response = await apiRequest("GET", `/api/fridges/${___fridgeId}/calibrations`);
+      if (!response.ok) throw new Error("Failed to fetch calibration records");
       return response.json();
     },
   });
@@ -99,7 +99,7 @@ export default function CalibrationManager({ ___fridgeId, fridgeName }: Calibrat
   // Create calibration record mutation
   const createMutation = useMutation({
     mutationFn: async (_data: CalibrationForm) => {
-      const response = await apiRequest('POST', '/api/calibration-records', _data);
+      const response = await apiRequest("POST", "/api/calibration-records", _data);
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to create calibration record: ${response.status} - ${errorText}`);
@@ -127,7 +127,7 @@ export default function CalibrationManager({ ___fridgeId, fridgeName }: Calibrat
   // Update calibration record mutation
   const updateMutation = useMutation({
     mutationFn: async ({ _id, _data }: { _id: string; _data: CalibrationForm }) => {
-      const response = await apiRequest('PUT', `/api/calibration-records/${_id}`, _data);
+      const response = await apiRequest("PUT", `/api/calibration-records/${_id}`, _data);
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to update calibration record: ${response.status} - ${errorText}`);
@@ -155,7 +155,7 @@ export default function CalibrationManager({ ___fridgeId, fridgeName }: Calibrat
   // Delete calibration record mutation
   const deleteMutation = useMutation({
     mutationFn: async (_id: string) => {
-      const response = await apiRequest('DELETE', `/api/calibration-records/${_id}`);
+      const response = await apiRequest("DELETE", `/api/calibration-records/${_id}`);
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to delete calibration record: ${response.status} - ${errorText}`);
@@ -190,7 +190,7 @@ export default function CalibrationManager({ ___fridgeId, fridgeName }: Calibrat
     setEditingRecord(record);
     form.reset({
       ___fridgeId,
-      calibrationDate: new Date(record.calibrationDate).toISOString().split('T')[0],
+      calibrationDate: new Date(record.calibrationDate).toISOString().split("T")[0],
       performedBy: record.performedBy,
       calibrationStandard: record.calibrationStandard || "",
       beforeCalibrationReading: record.beforeCalibrationReading?.toString() || "",
@@ -207,17 +207,23 @@ export default function CalibrationManager({ ___fridgeId, fridgeName }: Calibrat
     }
   };
 
-  const getCalibrationStatus = (record: CalibrationRecord): { status: string; color: 'destructive' | 'secondary' | 'default'; text: string } => {
+  const getCalibrationStatus = (
+    record: CalibrationRecord
+  ): { status: string; color: "destructive" | "secondary" | "default"; text: string } => {
     const nextDue = new Date(record.nextCalibrationDue);
     const now = new Date();
     const daysDiff = Math.ceil((nextDue.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
     if (daysDiff < 0) {
-      return { status: 'overdue', color: 'destructive', text: `${Math.abs(daysDiff)} days overdue` };
+      return {
+        status: "overdue",
+        color: "destructive",
+        text: `${Math.abs(daysDiff)} days overdue`,
+      };
     } else if (daysDiff <= 30) {
-      return { status: 'due-soon', color: 'secondary', text: `Due in ${daysDiff} days` };
+      return { status: "due-soon", color: "secondary", text: `Due in ${daysDiff} days` };
     } else {
-      return { status: 'current', color: 'default', text: `Due ${nextDue.toLocaleDateString()}` };
+      return { status: "current", color: "default", text: `Due ${nextDue.toLocaleDateString()}` };
     }
   };
 
@@ -232,25 +238,25 @@ export default function CalibrationManager({ ___fridgeId, fridgeName }: Calibrat
               <ShieldCheck className="h-5 w-5" />
               Thermometer Calibration
             </CardTitle>
-            <CardDescription>
-              Calibration records for {fridgeName}
-            </CardDescription>
+            <CardDescription>Calibration records for {fridgeName}</CardDescription>
           </div>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => {
-                setEditingRecord(null);
-                form.reset({
-                  ___fridgeId,
-                  calibrationDate: "",
-                  performedBy: "",
-                  calibrationStandard: "",
-                  beforeCalibrationReading: "",
-                  afterCalibrationReading: "",
-                  accuracy: "",
-                  notes: "",
-                });
-              }}>
+              <Button
+                onClick={() => {
+                  setEditingRecord(null);
+                  form.reset({
+                    ___fridgeId,
+                    calibrationDate: "",
+                    performedBy: "",
+                    calibrationStandard: "",
+                    beforeCalibrationReading: "",
+                    afterCalibrationReading: "",
+                    accuracy: "",
+                    notes: "",
+                  });
+                }}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Calibration
               </Button>
@@ -317,12 +323,7 @@ export default function CalibrationManager({ ___fridgeId, fridgeName }: Calibrat
                         <FormItem>
                           <FormLabel>Accuracy (±°C)</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="number" 
-                              step="0.01"
-                              placeholder="e.g. 0.5" 
-                              {...field} 
-                            />
+                            <Input type="number" step="0.01" placeholder="e.g. 0.5" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -336,11 +337,11 @@ export default function CalibrationManager({ ___fridgeId, fridgeName }: Calibrat
                         <FormItem>
                           <FormLabel>Before Calibration (°C)</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="number" 
+                            <Input
+                              type="number"
                               step="0.1"
-                              placeholder="Temperature reading before" 
-                              {...field} 
+                              placeholder="Temperature reading before"
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
@@ -355,11 +356,11 @@ export default function CalibrationManager({ ___fridgeId, fridgeName }: Calibrat
                         <FormItem>
                           <FormLabel>After Calibration (°C)</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="number" 
+                            <Input
+                              type="number"
                               step="0.1"
-                              placeholder="Temperature reading after" 
-                              {...field} 
+                              placeholder="Temperature reading after"
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
@@ -375,10 +376,10 @@ export default function CalibrationManager({ ___fridgeId, fridgeName }: Calibrat
                       <FormItem>
                         <FormLabel>Notes</FormLabel>
                         <FormControl>
-                          <Textarea 
+                          <Textarea
                             placeholder="Additional notes or observations"
                             rows={3}
-                            {...field} 
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -395,24 +396,28 @@ export default function CalibrationManager({ ___fridgeId, fridgeName }: Calibrat
                     <div className="p-4 bg-muted/50 rounded-lg">
                       <div className="flex items-center justify-center gap-2 text-muted-foreground">
                         <Upload className="h-5 w-5" />
-                        <span className="text-sm">Document upload feature will be available soon</span>
+                        <span className="text-sm">
+                          Document upload feature will be available soon
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   <DialogFooter>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
+                    <Button
+                      type="button"
+                      variant="outline"
                       onClick={() => setIsCreateDialogOpen(false)}
                     >
                       Cancel
                     </Button>
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       disabled={createMutation.isPending || updateMutation.isPending}
                     >
-                      {(createMutation.isPending || updateMutation.isPending) ? "Saving..." : "Save Record"}
+                      {createMutation.isPending || updateMutation.isPending
+                        ? "Saving..."
+                        : "Save Record"}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -436,8 +441,12 @@ export default function CalibrationManager({ ___fridgeId, fridgeName }: Calibrat
                   </span>
                 </div>
                 <Badge variant={getCalibrationStatus(latestRecord).color}>
-                  {getCalibrationStatus(latestRecord).status === 'overdue' && <AlertTriangle className="h-3 w-3 mr-1" />}
-                  {getCalibrationStatus(latestRecord).status === 'current' && <CheckCircle className="h-3 w-3 mr-1" />}
+                  {getCalibrationStatus(latestRecord).status === "overdue" && (
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                  )}
+                  {getCalibrationStatus(latestRecord).status === "current" && (
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                  )}
                   {getCalibrationStatus(latestRecord).text}
                 </Badge>
               </div>
@@ -476,30 +485,22 @@ export default function CalibrationManager({ ___fridgeId, fridgeName }: Calibrat
                 const status = getCalibrationStatus(record);
                 return (
                   <TableRow key={record._id}>
-                    <TableCell>
-                      {new Date(record.calibrationDate).toLocaleDateString()}
-                    </TableCell>
+                    <TableCell>{new Date(record.calibrationDate).toLocaleDateString()}</TableCell>
                     <TableCell>{record.performedBy}</TableCell>
-                    <TableCell>
-                      {record.accuracy ? `±${record.accuracy}°C` : "N/A"}
-                    </TableCell>
+                    <TableCell>{record.accuracy ? `±${record.accuracy}°C` : "N/A"}</TableCell>
                     <TableCell>
                       {new Date(record.nextCalibrationDue).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
                       <Badge variant={status.color}>
-                        {status.status === 'overdue' && <AlertTriangle className="h-3 w-3 mr-1" />}
-                        {status.status === 'current' && <CheckCircle className="h-3 w-3 mr-1" />}
+                        {status.status === "overdue" && <AlertTriangle className="h-3 w-3 mr-1" />}
+                        {status.status === "current" && <CheckCircle className="h-3 w-3 mr-1" />}
                         {status.text}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(record)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(record)}>
                           <Edit className="h-3 w-3" />
                         </Button>
                         <Button

@@ -21,9 +21,12 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans" data-testid="dashboard-container">
+    <div
+      className="min-h-screen bg-background text-foreground font-sans"
+      data-testid="dashboard-container"
+    >
       <Navigation onRefresh={handleRefresh} />
-      
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-testid="main-content">
         <ProjectOverview />
         <ServiceIntegrations />
@@ -31,7 +34,7 @@ export default function Dashboard() {
         <ToolingStatus />
         <QuickActions />
         <ProjectStructure />
-        
+
         <footer className="text-center text-muted-foreground py-8" data-testid="footer">
           <p className="text-sm" data-testid="footer-title">
             Fullstack Foundation Dashboard - Development Environment Ready

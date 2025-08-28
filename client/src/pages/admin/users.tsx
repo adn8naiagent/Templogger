@@ -5,35 +5,41 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger 
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { 
-  Shield, 
-  Users, 
-  // Crown, 
-  Star, 
-  Trash2, 
+import {
+  Shield,
+  Users,
+  // Crown,
+  Star,
+  Trash2,
   Search,
   ArrowLeft,
-  Edit
+  Edit,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -72,7 +78,13 @@ export default function AdminUsers() {
 
   // Update user mutation
   const updateUserMutation = useMutation({
-    mutationFn: async ({ _userId, _updates }: { _userId: string; _updates: { role?: string; subscriptionStatus?: string } }) => {
+    mutationFn: async ({
+      _userId,
+      _updates,
+    }: {
+      _userId: string;
+      _updates: { role?: string; subscriptionStatus?: string };
+    }) => {
       return apiRequest("PUT", `/api/admin/users/${_userId}`, _updates);
     },
     onSuccess: () => {
@@ -114,7 +126,7 @@ export default function AdminUsers() {
   });
 
   // Then conditional logic and early returns
-  if (currentUser?.role !== 'admin') {
+  if (currentUser?.role !== "admin") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
@@ -135,10 +147,11 @@ export default function AdminUsers() {
   }
 
   // Filter users based on search
-  const filteredUsers = users.filter((user: AdminUser) =>
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.lastName.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = users.filter(
+    (user: AdminUser) =>
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.lastName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getSubscriptionBadge = (_status: string) => {
@@ -146,7 +159,12 @@ export default function AdminUsers() {
       case "trial":
         return <Badge variant="secondary">Trial</Badge>;
       case "paid":
-        return <Badge className="bg-green-600"><Star className="h-3 w-3 mr-1" />Paid</Badge>;
+        return (
+          <Badge className="bg-green-600">
+            <Star className="h-3 w-3 mr-1" />
+            Paid
+          </Badge>
+        );
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
@@ -155,7 +173,12 @@ export default function AdminUsers() {
   const getRoleBadge = (role: string) => {
     switch (role) {
       case "admin":
-        return <Badge variant="destructive"><Shield className="h-3 w-3 mr-1" />Admin</Badge>;
+        return (
+          <Badge variant="destructive">
+            <Shield className="h-3 w-3 mr-1" />
+            Admin
+          </Badge>
+        );
       case "user":
         return <Badge variant="outline">User</Badge>;
       default:
@@ -192,14 +215,14 @@ export default function AdminUsers() {
             <div className="text-2xl font-bold">{users.length}</div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Admin Users</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {users.filter((u: AdminUser) => u.role === 'admin').length}
+              {users.filter((u: AdminUser) => u.role === "admin").length}
             </div>
           </CardContent>
         </Card>
@@ -210,7 +233,7 @@ export default function AdminUsers() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {users.filter((u: AdminUser) => u.subscriptionStatus === 'trial').length}
+              {users.filter((u: AdminUser) => u.subscriptionStatus === "trial").length}
             </div>
           </CardContent>
         </Card>
@@ -221,7 +244,7 @@ export default function AdminUsers() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {users.filter((u: AdminUser) => u.subscriptionStatus === 'paid').length}
+              {users.filter((u: AdminUser) => u.subscriptionStatus === "paid").length}
             </div>
           </CardContent>
         </Card>
@@ -236,9 +259,7 @@ export default function AdminUsers() {
                 <Users className="h-5 w-5" />
                 All Users
               </CardTitle>
-              <CardDescription>
-                View and manage all system users
-              </CardDescription>
+              <CardDescription>View and manage all system users</CardDescription>
             </div>
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -278,7 +299,7 @@ export default function AdminUsers() {
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
                             <span className="text-sm font-bold text-blue-600">
-                              {user.firstName?.charAt(0) || 'U'}
+                              {user.firstName?.charAt(0) || "U"}
                             </span>
                           </div>
                           <span className="font-medium">
@@ -300,13 +321,13 @@ export default function AdminUsers() {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          
+
                           {user._id !== currentUser?._id && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
                                   className="text-red-600 hover:text-red-700"
                                   data-testid={`button-delete-${user._id}`}
                                 >
@@ -317,8 +338,9 @@ export default function AdminUsers() {
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>Delete User</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Are you sure you want to delete {user.firstName} {user.lastName}? 
-                                    This will permanently delete their account and all associated data.
+                                    Are you sure you want to delete {user.firstName} {user.lastName}
+                                    ? This will permanently delete their account and all associated
+                                    data.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -349,7 +371,9 @@ export default function AdminUsers() {
         <AlertDialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Edit User: {editingUser.firstName} {editingUser.lastName}</AlertDialogTitle>
+              <AlertDialogTitle>
+                Edit User: {editingUser.firstName} {editingUser.lastName}
+              </AlertDialogTitle>
               <AlertDialogDescription>
                 Update user role and subscription status
               </AlertDialogDescription>
@@ -374,7 +398,9 @@ export default function AdminUsers() {
                 <label className="text-sm font-medium">Subscription Status</label>
                 <Select
                   defaultValue={editingUser.subscriptionStatus}
-                  onValueChange={(value) => setEditingUser({ ...editingUser, subscriptionStatus: value })}
+                  onValueChange={(value) =>
+                    setEditingUser({ ...editingUser, subscriptionStatus: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -389,13 +415,15 @@ export default function AdminUsers() {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => updateUserMutation.mutate({
-                  _userId: editingUser._id,
-                  _updates: {
-                    role: editingUser.role,
-                    subscriptionStatus: editingUser.subscriptionStatus
-                  }
-                })}
+                onClick={() =>
+                  updateUserMutation.mutate({
+                    _userId: editingUser._id,
+                    _updates: {
+                      role: editingUser.role,
+                      subscriptionStatus: editingUser.subscriptionStatus,
+                    },
+                  })
+                }
                 disabled={updateUserMutation.isPending}
               >
                 {updateUserMutation.isPending ? "Updating..." : "Update User"}

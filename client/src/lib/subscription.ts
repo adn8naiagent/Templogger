@@ -20,46 +20,35 @@ export const defaultTiers: SubscriptionTiers = {
     price: 0,
     currency: "USD",
     interval: "month",
-    features: [
-      "Basic features",
-      "Community support",
-      "Limited usage"
-    ],
-    limitations: [
-      "Advanced features"
-    ]
+    features: ["Basic features", "Community support", "Limited usage"],
+    limitations: ["Advanced features"],
   },
   pro: {
     name: "Pro",
     price: 19,
-    currency: "USD", 
+    currency: "USD",
     interval: "month",
     popular: true,
     features: [
       "All basic features",
       "Advanced features",
       "Priority support",
-      "Higher usage limits"
-    ]
+      "Higher usage limits",
+    ],
   },
   enterprise: {
     name: "Enterprise",
     price: 99,
     currency: "USD",
-    interval: "month", 
-    features: [
-      "All pro features",
-      "Custom integrations",
-      "Dedicated support",
-      "Unlimited usage"
-    ]
-  }
+    interval: "month",
+    features: ["All pro features", "Custom integrations", "Dedicated support", "Unlimited usage"],
+  },
 };
 
 export function formatPrice(price: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
     currency: currency,
-    minimumFractionDigits: 0
+    minimumFractionDigits: 0,
   }).format(price);
 }

@@ -39,7 +39,7 @@ import { Calendar } from "@/components/ui/calendar";
 interface ChecklistSummary {
   checklistId: string;
   checklistName: string;
-  cadence: 'DAILY' | 'DOW' | 'WEEKLY';
+  cadence: "DAILY" | "DOW" | "WEEKLY";
   period: {
     start: string;
     end: string;
@@ -63,37 +63,37 @@ interface ChecklistMetrics {
 export default function ChecklistDashboard() {
   const { toast } = useToast();
   const { logout } = useAuth();
-  
+
   const [dateFrom, setDateFrom] = useState(() => {
     const date = new Date();
     date.setDate(date.getDate() - 30); // 30 days ago
-    return date.toISOString().split('T')[0]!;
+    return date.toISOString().split("T")[0]!;
   });
-  
+
   const [dateTo, setDateTo] = useState(() => {
-    return new Date().toISOString().split('T')[0]!; // Today
+    return new Date().toISOString().split("T")[0]!; // Today
   });
-  
-  const [selectedChecklistId, setSelectedChecklistId] = useState<string>('');
-  const [selectedCadence, setSelectedCadence] = useState<string>('');
+
+  const [selectedChecklistId, setSelectedChecklistId] = useState<string>("");
+  const [selectedCadence, setSelectedCadence] = useState<string>("");
 
   // Fetch summaries
-  const { 
-    data: metrics, 
-    isLoading, 
-    error 
+  const {
+    data: metrics,
+    isLoading,
+    error,
   } = useQuery({
-    queryKey: ['checklist-summaries', { dateFrom, dateTo, selectedChecklistId, selectedCadence }],
+    queryKey: ["checklist-summaries", { dateFrom, dateTo, selectedChecklistId, selectedCadence }],
     queryFn: async (): Promise<ChecklistMetrics> => {
       const params = new URLSearchParams({
         from: dateFrom,
         to: dateTo,
       });
-      
-      if (selectedChecklistId) params.append('checklistId', selectedChecklistId);
-      if (selectedCadence) params.append('cadence', selectedCadence);
 
-      const response = await apiRequest('GET', `/api/v2/summaries?${params}`);
+      if (selectedChecklistId) params.append("checklistId", selectedChecklistId);
+      if (selectedCadence) params.append("cadence", selectedCadence);
+
+      const response = await apiRequest("GET", `/api/v2/summaries?${params}`);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -115,11 +115,11 @@ export default function ChecklistDashboard() {
         from: dateFrom,
         to: dateTo,
       });
-      
-      if (selectedChecklistId) params.append('checklistId', selectedChecklistId);
-      if (selectedCadence) params.append('cadence', selectedCadence);
 
-      const response = await apiRequest('GET', `/api/v2/export/checklists?${params}`);
+      if (selectedChecklistId) params.append("checklistId", selectedChecklistId);
+      if (selectedCadence) params.append("cadence", selectedCadence);
+
+      const response = await apiRequest("GET", `/api/v2/export/checklists?${params}`);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -133,8 +133,8 @@ export default function ChecklistDashboard() {
       // Download the file
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
+      const a = document.createElement("a");
+      a.style.display = "none";
       a.href = url;
       a.download = `checklist-report-${dateFrom}-to-${dateTo}.csv`;
       document.body.appendChild(a);
@@ -181,9 +181,7 @@ export default function ChecklistDashboard() {
           <p className="text-muted-foreground mb-4">
             Failed to load dashboard data. Please try again.
           </p>
-          <Button onClick={() => window.location.reload()}>
-            Retry
-          </Button>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
         </CardContent>
       </Card>
     );
@@ -198,11 +196,9 @@ export default function ChecklistDashboard() {
             <BarChart3 className="w-6 h-6" />
             Checklist Dashboard
           </h2>
-          <p className="text-muted-foreground">
-            Track completion rates and performance metrics
-          </p>
+          <p className="text-muted-foreground">Track completion rates and performance metrics</p>
         </div>
-        
+
         <Button onClick={handleExportCSV} disabled={isLoading}>
           <Download className="w-4 h-4 mr-2" />
           Export CSV
@@ -226,7 +222,7 @@ export default function ChecklistDashboard() {
                 className="mt-1"
               />
             </div>
-            
+
             <div>
               <Label htmlFor="dateTo">To Date</Label>
               <Input
@@ -237,7 +233,7 @@ export default function ChecklistDashboard() {
                 className="mt-1"
               />
             </div>
-            
+
             <div>
               <Label>Checklist</Label>
               <Select value={selectedChecklistId} onValueChange={setSelectedChecklistId}>
@@ -254,7 +250,7 @@ export default function ChecklistDashboard() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <Label>Cadence</Label>
               <Select value={selectedCadence} onValueChange={setSelectedCadence}>
@@ -369,17 +365,11 @@ export default function ChecklistDashboard() {
                 <TableBody>
                   {metrics.byChecklist.map((summary) => (
                     <TableRow key={summary.checklistId}>
-                      <TableCell className="font-medium">
-                        {summary.checklistName}
-                      </TableCell>
+                      <TableCell className="font-medium">{summary.checklistName}</TableCell>
                       <TableCell className="text-center">
-                        <Badge variant="outline">
-                          {summary.cadence}
-                        </Badge>
+                        <Badge variant="outline">{summary.cadence}</Badge>
                       </TableCell>
-                      <TableCell className="text-center">
-                        {summary.required}
-                      </TableCell>
+                      <TableCell className="text-center">{summary.required}</TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1">
                           <CheckCircle2 className="w-4 h-4 text-green-500" />
@@ -394,22 +384,30 @@ export default function ChecklistDashboard() {
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-2">
-                          <span className={`font-medium ${
-                            summary.completionRate >= 90 ? 'text-green-600' :
-                            summary.completionRate >= 70 ? 'text-yellow-600' :
-                            'text-red-600'
-                          }`}>
+                          <span
+                            className={`font-medium ${
+                              summary.completionRate >= 90
+                                ? "text-green-600"
+                                : summary.completionRate >= 70
+                                  ? "text-yellow-600"
+                                  : "text-red-600"
+                            }`}
+                          >
                             {formatPercentage(summary.completionRate)}
                           </span>
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-2">
-                          <span className={`font-medium ${
-                            summary.onTimeRate >= 90 ? 'text-green-600' :
-                            summary.onTimeRate >= 70 ? 'text-yellow-600' :
-                            'text-red-600'
-                          }`}>
+                          <span
+                            className={`font-medium ${
+                              summary.onTimeRate >= 90
+                                ? "text-green-600"
+                                : summary.onTimeRate >= 70
+                                  ? "text-yellow-600"
+                                  : "text-red-600"
+                            }`}
+                          >
                             {formatPercentage(summary.onTimeRate)}
                           </span>
                         </div>
@@ -434,35 +432,30 @@ export default function ChecklistDashboard() {
           <Card>
             <CardContent className="p-6 text-center">
               <div className="text-2xl font-bold text-green-600 mb-2">
-                {metrics.byChecklist.filter(s => s.completionRate >= 90).length}
+                {metrics.byChecklist.filter((s) => s.completionRate >= 90).length}
               </div>
-              <p className="text-sm text-muted-foreground">
-                Checklists with ≥90% completion
-              </p>
+              <p className="text-sm text-muted-foreground">Checklists with ≥90% completion</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="p-6 text-center">
               <div className="text-2xl font-bold text-yellow-600 mb-2">
-                {metrics.byChecklist.filter(s =>
-                  s.completionRate >= 70 && s.completionRate < 90
-                ).length}
+                {
+                  metrics.byChecklist.filter((s) => s.completionRate >= 70 && s.completionRate < 90)
+                    .length
+                }
               </div>
-              <p className="text-sm text-muted-foreground">
-                Checklists with 70-89% completion
-              </p>
+              <p className="text-sm text-muted-foreground">Checklists with 70-89% completion</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="p-6 text-center">
               <div className="text-2xl font-bold text-red-600 mb-2">
-                {metrics.byChecklist.filter(s => s.completionRate < 70).length}
+                {metrics.byChecklist.filter((s) => s.completionRate < 70).length}
               </div>
-              <p className="text-sm text-muted-foreground">
-                Checklists with &lt;70% completion
-              </p>
+              <p className="text-sm text-muted-foreground">Checklists with &lt;70% completion</p>
             </CardContent>
           </Card>
         </div>

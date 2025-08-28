@@ -30,17 +30,16 @@ export default function Navigation({ onRefresh }: NavigationProps) {
                 Fullstack Foundation
               </h1>
             </div>
-            <Badge variant="secondary" className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200" data-testid="status-badge">
+            <Badge
+              variant="secondary"
+              className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
+              data-testid="status-badge"
+            >
               Active
             </Badge>
           </div>
           <div className="flex items-center space-x-4">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={onRefresh}
-              data-testid="button-refresh"
-            >
+            <Button variant="ghost" size="icon" onClick={onRefresh} data-testid="button-refresh">
               <RefreshCw className="w-5 h-5" />
             </Button>
             <Button variant="ghost" size="icon" data-testid="button-settings">
@@ -49,21 +48,27 @@ export default function Navigation({ onRefresh }: NavigationProps) {
             <Button variant="ghost" size="icon" data-testid="button-theme">
               <Sun className="w-5 h-5" />
             </Button>
-            
+
             {/* User Account Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center space-x-2" data-testid="user-menu">
+                <Button
+                  variant="ghost"
+                  className="flex items-center space-x-2"
+                  data-testid="user-menu"
+                >
                   <div className="flex items-center space-x-2">
-                    {user?.role === 'admin' && <Crown className="w-4 h-4 text-yellow-500" />}
-                    {user?.role === 'manager' && <Shield className="w-4 h-4 text-blue-500" />}
-                    {user?.role === 'staff' && <Star className="w-4 h-4 text-green-500" />}
+                    {user?.role === "admin" && <Crown className="w-4 h-4 text-yellow-500" />}
+                    {user?.role === "manager" && <Shield className="w-4 h-4 text-blue-500" />}
+                    {user?.role === "staff" && <Star className="w-4 h-4 text-green-500" />}
                     <Avatar className="w-6 h-6">
                       <AvatarFallback className="bg-primary text-primary-foreground text-xs font-medium">
-                        {user?.firstName?.[0] || user?.email?.[0] || 'U'}
+                        {user?.firstName?.[0] || user?.email?.[0] || "U"}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="hidden sm:inline-block text-sm">{user?.firstName || user?.email || 'User'}</span>
+                    <span className="hidden sm:inline-block text-sm">
+                      {user?.firstName || user?.email || "User"}
+                    </span>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
@@ -80,7 +85,7 @@ export default function Navigation({ onRefresh }: NavigationProps) {
                     App Settings
                   </Link>
                 </DropdownMenuItem>
-                {user?.role === 'admin' && (
+                {user?.role === "admin" && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>

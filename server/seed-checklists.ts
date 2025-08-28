@@ -1,9 +1,6 @@
 import { ChecklistService } from "./checklist-service";
 import { storage } from "./storage";
-import {
-  CreateChecklistRequest,
-  ScheduleChecklistRequest
-} from "@shared/checklist-types";
+import { CreateChecklistRequest, ScheduleChecklistRequest } from "@shared/checklist-types";
 
 export interface SeedChecklistsOptions {
   _userId: string;
@@ -13,12 +10,7 @@ export interface SeedChecklistsOptions {
 }
 
 export async function seedChecklists(options: SeedChecklistsOptions): Promise<void> {
-  const {
-    _userId,
-    generateInstances = true,
-    daysBack = 14,
-    daysAhead = 60
-  } = options;
+  const { _userId, generateInstances = true, daysBack = 14, daysAhead = 60 } = options;
 
   console.log(`Seeding checklists for user ${_userId}...`);
 
@@ -63,16 +55,16 @@ export async function seedChecklists(options: SeedChecklistsOptions): Promise<vo
 
     // Schedule for daily
     const dailySchedule: ScheduleChecklistRequest = {
-      cadence: 'DAILY',
-      startDate: new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!,
-      endDate: new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!,
-      timezone: 'UTC',
+      cadence: "DAILY",
+      startDate: new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString().split("T")[0]!,
+      endDate: new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000).toISOString().split("T")[0]!,
+      timezone: "UTC",
     };
 
     console.log("Scheduling daily safety checklist...");
     await checklistService.createOrReplaceSchedule(
-      _userId, 
-      createdDailyChecklist._id, 
+      _userId,
+      createdDailyChecklist._id,
       dailySchedule
     );
 
@@ -124,16 +116,16 @@ export async function seedChecklists(options: SeedChecklistsOptions): Promise<vo
 
     // Schedule for weekly
     const weeklySchedule: ScheduleChecklistRequest = {
-      cadence: 'WEEKLY',
-      startDate: new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!,
-      endDate: new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!,
-      timezone: 'UTC',
+      cadence: "WEEKLY",
+      startDate: new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString().split("T")[0]!,
+      endDate: new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000).toISOString().split("T")[0]!,
+      timezone: "UTC",
     };
 
     console.log("Scheduling weekly maintenance checklist...");
     await checklistService.createOrReplaceSchedule(
-      _userId, 
-      createdWeeklyChecklist._id, 
+      _userId,
+      createdWeeklyChecklist._id,
       weeklySchedule
     );
 
@@ -172,32 +164,36 @@ export async function seedChecklists(options: SeedChecklistsOptions): Promise<vo
 
     console.log("Creating equipment check checklist...");
     const createdEquipmentChecklist = await checklistService.createChecklist(
-      _userId, 
+      _userId,
       equipmentChecklist
     );
 
     // Schedule for Monday, Wednesday, Friday (1, 3, 5)
     const equipmentSchedule: ScheduleChecklistRequest = {
-      cadence: 'DOW',
+      cadence: "DOW",
       daysOfWeek: [1, 3, 5], // Monday, Wednesday, Friday
-      startDate: new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!,
-      endDate: new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!,
-      timezone: 'UTC',
+      startDate: new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString().split("T")[0]!,
+      endDate: new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000).toISOString().split("T")[0]!,
+      timezone: "UTC",
     };
 
     console.log("Scheduling equipment check checklist...");
     await checklistService.createOrReplaceSchedule(
-      _userId, 
-      createdEquipmentChecklist._id, 
+      _userId,
+      createdEquipmentChecklist._id,
       equipmentSchedule
     );
 
     // Generate instances if requested
     if (generateInstances) {
       console.log("Generating checklist instances...");
-      const fromDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!;
-      const toDate = new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!;
-      
+      const fromDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0]!;
+      const toDate = new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0]!;
+
       await checklistService.generateInstances(_userId, fromDate!, toDate!);
       console.log("Instances generated successfully");
 
@@ -207,7 +203,7 @@ export async function seedChecklists(options: SeedChecklistsOptions): Promise<vo
     }
 
     console.log("Checklist seeding completed successfully!");
-    
+
     return;
   } catch (error) {
     console.error("Error seeding checklists:", error);
@@ -216,18 +212,18 @@ export async function seedChecklists(options: SeedChecklistsOptions): Promise<vo
 }
 
 async function simulateCompletions(
-  _checklistService: ChecklistService, 
+  _checklistService: ChecklistService,
   _userId: string
 ): Promise<void> {
   // This would simulate completing some instances
   // For now, we'll just log that it would happen
   console.log("Would simulate completions for past instances...");
-  
+
   // In a real implementation, you would:
   // 1. Get calendar instances for the past week
   // 2. Randomly select some to mark as completed
   // 3. Call completeInstance for each selected instance
-  
+
   // Example logic (commented out since we'd need to implement the calendar fetch):
   /*
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -272,7 +268,7 @@ export async function runChecklistSeed(): Promise<void> {
       return;
     }
 
-    const targetUser = users.find(u => u.role === 'admin') || users[0];
+    const targetUser = users.find((u) => u.role === "admin") || users[0];
     console.log(`Seeding checklists for user: ${targetUser!.email}`);
 
     await seedChecklists({

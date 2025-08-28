@@ -1,34 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams, useLocation } from 'wouter';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
-import { 
-  ArrowLeft, 
-  Save, 
-  Trash2, 
-  Power, 
-  PowerOff, 
-  Plus, 
-  X, 
-  Clock,
-  Palette
-} from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useParams, useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { ArrowLeft, Save, Trash2, Power, PowerOff, Plus, X, Clock, Palette } from "lucide-react";
 import { HexColorPicker } from "react-colorful";
 import { Checkbox } from "@/components/ui/checkbox";
 // import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Badge } from '@/components/ui/badge';
-// import { 
-//   Select 
+import { Badge } from "@/components/ui/badge";
+// import {
+//   Select
 // } from '@/components/ui/select';
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -38,13 +28,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { apiRequest } from '@/lib/queryClient';
-import type { Fridge } from '@shared/schema';
+} from "@/components/ui/alert-dialog";
+import { apiRequest } from "@/lib/queryClient";
+import type { Fridge } from "@shared/schema";
 
 interface TimeWindow {
   label?: string;
-  checkType?: 'specific' | 'daily' | 'am_pm';
+  checkType?: "specific" | "daily" | "am_pm";
   startTime?: string;
   endTime?: string;
   excludedDays?: number[];
@@ -58,19 +48,19 @@ export default function EditFridge() {
   const [, setLocation] = useLocation();
 
   // Form state
-  const [name, setName] = useState('');
-  const [location, setFridgeLocation] = useState('');
-  const [notes, setNotes] = useState('');
-  const [color, setColor] = useState('#3b82f6');
-  const [minTemp, setMinTemp] = useState('');
-  const [maxTemp, setMaxTemp] = useState('');
+  const [name, setName] = useState("");
+  const [location, setFridgeLocation] = useState("");
+  const [notes, setNotes] = useState("");
+  const [color, setColor] = useState("#3b82f6");
+  const [minTemp, setMinTemp] = useState("");
+  const [maxTemp, setMaxTemp] = useState("");
   const [enableScheduledChecks, setEnableScheduledChecks] = useState(true);
-  const [checkFrequency, setCheckFrequency] = useState<'once' | 'twice' | 'multiple'>('twice');
+  const [checkFrequency, setCheckFrequency] = useState<"once" | "twice" | "multiple">("twice");
   const [excludedDays, setExcludedDays] = useState<number[]>([]);
   const [timeWindows, setTimeWindows] = useState<TimeWindow[]>([]);
   const [isRemoving, setIsRemoving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteConfirmName, setDeleteConfirmName] = useState('');
+  const [deleteConfirmName, setDeleteConfirmName] = useState("");
 
   // Fetch fridge data
   const { data: fridge, isLoading } = useQuery<Fridge>({
@@ -82,34 +72,38 @@ export default function EditFridge() {
   useEffect(() => {
     if (fridge) {
       setName(fridge.name);
-      setFridgeLocation(fridge.location || '');
-      setNotes(fridge.notes || '');
-      setColor(fridge.color || '#3b82f6');
+      setFridgeLocation(fridge.location || "");
+      setNotes(fridge.notes || "");
+      setColor(fridge.color || "#3b82f6");
       setMinTemp(fridge.minTemp);
       setMaxTemp(fridge.maxTemp);
       setEnableScheduledChecks(fridge.enableScheduledChecks ?? true);
-      setCheckFrequency((fridge.checkFrequency as "once" | "twice" | "multiple") || 'twice');
+      setCheckFrequency((fridge.checkFrequency as "once" | "twice" | "multiple") || "twice");
       setExcludedDays(
-        fridge.excludedDays 
-          ? (fridge.excludedDays as unknown as string[]).map(Number)
-          : []
+        fridge.excludedDays ? (fridge.excludedDays as unknown as string[]).map(Number) : []
       );
       setTimeWindows([]);
     }
   }, [fridge]);
 
-  const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
   const _predefinedColors = [
-    '#3b82f6', '#ef4444', '#10b981', '#f59e0b', 
-    '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'
+    "#3b82f6",
+    "#ef4444",
+    "#10b981",
+    "#f59e0b",
+    "#8b5cf6",
+    "#ec4899",
+    "#06b6d4",
+    "#84cc16",
   ];
 
   const toggleExcludedDay = (dayIndex: number) => {
     const sundayFirstIndex = dayIndex === 6 ? 0 : dayIndex + 1;
-    setExcludedDays(prev => 
-      prev.includes(sundayFirstIndex) 
-        ? prev.filter(d => d !== sundayFirstIndex)
+    setExcludedDays((prev) =>
+      prev.includes(sundayFirstIndex)
+        ? prev.filter((d) => d !== sundayFirstIndex)
         : [...prev, sundayFirstIndex]
     );
   };
@@ -122,7 +116,7 @@ export default function EditFridge() {
   const addTimeWindow = () => {
     const newWindow: TimeWindow = {
       label: `Check ${timeWindows.length + 1}`,
-      checkType: 'specific',
+      checkType: "specific",
       startTime: "09:00",
       endTime: "09:30",
       excludedDays: [],
@@ -143,7 +137,7 @@ export default function EditFridge() {
   // Update fridge mutation
   const updateMutation = useMutation({
     mutationFn: async (_data: Partial<Fridge>) => {
-      const response = await apiRequest('PATCH', `/api/fridge/${id}`, _data);
+      const response = await apiRequest("PATCH", `/api/fridge/${id}`, _data);
       return response.json();
     },
     onSuccess: () => {
@@ -152,7 +146,7 @@ export default function EditFridge() {
         description: "Fridge settings have been successfully updated.",
       });
       queryClient.invalidateQueries({ queryKey: [`/api/fridge/${id}`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/fridges/all'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fridges/all"] });
       setLocation(`/fridge/${id}`);
     },
     onError: (error: Error) => {
@@ -167,7 +161,7 @@ export default function EditFridge() {
   // Soft delete (remove) mutation
   const removeMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('PATCH', `/api/fridge/${id}/deactivate`, {});
+      const response = await apiRequest("PATCH", `/api/fridge/${id}/deactivate`, {});
       return response.json();
     },
     onSuccess: () => {
@@ -175,8 +169,8 @@ export default function EditFridge() {
         title: "Fridge Removed",
         description: "Fridge has been made inactive. It will still appear in compliance reports.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/fridges/all'] });
-      setLocation('/fridges');
+      queryClient.invalidateQueries({ queryKey: ["/api/fridges/all"] });
+      setLocation("/fridges");
     },
     onError: (error: Error) => {
       toast({
@@ -190,7 +184,7 @@ export default function EditFridge() {
   // Reactivate mutation
   const reactivateMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('PATCH', `/api/fridge/${id}/activate`, {});
+      const response = await apiRequest("PATCH", `/api/fridge/${id}/activate`, {});
       return response.json();
     },
     onSuccess: () => {
@@ -199,7 +193,7 @@ export default function EditFridge() {
         description: "Fridge has been made active again.",
       });
       queryClient.invalidateQueries({ queryKey: [`/api/fridge/${id}`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/fridges/all'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fridges/all"] });
     },
     onError: (error: Error) => {
       toast({
@@ -213,7 +207,7 @@ export default function EditFridge() {
   // Hard delete mutation
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('DELETE', `/api/fridge/${id}`, {});
+      const response = await apiRequest("DELETE", `/api/fridge/${id}`, {});
       return response.json();
     },
     onSuccess: () => {
@@ -221,8 +215,8 @@ export default function EditFridge() {
         title: "Fridge Deleted",
         description: "Fridge and all its data have been permanently deleted.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/fridges/all'] });
-      setLocation('/fridges');
+      queryClient.invalidateQueries({ queryKey: ["/api/fridges/all"] });
+      setLocation("/fridges");
     },
     onError: (error: Error) => {
       toast({
@@ -264,7 +258,7 @@ export default function EditFridge() {
       enableScheduledChecks,
       checkFrequency: enableScheduledChecks ? checkFrequency : null,
       excludedDays: enableScheduledChecks ? excludedDays : [],
-      timeWindows: enableScheduledChecks && checkFrequency === 'multiple' ? timeWindows : [],
+      timeWindows: enableScheduledChecks && checkFrequency === "multiple" ? timeWindows : [],
     };
 
     updateMutation.mutate(fridgeData);
@@ -306,7 +300,7 @@ export default function EditFridge() {
             </div>
           </div>
         </header>
-        
+
         <div className="max-w-3xl mx-auto px-4 py-8">
           <div className="animate-pulse space-y-6">
             <Card>
@@ -334,17 +328,19 @@ export default function EditFridge() {
         <header className="bg-card border-b border-border sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 py-4">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => setLocation('/fridges')}>
+              <Button variant="ghost" size="sm" onClick={() => setLocation("/fridges")}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Fridges
               </Button>
             </div>
           </div>
         </header>
-        
+
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="text-center">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Fridge not found</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              Fridge not found
+            </h2>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
               The requested fridge could not be found or you don&apos;t have access to it.
             </p>
@@ -360,15 +356,17 @@ export default function EditFridge() {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => setLocation(`/fridge/${id}`)} data-testid="button-back">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocation(`/fridge/${id}`)}
+                data-testid="button-back"
+              >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Fridge
               </Button>
               <div className="flex items-center gap-2">
-                <div 
-                  className="w-4 h-4 rounded-full" 
-                  style={{ backgroundColor: color }}
-                ></div>
+                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: color }}></div>
                 <h1 className="text-xl font-bold text-foreground">Edit {fridge.name}</h1>
                 {!fridge.isActive && (
                   <Badge variant="secondary" className="gap-1">
@@ -442,8 +440,8 @@ export default function EditFridge() {
                       className="w-full justify-start mt-2"
                       data-testid="button-color-picker"
                     >
-                      <div 
-                        className="w-4 h-4 rounded mr-2 border" 
+                      <div
+                        className="w-4 h-4 rounded mr-2 border"
                         style={{ backgroundColor: color }}
                       />
                       {color}
@@ -499,115 +497,119 @@ export default function EditFridge() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-6">
-                  <div>
-                    <Label className="text-base font-medium">Check Frequency</Label>
-                    <RadioGroup
-                      value={checkFrequency}
-                      onValueChange={(_value) => setCheckFrequency(_value as 'once' | 'twice' | 'multiple')}
-                      className="mt-3"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="once" id="once" />
-                        <Label htmlFor="once">Once per day</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="twice" id="twice" />
-                        <Label htmlFor="twice">Twice per day (AM & PM)</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="multiple" id="multiple" />
-                        <Label htmlFor="multiple">Multiple specific times</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
+                <div>
+                  <Label className="text-base font-medium">Check Frequency</Label>
+                  <RadioGroup
+                    value={checkFrequency}
+                    onValueChange={(_value) =>
+                      setCheckFrequency(_value as "once" | "twice" | "multiple")
+                    }
+                    className="mt-3"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="once" id="once" />
+                      <Label htmlFor="once">Once per day</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="twice" id="twice" />
+                      <Label htmlFor="twice">Twice per day (AM & PM)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="multiple" id="multiple" />
+                      <Label htmlFor="multiple">Multiple specific times</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
 
-                  {checkFrequency === 'multiple' && (
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <Label className="text-base font-medium">Temperature Check Times</Label>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={addTimeWindow}
-                          data-testid="add-time-window"
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add Check Time
-                        </Button>
-                      </div>
-                      
-                      {timeWindows.map((window, index) => (
-                        <Card key={index} className="p-4">
-                          <div className="space-y-4">
-                            <div className="flex items-center justify-between">
+                {checkFrequency === "multiple" && (
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <Label className="text-base font-medium">Temperature Check Times</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={addTimeWindow}
+                        data-testid="add-time-window"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Check Time
+                      </Button>
+                    </div>
+
+                    {timeWindows.map((window, index) => (
+                      <Card key={index} className="p-4">
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <Input
+                              value={window.label}
+                              onChange={(e) => updateTimeWindow(index, "label", e.target.value)}
+                              placeholder="Check label"
+                              className="flex-1 mr-4"
+                              data-testid={`time-window-label-${index}`}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => removeTimeWindow(index)}
+                              data-testid={`remove-time-window-${index}`}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor={`start-${index}`}>Start Time</Label>
                               <Input
-                                value={window.label}
-                                onChange={(e) => updateTimeWindow(index, 'label', e.target.value)}
-                                placeholder="Check label"
-                                className="flex-1 mr-4"
-                                data-testid={`time-window-label-${index}`}
+                                id={`start-${index}`}
+                                type="time"
+                                value={window.startTime || ""}
+                                onChange={(e) =>
+                                  updateTimeWindow(index, "startTime", e.target.value)
+                                }
+                                data-testid={`start-time-${index}`}
                               />
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => removeTimeWindow(index)}
-                                data-testid={`remove-time-window-${index}`}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
                             </div>
-                            
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <Label htmlFor={`start-${index}`}>Start Time</Label>
-                                <Input
-                                  id={`start-${index}`}
-                                  type="time"
-                                  value={window.startTime || ''}
-                                  onChange={(e) => updateTimeWindow(index, 'startTime', e.target.value)}
-                                  data-testid={`start-time-${index}`}
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor={`end-${index}`}>End Time</Label>
-                                <Input
-                                  id={`end-${index}`}
-                                  type="time"
-                                  value={window.endTime || ''}
-                                  onChange={(e) => updateTimeWindow(index, 'endTime', e.target.value)}
-                                  data-testid={`end-time-${index}`}
-                                />
-                              </div>
+                            <div>
+                              <Label htmlFor={`end-${index}`}>End Time</Label>
+                              <Input
+                                id={`end-${index}`}
+                                type="time"
+                                value={window.endTime || ""}
+                                onChange={(e) => updateTimeWindow(index, "endTime", e.target.value)}
+                                data-testid={`end-time-${index}`}
+                              />
                             </div>
                           </div>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-
-                  <div>
-                    <Label className="text-base font-medium">Excluded Days</Label>
-                    <div className="mt-3 space-y-2">
-                      {dayNames.map((day, index) => (
-                        <div key={day} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`day-${index}`}
-                            checked={isDayExcluded(index)}
-                            onCheckedChange={() => toggleExcludedDay(index)}
-                            data-testid={`exclude-${day.toLowerCase()}`}
-                          />
-                          <Label htmlFor={`day-${index}`} className="text-sm">
-                            Skip {day}
-                          </Label>
                         </div>
-                      ))}
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Select days when temperature checks should be skipped
-                    </p>
+                      </Card>
+                    ))}
                   </div>
+                )}
+
+                <div>
+                  <Label className="text-base font-medium">Excluded Days</Label>
+                  <div className="mt-3 space-y-2">
+                    {dayNames.map((day, index) => (
+                      <div key={day} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`day-${index}`}
+                          checked={isDayExcluded(index)}
+                          onCheckedChange={() => toggleExcludedDay(index)}
+                          data-testid={`exclude-${day.toLowerCase()}`}
+                        />
+                        <Label htmlFor={`day-${index}`} className="text-sm">
+                          Skip {day}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Select days when temperature checks should be skipped
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -618,14 +620,14 @@ export default function EditFridge() {
               {fridge.isActive ? (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button 
-                      type="button" 
-                      variant="destructive" 
+                    <Button
+                      type="button"
+                      variant="destructive"
                       disabled={isRemoving}
                       data-testid="button-remove"
                     >
                       <PowerOff className="h-4 w-4 mr-2" />
-                      {isRemoving ? 'Removing...' : 'Remove Fridge'}
+                      {isRemoving ? "Removing..." : "Remove Fridge"}
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
@@ -653,16 +655,12 @@ export default function EditFridge() {
                     data-testid="button-reactivate"
                   >
                     <Power className="h-4 w-4 mr-2" />
-                    {reactivateMutation.isPending ? 'Reactivating...' : 'Reactivate'}
+                    {reactivateMutation.isPending ? "Reactivating..." : "Reactivate"}
                   </Button>
-                  
+
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button 
-                        type="button" 
-                        variant="destructive"
-                        data-testid="button-delete"
-                      >
+                      <Button type="button" variant="destructive" data-testid="button-delete">
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete Permanently
                       </Button>
@@ -689,13 +687,15 @@ export default function EditFridge() {
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setDeleteConfirmName('')}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
+                        <AlertDialogCancel onClick={() => setDeleteConfirmName("")}>
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
                           onClick={handleDelete}
                           disabled={deleteConfirmName.trim() !== fridge.name || isDeleting}
                           className="bg-red-600 hover:bg-red-700"
                         >
-                          {isDeleting ? 'Deleting...' : 'Delete Permanently'}
+                          {isDeleting ? "Deleting..." : "Delete Permanently"}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -704,13 +704,9 @@ export default function EditFridge() {
               )}
             </div>
 
-            <Button 
-              type="submit" 
-              disabled={updateMutation.isPending}
-              data-testid="button-save"
-            >
+            <Button type="submit" disabled={updateMutation.isPending} data-testid="button-save">
               <Save className="h-4 w-4 mr-2" />
-              {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+              {updateMutation.isPending ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </form>

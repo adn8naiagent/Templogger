@@ -12,15 +12,9 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle } from "@/components/ui/dialog";
-import {
-  CheckSquare,
-  Save,
-  X,
-  AlertTriangle,
-  FileText,
-  Clock,
-  User } from "lucide-react";
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { CheckSquare, Save, X, AlertTriangle, FileText, Clock, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
@@ -39,8 +33,8 @@ interface ChecklistInstance {
   checklistId: string;
   checklistName: string;
   targetDate: string;
-  status: 'REQUIRED' | 'COMPLETED' | 'MISSED';
-  cadence: 'DAILY' | 'DOW' | 'WEEKLY';
+  status: "REQUIRED" | "COMPLETED" | "MISSED";
+  cadence: "DAILY" | "DOW" | "WEEKLY";
   items: ChecklistItem[];
   completedAt?: Date;
   completedBy?: string;
@@ -63,22 +57,26 @@ export default function CompleteChecklistModal({
   isOpen,
   onOpenChange,
   instance,
-  onComplete }: CompleteChecklistModalProps) {
+  onComplete,
+}: CompleteChecklistModalProps) {
   const { toast } = useToast();
   const { logout, user } = useAuth();
   const queryClient = useQueryClient();
 
   const [itemStates, setItemStates] = useState<ItemCompletionState[]>([]);
-  const [confirmationNote, setConfirmationNote] = useState('');
+  const [confirmationNote, setConfirmationNote] = useState("");
 
   // Initialize item states when instance changes
   useEffect(() => {
     if (instance?.items) {
-      setItemStates(instance.items.map(item => ({
-        itemId: item._id,
-        checked: false,
-        note: '' })));
-      setConfirmationNote('');
+      setItemStates(
+        instance.items.map((item) => ({
+          itemId: item._id,
+          checked: false,
+          note: "",
+        }))
+      );
+      setConfirmationNote("");
     }
   }, [instance]);
 
@@ -88,10 +86,10 @@ export default function CompleteChecklistModal({
       items: Array<{ itemId: string; checked: boolean; note?: string }>;
       confirmationNote?: string;
     }) => {
-      if (!instance) throw new Error('No instance to complete');
+      if (!instance) throw new Error("No instance to complete");
 
       const response = await apiRequest(
-        'POST',
+        "POST",
         `/api/v2/instances/${instance._id}/complete`,
         _data
       );
@@ -107,40 +105,41 @@ export default function CompleteChecklistModal({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['calendar'] });
-      queryClient.invalidateQueries({ queryKey: ['checklist-summaries'] });
+      queryClient.invalidateQueries({ queryKey: ["calendar"] });
+      queryClient.invalidateQueries({ queryKey: ["checklist-summaries"] });
       onOpenChange(false);
       onComplete?.();
       toast({
         title: "Success",
-        description: "Checklist completed successfully" });
+        description: "Checklist completed successfully",
+      });
     },
     onError: (error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to complete checklist",
-        variant: "destructive" });
-    } });
+        variant: "destructive",
+      });
+    },
+  });
 
   // Update item state
   const updateItemState = (itemId: string, _updates: Partial<ItemCompletionState>) => {
-    setItemStates(prev => 
-      prev.map(state => 
-        state.itemId === itemId ? { ...state, ..._updates } : state
-      )
+    setItemStates((prev) =>
+      prev.map((state) => (state.itemId === itemId ? { ...state, ..._updates } : state))
     );
   };
 
   // Check if all required items are completed
   const areRequiredItemsCompleted = () => {
     if (!instance?.items) return false;
-    
-    const requiredItems = instance.items.filter(item => item.required);
-    const completedRequiredItems = itemStates.filter(state => {
-      const item = instance.items.find(i => i._id === state.itemId);
+
+    const requiredItems = instance.items.filter((item) => item.required);
+    const completedRequiredItems = itemStates.filter((state) => {
+      const item = instance.items.find((i) => i._id === state.itemId);
       return item?.required && state.checked;
     });
-    
+
     return completedRequiredItems.length === requiredItems.length;
   };
 
@@ -150,42 +149,46 @@ export default function CompleteChecklistModal({
       toast({
         title: "Validation Error",
         description: "All required items must be completed",
-        variant: "destructive" });
+        variant: "destructive",
+      });
       return;
     }
 
     const _completionData = {
-      items: itemStates.map(state => ({
+      items: itemStates.map((state) => ({
         itemId: state.itemId,
         checked: state.checked,
-        note: state.note || undefined })),
-      confirmationNote: confirmationNote || undefined };
+        note: state.note || undefined,
+      })),
+      confirmationNote: confirmationNote || undefined,
+    };
 
     completeInstanceMutation.mutate(_completionData);
   };
 
   // Format target date display
-  const formatTargetDate = (targetDate: string, cadence: 'DAILY' | 'DOW' | 'WEEKLY') => {
-    if (cadence === 'WEEKLY' && targetDate.includes('-W')) {
+  const formatTargetDate = (targetDate: string, cadence: "DAILY" | "DOW" | "WEEKLY") => {
+    if (cadence === "WEEKLY" && targetDate.includes("-W")) {
       // Parse week identifier like "2024-W08"
-      const [year, week] = targetDate.split('-W');
+      const [year, week] = targetDate.split("-W");
       return `Week ${week}, ${year}`;
     } else {
       // Regular date
-      return new Date(targetDate).toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric' });
+      return new Date(targetDate).toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
     }
   };
 
   if (!instance) return null;
 
-  const requiredItems = instance.items.filter(item => item.required);
-  const optionalItems = instance.items.filter(item => !item.required);
-  const completedRequiredCount = itemStates.filter(state => {
-    const item = instance.items.find(i => i._id === state.itemId);
+  const requiredItems = instance.items.filter((item) => item.required);
+  const optionalItems = instance.items.filter((item) => !item.required);
+  const completedRequiredCount = itemStates.filter((state) => {
+    const item = instance.items.find((i) => i._id === state.itemId);
     return item?.required && state.checked;
   }).length;
 
@@ -198,7 +201,7 @@ export default function CompleteChecklistModal({
             Complete Checklist
           </DialogTitle>
           <DialogDescription>
-            Complete &quot;{instance.checklistName}&quot; for{' '}
+            Complete &quot;{instance.checklistName}&quot; for{" "}
             {formatTargetDate(instance.targetDate, instance.cadence)}
           </DialogDescription>
         </DialogHeader>
@@ -242,10 +245,11 @@ export default function CompleteChecklistModal({
               <div className="w-full bg-muted rounded-full h-2">
                 <div
                   className={`h-2 rounded-full transition-all ${
-                    areRequiredItemsCompleted() ? 'bg-green-500' : 'bg-blue-500'
+                    areRequiredItemsCompleted() ? "bg-green-500" : "bg-blue-500"
                   }`}
                   style={{
-                    width: `${requiredItems.length > 0 ? (completedRequiredCount / requiredItems.length) * 100 : 0}%` }}
+                    width: `${requiredItems.length > 0 ? (completedRequiredCount / requiredItems.length) * 100 : 0}%`,
+                  }}
                 />
               </div>
             </CardContent>
@@ -258,24 +262,27 @@ export default function CompleteChecklistModal({
                 <AlertTriangle className="w-5 h-5 text-red-500" />
                 <h3 className="font-medium text-lg">Required Items ({requiredItems.length})</h3>
               </div>
-              
+
               <div className="space-y-3">
                 {requiredItems.map((item) => {
-                  const itemState = itemStates.find(s => s.itemId === item._id);
+                  const itemState = itemStates.find((s) => s.itemId === item._id);
                   if (!itemState) return null;
 
                   return (
-                    <Card key={item._id} className={`border-l-4 ${
-                      itemState.checked 
-                        ? 'border-l-green-500 bg-green-50/50' 
-                        : 'border-l-red-500 bg-red-50/50'
-                    }`}>
+                    <Card
+                      key={item._id}
+                      className={`border-l-4 ${
+                        itemState.checked
+                          ? "border-l-green-500 bg-green-50/50"
+                          : "border-l-red-500 bg-red-50/50"
+                      }`}
+                    >
                       <CardContent className="p-4">
                         <div className="space-y-3">
                           <div className="flex items-start gap-3">
                             <Checkbox
                               checked={itemState.checked}
-                              onCheckedChange={(checked) => 
+                              onCheckedChange={(checked) =>
                                 updateItemState(item._id, { checked: !!checked })
                               }
                               className="mt-1"
@@ -286,9 +293,7 @@ export default function CompleteChecklistModal({
                                 Required
                               </Badge>
                               {item.note && (
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  {item.note}
-                                </p>
+                                <p className="text-sm text-muted-foreground mt-1">{item.note}</p>
                               )}
                             </div>
                           </div>
@@ -302,9 +307,7 @@ export default function CompleteChecklistModal({
                               id={`note-${item._id}`}
                               placeholder="Add notes about this item..."
                               value={itemState.note}
-                              onChange={(e) => 
-                                updateItemState(item._id, { note: e.target.value })
-                              }
+                              onChange={(e) => updateItemState(item._id, { note: e.target.value })}
                               rows={2}
                               className="mt-1"
                             />
@@ -325,24 +328,25 @@ export default function CompleteChecklistModal({
                 <FileText className="w-5 h-5 text-muted-foreground" />
                 <h3 className="font-medium text-lg">Optional Items ({optionalItems.length})</h3>
               </div>
-              
+
               <div className="space-y-3">
                 {optionalItems.map((item) => {
-                  const itemState = itemStates.find(s => s.itemId === item._id);
+                  const itemState = itemStates.find((s) => s.itemId === item._id);
                   if (!itemState) return null;
 
                   return (
-                    <Card key={item._id} className={`border-l-4 ${
-                      itemState.checked 
-                        ? 'border-l-blue-500 bg-blue-50/50' 
-                        : 'border-l-gray-300'
-                    }`}>
+                    <Card
+                      key={item._id}
+                      className={`border-l-4 ${
+                        itemState.checked ? "border-l-blue-500 bg-blue-50/50" : "border-l-gray-300"
+                      }`}
+                    >
                       <CardContent className="p-4">
                         <div className="space-y-3">
                           <div className="flex items-start gap-3">
                             <Checkbox
                               checked={itemState.checked}
-                              onCheckedChange={(checked) => 
+                              onCheckedChange={(checked) =>
                                 updateItemState(item._id, { checked: !!checked })
                               }
                               className="mt-1"
@@ -353,9 +357,7 @@ export default function CompleteChecklistModal({
                                 Optional
                               </Badge>
                               {item.note && (
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  {item.note}
-                                </p>
+                                <p className="text-sm text-muted-foreground mt-1">{item.note}</p>
                               )}
                             </div>
                           </div>
@@ -369,9 +371,7 @@ export default function CompleteChecklistModal({
                               id={`note-${item._id}`}
                               placeholder="Add notes about this item..."
                               value={itemState.note}
-                              onChange={(e) => 
-                                updateItemState(item._id, { note: e.target.value })
-                              }
+                              onChange={(e) => updateItemState(item._id, { note: e.target.value })}
                               rows={2}
                               className="mt-1"
                             />
@@ -408,10 +408,9 @@ export default function CompleteChecklistModal({
                   <div className="text-sm text-amber-800">
                     <div className="font-medium mb-1">Complete Required Items</div>
                     <div>
-                      You must complete all {requiredItems.length} required items before
-                      submitting this checklist.
-                      Currently {completedRequiredCount} of {requiredItems.length} required
-                      items are completed.
+                      You must complete all {requiredItems.length} required items before submitting
+                      this checklist. Currently {completedRequiredCount} of {requiredItems.length}{" "}
+                      required items are completed.
                     </div>
                   </div>
                 </div>

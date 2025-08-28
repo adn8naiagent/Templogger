@@ -10,16 +10,12 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle } from "@/components/ui/dialog";
+  DialogTitle,
+} from "@/components/ui/dialog";
 // import {
 //   Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import {
-  Clock,
-  Save,
-  X,
-  AlertCircle,
-  CheckCircle2 } from "lucide-react";
+import { Clock, Save, X, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
@@ -27,7 +23,7 @@ import { apiRequest } from "@/lib/queryClient";
 interface ChecklistSchedule {
   _id: string;
   checklistId: string;
-  cadence: 'DAILY' | 'DOW' | 'WEEKLY';
+  cadence: "DAILY" | "DOW" | "WEEKLY";
   daysOfWeek?: number[];
   startDate: string;
   endDate?: string;
@@ -52,43 +48,43 @@ interface ScheduleEditorProps {
 }
 
 const DAYS_OF_WEEK = [
-  { value: 0, label: 'Sunday', short: 'Sun' },
-  { value: 1, label: 'Monday', short: 'Mon' },
-  { value: 2, label: 'Tuesday', short: 'Tue' },
-  { value: 3, label: 'Wednesday', short: 'Wed' },
-  { value: 4, label: 'Thursday', short: 'Thu' },
-  { value: 5, label: 'Friday', short: 'Fri' },
-  { value: 6, label: 'Saturday', short: 'Sat' },
+  { value: 0, label: "Sunday", short: "Sun" },
+  { value: 1, label: "Monday", short: "Mon" },
+  { value: 2, label: "Tuesday", short: "Tue" },
+  { value: 3, label: "Wednesday", short: "Wed" },
+  { value: 4, label: "Thursday", short: "Thu" },
+  { value: 5, label: "Friday", short: "Fri" },
+  { value: 6, label: "Saturday", short: "Sat" },
 ];
 
 const CADENCE_OPTIONS = [
   {
-    value: 'DAILY',
-    label: 'Daily',
-    description: 'Required every day within the date range' },
+    value: "DAILY",
+    label: "Daily",
+    description: "Required every day within the date range",
+  },
   {
-    value: 'DOW',
-    label: 'Days of Week',
-    description: 'Required on specific days of the week' },
+    value: "DOW",
+    label: "Days of Week",
+    description: "Required on specific days of the week",
+  },
   {
-    value: 'WEEKLY',
-    label: 'Weekly',
-    description: 'Required once per week (any day within the week)' },
+    value: "WEEKLY",
+    label: "Weekly",
+    description: "Required once per week (any day within the week)",
+  },
 ];
 
-export default function ScheduleEditor({
-  isOpen,
-  onOpenChange,
-  checklist }: ScheduleEditorProps) {
+export default function ScheduleEditor({ isOpen, onOpenChange, checklist }: ScheduleEditorProps) {
   const { toast } = useToast();
   const { logout } = useAuth();
   const queryClient = useQueryClient();
 
-  const [cadence, setCadence] = useState<'DAILY' | 'DOW' | 'WEEKLY'>('DAILY');
+  const [cadence, setCadence] = useState<"DAILY" | "DOW" | "WEEKLY">("DAILY");
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [timezone] = useState('UTC'); // For simplicity, using UTC
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [timezone] = useState("UTC"); // For simplicity, using UTC
 
   // Initialize form when checklist changes
   useEffect(() => {
@@ -96,29 +92,29 @@ export default function ScheduleEditor({
       setCadence(checklist.schedule.cadence);
       setSelectedDays(checklist.schedule.daysOfWeek || []);
       setStartDate(checklist.schedule.startDate);
-      setEndDate(checklist.schedule.endDate || '');
+      setEndDate(checklist.schedule.endDate || "");
     } else {
       // Set defaults
-      setCadence('DAILY');
+      setCadence("DAILY");
       setSelectedDays([]);
-      setStartDate(new Date().toISOString().split('T')[0]!); // Today
-      setEndDate('');
+      setStartDate(new Date().toISOString().split("T")[0]!); // Today
+      setEndDate("");
     }
   }, [checklist, isOpen]);
 
   // Create/Update schedule mutation
   const scheduleChecklistMutation = useMutation({
     mutationFn: async (_data: {
-      cadence: 'DAILY' | 'DOW' | 'WEEKLY';
+      cadence: "DAILY" | "DOW" | "WEEKLY";
       daysOfWeek?: number[];
       startDate: string;
       endDate?: string;
       timezone: string;
     }) => {
-      if (!checklist) throw new Error('No checklist selected');
+      if (!checklist) throw new Error("No checklist selected");
 
       const response = await apiRequest(
-        'POST',
+        "POST",
         `/api/v2/checklists/${checklist._id}/schedule`,
         _data
       );
@@ -134,23 +130,26 @@ export default function ScheduleEditor({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['checklists'] });
+      queryClient.invalidateQueries({ queryKey: ["checklists"] });
       onOpenChange(false);
       toast({
         title: "Success",
-        description: "Checklist schedule updated successfully" });
+        description: "Checklist schedule updated successfully",
+      });
     },
     onError: (error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to update schedule",
-        variant: "destructive" });
-    } });
+        variant: "destructive",
+      });
+    },
+  });
 
   // Toggle day selection for DOW cadence
   const toggleDay = (dayValue: number) => {
     if (selectedDays.includes(dayValue)) {
-      setSelectedDays(selectedDays.filter(d => d !== dayValue));
+      setSelectedDays(selectedDays.filter((d) => d !== dayValue));
     } else {
       setSelectedDays([...selectedDays, dayValue].sort());
     }
@@ -162,7 +161,8 @@ export default function ScheduleEditor({
       toast({
         title: "Validation Error",
         description: "Start date is required",
-        variant: "destructive" });
+        variant: "destructive",
+      });
       return false;
     }
 
@@ -170,15 +170,17 @@ export default function ScheduleEditor({
       toast({
         title: "Validation Error",
         description: "End date must be after start date",
-        variant: "destructive" });
+        variant: "destructive",
+      });
       return false;
     }
 
-    if (cadence === 'DOW' && selectedDays.length === 0) {
+    if (cadence === "DOW" && selectedDays.length === 0) {
       toast({
         title: "Validation Error",
         description: "Please select at least one day of the week",
-        variant: "destructive" });
+        variant: "destructive",
+      });
       return false;
     }
 
@@ -191,49 +193,50 @@ export default function ScheduleEditor({
 
     const preview = [];
     const start = new Date(startDate);
-    const end = endDate 
-      ? new Date(endDate) 
-      : new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from start
-    
+    const end = endDate ? new Date(endDate) : new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from start
+
     const today = new Date();
     const current = new Date(Math.max(start.getTime(), today.getTime()));
     const maxPreview = 10;
     let count = 0;
 
     while (current <= end && count < maxPreview) {
-      if (cadence === 'DAILY') {
+      if (cadence === "DAILY") {
         preview.push({
-          date: current.toISOString().split('T')[0],
-          display: current.toLocaleDateString('en-US', { 
-            weekday: 'short', 
-            month: 'short', 
-            day: 'numeric' 
-          }) });
+          date: current.toISOString().split("T")[0],
+          display: current.toLocaleDateString("en-US", {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+          }),
+        });
         current.setDate(current.getDate() + 1);
         count++;
-      } else if (cadence === 'DOW') {
+      } else if (cadence === "DOW") {
         if (selectedDays.includes(current.getDay())) {
           preview.push({
-            date: current.toISOString().split('T')[0],
-            display: current.toLocaleDateString('en-US', { 
-              weekday: 'short', 
-              month: 'short', 
-              day: 'numeric' 
-            }) });
+            date: current.toISOString().split("T")[0],
+            display: current.toLocaleDateString("en-US", {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+            }),
+          });
           count++;
         }
         current.setDate(current.getDate() + 1);
-      } else if (cadence === 'WEEKLY') {
+      } else if (cadence === "WEEKLY") {
         // Find the start of the week (Sunday)
         const weekStart = new Date(current);
         weekStart.setDate(current.getDate() - current.getDay());
-        
+
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekStart.getDate() + 6);
-        
+
         preview.push({
-          date: `Week of ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
-          display: `Week ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` });
+          date: `Week of ${weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
+          display: `Week ${weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${weekEnd.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
+        });
         current.setDate(current.getDate() + 7);
         count++;
       }
@@ -248,10 +251,11 @@ export default function ScheduleEditor({
 
     const saveData = {
       cadence,
-      daysOfWeek: cadence === 'DOW' ? selectedDays : undefined,
+      daysOfWeek: cadence === "DOW" ? selectedDays : undefined,
       startDate,
       endDate: endDate || undefined,
-      timezone };
+      timezone,
+    };
 
     scheduleChecklistMutation.mutate(saveData);
   };
@@ -281,27 +285,27 @@ export default function ScheduleEditor({
                   key={option.value}
                   className={`cursor-pointer transition-colors ${
                     cadence === option.value
-                      ? 'border-primary bg-primary/5'
-                      : 'hover:border-muted-foreground/50'
+                      ? "border-primary bg-primary/5"
+                      : "hover:border-muted-foreground/50"
                   }`}
-                  onClick={() => setCadence(option.value as 'DAILY' | 'DOW' | 'WEEKLY')}
+                  onClick={() => setCadence(option.value as "DAILY" | "DOW" | "WEEKLY")}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-3">
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                        cadence === option.value
-                          ? 'border-primary bg-primary'
-                          : 'border-muted-foreground'
-                      }`}>
+                      <div
+                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                          cadence === option.value
+                            ? "border-primary bg-primary"
+                            : "border-muted-foreground"
+                        }`}
+                      >
                         {cadence === option.value && (
                           <div className="w-2 h-2 rounded-full bg-white" />
                         )}
                       </div>
                       <div>
                         <div className="font-medium">{option.label}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {option.description}
-                        </div>
+                        <div className="text-sm text-muted-foreground">{option.description}</div>
                       </div>
                     </div>
                   </CardContent>
@@ -311,7 +315,7 @@ export default function ScheduleEditor({
           </div>
 
           {/* Days of Week Selection (only for DOW cadence) */}
-          {cadence === 'DOW' && (
+          {cadence === "DOW" && (
             <div className="space-y-3">
               <Label className="text-base font-medium">Select Days</Label>
               <div className="flex flex-wrap gap-2">
@@ -330,7 +334,10 @@ export default function ScheduleEditor({
               </div>
               {selectedDays.length > 0 && (
                 <p className="text-sm text-muted-foreground">
-                  Selected: {selectedDays.map(d => DAYS_OF_WEEK.find(day => day.value === d)?.label).join(', ')}
+                  Selected:{" "}
+                  {selectedDays
+                    .map((d) => DAYS_OF_WEEK.find((day) => day.value === d)?.label)
+                    .join(", ")}
                 </p>
               )}
             </div>
@@ -345,7 +352,7 @@ export default function ScheduleEditor({
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
+                min={new Date().toISOString().split("T")[0]}
                 className="mt-1"
               />
             </div>
@@ -356,7 +363,7 @@ export default function ScheduleEditor({
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                min={startDate || new Date().toISOString().split('T')[0]}
+                min={startDate || new Date().toISOString().split("T")[0]}
                 className="mt-1"
               />
             </div>
@@ -404,9 +411,10 @@ export default function ScheduleEditor({
                       )}
                       {checklist.schedule.daysOfWeek && (
                         <div>
-                          Days: {checklist.schedule.daysOfWeek
-                            .map(d => DAYS_OF_WEEK.find(day => day.value === d)?.short)
-                            .join(', ')}
+                          Days:{" "}
+                          {checklist.schedule.daysOfWeek
+                            .map((d) => DAYS_OF_WEEK.find((day) => day.value === d)?.short)
+                            .join(", ")}
                         </div>
                       )}
                     </div>
@@ -460,7 +468,7 @@ export default function ScheduleEditor({
             ) : (
               <>
                 <Save className="w-4 h-4 mr-2" />
-                {checklist?.schedule ? 'Update' : 'Create'} Schedule
+                {checklist?.schedule ? "Update" : "Create"} Schedule
               </>
             )}
           </Button>

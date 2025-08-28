@@ -88,19 +88,19 @@ export default function ViewAuditCompletion() {
   }, [isAuthenticated, isLoading, toast]);
 
   // Fetch completion details
-  const { 
-    data: completion, 
-    isLoading: completionLoading, 
-    error: completionError 
+  const {
+    data: completion,
+    isLoading: completionLoading,
+    error: completionError,
   } = useQuery({
-    queryKey: ['audit-completion', _completionId],
+    queryKey: ["audit-completion", _completionId],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/audit-completions/${_completionId}`);
+      const response = await apiRequest("GET", `/api/audit-completions/${_completionId}`);
       if (!response.ok) {
         if (response.status === 404) {
-          throw new Error('Completion not found');
+          throw new Error("Completion not found");
         }
-        throw new Error('Failed to fetch completion');
+        throw new Error("Failed to fetch completion");
       }
       return response.json() as Promise<AuditCompletion>;
     },
@@ -121,27 +121,27 @@ export default function ViewAuditCompletion() {
 
   const exportReport = () => {
     if (!completion) return;
-    
-    const csvHeaders = ['Section', 'Item', 'Compliant', 'Notes', 'Action Required'];
-    const csvRows = [csvHeaders.join(',')];
-    
+
+    const csvHeaders = ["Section", "Item", "Compliant", "Notes", "Action Required"];
+    const csvRows = [csvHeaders.join(",")];
+
     completion.responses.forEach((response: AuditResponse) => {
       const row = [
         `"${response.sectionTitle}"`,
         `"${response.itemText}"`,
-        response.isCompliant ? 'Yes' : 'No',
-        response.notes ? `"${response.notes}"` : '',
-        response.actionRequired ? `"${response.actionRequired}"` : ''
+        response.isCompliant ? "Yes" : "No",
+        response.notes ? `"${response.notes}"` : "",
+        response.actionRequired ? `"${response.actionRequired}"` : "",
       ];
-      csvRows.push(row.join(','));
+      csvRows.push(row.join(","));
     });
-    
-    const csvContent = csvRows.join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+
+    const csvContent = csvRows.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `audit-${completion.templateName}-${new Date(completion.completedAt).toISOString().split('T')[0]}.csv`;
+    a.download = `audit-${completion.templateName}-${new Date(completion.completedAt).toISOString().split("T")[0]}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -174,7 +174,7 @@ export default function ViewAuditCompletion() {
               <p className="text-muted-foreground mb-4">
                 The audit completion could not be found or you don&apos;t have access to it.
               </p>
-              <Button onClick={() => setLocation('/self-audit-checklists')}>
+              <Button onClick={() => setLocation("/self-audit-checklists")}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Checklists
               </Button>
@@ -186,28 +186,29 @@ export default function ViewAuditCompletion() {
   }
 
   // Group responses by section
-  const responsesBySection = completion.responses.reduce((
-    acc: Record<string, { sectionTitle: string; responses: AuditResponse[] }>,
-    response: AuditResponse
-  ) => {
-    if (!acc[response.sectionId]) {
-      acc[response.sectionId] = {
-        sectionTitle: response.sectionTitle,
-        responses: []
-      };
-    }
-    acc[response.sectionId].responses.push(response);
-    return acc;
-  }, {} as Record<string, { sectionTitle: string; responses: AuditResponse[] }>);
+  const responsesBySection = completion.responses.reduce(
+    (
+      acc: Record<string, { sectionTitle: string; responses: AuditResponse[] }>,
+      response: AuditResponse
+    ) => {
+      if (!acc[response.sectionId]) {
+        acc[response.sectionId] = {
+          sectionTitle: response.sectionTitle,
+          responses: [],
+        };
+      }
+      acc[response.sectionId].responses.push(response);
+      return acc;
+    },
+    {} as Record<string, { sectionTitle: string; responses: AuditResponse[] }>
+  );
 
-  const compliantCount = completion.responses.filter(
-    (r: AuditResponse) => r.isCompliant
-  ).length;
+  const compliantCount = completion.responses.filter((r: AuditResponse) => r.isCompliant).length;
   const nonCompliantCount = completion.responses.filter(
     (r: AuditResponse) => !r.isCompliant
   ).length;
   const actionItems = completion.responses.filter(
-    (r: AuditResponse) => r.actionRequired && r.actionRequired.trim() !== ''
+    (r: AuditResponse) => r.actionRequired && r.actionRequired.trim() !== ""
   );
 
   return (
@@ -217,7 +218,11 @@ export default function ViewAuditCompletion() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" onClick={() => setLocation('/self-audit-checklists')}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocation("/self-audit-checklists")}
+              >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Checklists
               </Button>
@@ -226,7 +231,7 @@ export default function ViewAuditCompletion() {
                 <p className="text-sm text-muted-foreground">{completion.templateName}</p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <Button variant="outline" onClick={exportReport}>
                 <Download className="h-4 w-4 mr-2" />
@@ -246,29 +251,31 @@ export default function ViewAuditCompletion() {
               Audit Summary
             </CardTitle>
             <CardDescription>
-              Completed on {new Date(completion.completedAt).toLocaleDateString()} at{' '}
+              Completed on {new Date(completion.completedAt).toLocaleDateString()} at{" "}
               {new Date(completion.completedAt).toLocaleTimeString()}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="text-center">
-                <div className={`text-3xl font-bold ${getComplianceColor(completion.complianceRate)}`}>
+                <div
+                  className={`text-3xl font-bold ${getComplianceColor(completion.complianceRate)}`}
+                >
                   {completion.complianceRate}%
                 </div>
                 <div className="text-sm text-muted-foreground">Overall Compliance</div>
               </div>
-              
+
               <div className="text-center">
                 <div className="text-3xl font-bold text-green-600">{compliantCount}</div>
                 <div className="text-sm text-muted-foreground">Compliant Items</div>
               </div>
-              
+
               <div className="text-center">
                 <div className="text-3xl font-bold text-red-600">{nonCompliantCount}</div>
                 <div className="text-sm text-muted-foreground">Non-Compliant Items</div>
               </div>
-              
+
               <div className="text-center">
                 <div className="text-3xl font-bold text-orange-600">{actionItems.length}</div>
                 <div className="text-sm text-muted-foreground">Action Items</div>
@@ -300,9 +307,7 @@ export default function ViewAuditCompletion() {
                 <AlertTriangle className="h-5 w-5" />
                 Action Items Required
               </CardTitle>
-              <CardDescription>
-                Items that require corrective action or follow-up
-              </CardDescription>
+              <CardDescription>Items that require corrective action or follow-up</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -339,84 +344,86 @@ export default function ViewAuditCompletion() {
             (
               [sectionId, { sectionTitle, responses }]: [
                 string,
-                { sectionTitle: string; responses: AuditResponse[] }
+                { sectionTitle: string; responses: AuditResponse[] },
               ],
               index: number
             ) => (
-            <Card key={sectionId}>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">{index + 1}</Badge>
-                    {sectionTitle}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">
-                      {responses.filter((r: AuditResponse) => r.isCompliant).length}/
-                      {responses.length} Compliant
-                    </Badge>
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {responses.map((response: AuditResponse, itemIndex: number) => (
-                    <div 
-                      key={response._id}
-                      className={`p-4 rounded-lg border-2 ${
-                        response.isCompliant
-                          ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950'
-                          : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <Badge variant="secondary" className="text-xs mt-0.5">
-                          {index + 1}.{itemIndex + 1}
-                        </Badge>
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between gap-4 mb-3">
-                            <p className="font-medium text-foreground">
-                              {response.itemText}
-                            </p>
-                            <div className="flex items-center gap-2">
-                              {response.isCompliant ? (
-                                <Badge className="bg-green-600">
-                                  <CheckCircle className="h-3 w-3 mr-1" />
-                                  Compliant
-                                </Badge>
-                              ) : (
-                                <Badge variant="destructive">
-                                  <XCircle className="h-3 w-3 mr-1" />
-                                  Non-Compliant
-                                </Badge>
-                              )}
+              <Card key={sectionId}>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{index + 1}</Badge>
+                      {sectionTitle}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        {responses.filter((r: AuditResponse) => r.isCompliant).length}/
+                        {responses.length} Compliant
+                      </Badge>
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {responses.map((response: AuditResponse, itemIndex: number) => (
+                      <div
+                        key={response._id}
+                        className={`p-4 rounded-lg border-2 ${
+                          response.isCompliant
+                            ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950"
+                            : "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <Badge variant="secondary" className="text-xs mt-0.5">
+                            {index + 1}.{itemIndex + 1}
+                          </Badge>
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between gap-4 mb-3">
+                              <p className="font-medium text-foreground">{response.itemText}</p>
+                              <div className="flex items-center gap-2">
+                                {response.isCompliant ? (
+                                  <Badge className="bg-green-600">
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    Compliant
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="destructive">
+                                    <XCircle className="h-3 w-3 mr-1" />
+                                    Non-Compliant
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
+
+                            {(response.notes || response.actionRequired) && (
+                              <div className="space-y-2">
+                                {response.notes && (
+                                  <div className="bg-white dark:bg-gray-900 rounded p-3 text-sm">
+                                    <strong className="text-muted-foreground">Notes:</strong>
+                                    <p className="mt-1">{response.notes}</p>
+                                  </div>
+                                )}
+
+                                {response.actionRequired && (
+                                  <div className="bg-orange-100 dark:bg-orange-950 rounded p-3 text-sm">
+                                    <strong className="text-orange-800 dark:text-orange-200">
+                                      Action Required:
+                                    </strong>
+                                    <p className="mt-1 text-orange-900 dark:text-orange-100">
+                                      {response.actionRequired}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
-                          
-                          {(response.notes || response.actionRequired) && (
-                            <div className="space-y-2">
-                              {response.notes && (
-                                <div className="bg-white dark:bg-gray-900 rounded p-3 text-sm">
-                                  <strong className="text-muted-foreground">Notes:</strong>
-                                  <p className="mt-1">{response.notes}</p>
-                                </div>
-                              )}
-                              
-                              {response.actionRequired && (
-                                <div className="bg-orange-100 dark:bg-orange-950 rounded p-3 text-sm">
-                                  <strong className="text-orange-800 dark:text-orange-200">Action Required:</strong>
-                                  <p className="mt-1 text-orange-900 dark:text-orange-100">{response.actionRequired}</p>
-                                </div>
-                              )}
-                            </div>
-                          )}
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             )
           )}
         </div>

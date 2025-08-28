@@ -1,14 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Link } from "wouter";
-import { 
-  Thermometer, 
-  Shield, 
-  Users, 
-  BarChart3, 
+import {
+  Thermometer,
+  Shield,
+  Users,
+  BarChart3,
   Download,
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
 } from "lucide-react";
 
 export default function Landing() {
@@ -19,9 +19,7 @@ export default function Landing() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Thermometer className="h-8 w-8 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              FridgeSafe
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">FridgeSafe</h1>
           </div>
           <div className="flex gap-2">
             <Link to="/auth/login">
@@ -30,9 +28,7 @@ export default function Landing() {
               </Button>
             </Link>
             <Link to="/auth/signup">
-              <Button data-testid="button-signup">
-                Sign Up
-              </Button>
+              <Button data-testid="button-signup">Sign Up</Button>
             </Link>
           </div>
         </div>
@@ -46,8 +42,8 @@ export default function Landing() {
             <span className="text-blue-600"> Pharmacies & Healthcare</span>
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-            Ensure medication safety with real-time temperature logging, automated alerts, 
-            and comprehensive reporting for regulatory compliance.
+            Ensure medication safety with real-time temperature logging, automated alerts, and
+            comprehensive reporting for regulatory compliance.
           </p>
           <div className="flex gap-4 justify-center">
             <Link to="/auth/signup">
@@ -81,8 +77,8 @@ export default function Landing() {
               </div>
               <CardTitle>Smart Temperature Logging</CardTitle>
               <CardDescription>
-                Log temperatures with automatic timestamp and person tracking. 
-                Set custom ranges for each fridge.
+                Log temperatures with automatic timestamp and person tracking. Set custom ranges for
+                each fridge.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -94,8 +90,8 @@ export default function Landing() {
               </div>
               <CardTitle>Real-time Alerts</CardTitle>
               <CardDescription>
-                Instant notifications when temperatures go outside safe ranges. 
-                Never miss a critical temperature event.
+                Instant notifications when temperatures go outside safe ranges. Never miss a
+                critical temperature event.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -107,8 +103,8 @@ export default function Landing() {
               </div>
               <CardTitle>Export & Reporting</CardTitle>
               <CardDescription>
-                Generate CSV reports for audits and compliance. 
-                Full data export with timestamps and alert status.
+                Generate CSV reports for audits and compliance. Full data export with timestamps and
+                alert status.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -120,8 +116,8 @@ export default function Landing() {
               </div>
               <CardTitle>Team Management</CardTitle>
               <CardDescription>
-                Track who logged each temperature. Role-based access control 
-                for staff and administrators.
+                Track who logged each temperature. Role-based access control for staff and
+                administrators.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -133,8 +129,8 @@ export default function Landing() {
               </div>
               <CardTitle>Analytics Dashboard</CardTitle>
               <CardDescription>
-                View temperature trends, compliance rates, and identify 
-                patterns across all your fridges.
+                View temperature trends, compliance rates, and identify patterns across all your
+                fridges.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -146,8 +142,8 @@ export default function Landing() {
               </div>
               <CardTitle>Secure & Compliant</CardTitle>
               <CardDescription>
-                HIPAA-ready security with encrypted data storage. 
-                Meets regulatory requirements for healthcare facilities.
+                HIPAA-ready security with encrypted data storage. Meets regulatory requirements for
+                healthcare facilities.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -160,9 +156,7 @@ export default function Landing() {
           <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
             Choose Your Plan
           </h3>
-          <p className="text-gray-600 dark:text-gray-300">
-            Start free, upgrade as you grow
-          </p>
+          <p className="text-gray-600 dark:text-gray-300">Start free, upgrade as you grow</p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -174,9 +168,7 @@ export default function Landing() {
                 <span className="text-3xl font-bold">$0</span>
                 <span className="text-gray-600">/month</span>
               </div>
-              <CardDescription className="text-center">
-                Perfect for small clinics
-              </CardDescription>
+              <CardDescription className="text-center">Perfect for small clinics</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center gap-2">
@@ -211,9 +203,7 @@ export default function Landing() {
                 <span className="text-3xl font-bold">$29</span>
                 <span className="text-gray-600">/month</span>
               </div>
-              <CardDescription className="text-center">
-                For growing pharmacies
-              </CardDescription>
+              <CardDescription className="text-center">For growing pharmacies</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center gap-2">
@@ -284,8 +274,8 @@ export default function Landing() {
             Ready to Ensure Medication Safety?
           </h3>
           <p className="text-gray-600 dark:text-gray-300 mb-8">
-            Join thousands of healthcare professionals who trust FridgeSafe 
-            for their temperature monitoring needs.
+            Join thousands of healthcare professionals who trust FridgeSafe for their temperature
+            monitoring needs.
           </p>
           <Link to="/auth/signup">
             <Button size="lg" data-testid="button-start-monitoring">

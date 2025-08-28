@@ -2,12 +2,26 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useLocation } from "wouter";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 // import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Loader2, LogIn, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { signInSchema, type SignInData } from "@shared/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -36,14 +50,14 @@ export default function Login() {
     onSuccess: async (_data) => {
       // Store the auth token in localStorage
       if (_data.authToken) {
-        localStorage.setItem('authToken', _data.authToken);
+        localStorage.setItem("authToken", _data.authToken);
       }
-      
+
       toast({
         title: "Welcome back!",
         description: "You&apos;ve been signed in successfully.",
       });
-      
+
       // Invalidate the auth query and navigate
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       setLocation("/");
@@ -62,7 +76,10 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4" data-testid="login-container">
+    <div
+      className="min-h-screen flex items-center justify-center bg-background p-4"
+      data-testid="login-container"
+    >
       <Card className="w-full max-w-md" data-testid="login-card">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center" data-testid="login-title">
@@ -72,7 +89,7 @@ export default function Login() {
             Enter your email and password to access your account
           </CardDescription>
         </CardHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} data-testid="login-form">
             <CardContent className="space-y-4">
@@ -164,7 +181,11 @@ export default function Login() {
 
               <div className="text-center text-sm text-muted-foreground">
                 Don&apos;t have an account?{" "}
-                <Link to="/auth/signup" className="text-primary hover:underline" data-testid="link-signup">
+                <Link
+                  to="/auth/signup"
+                  className="text-primary hover:underline"
+                  data-testid="link-signup"
+                >
                   Sign up
                 </Link>
               </div>

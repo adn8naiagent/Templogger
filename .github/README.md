@@ -7,12 +7,14 @@ This repository includes a comprehensive CI/CD pipeline for the FridgeSafe appli
 To use this CI/CD pipeline, you need to configure the following secrets in your GitHub repository:
 
 ### Database Configuration
+
 - **`DATABASE_URL`** - PostgreSQL connection string for your Supabase database
   ```
   postgresql://username:password@host:port/database
   ```
 
 ### Authentication
+
 - **`SESSION_SECRET`** - Secret key for session management (generate a random string)
   ```bash
   # Generate a secure session secret
@@ -20,10 +22,12 @@ To use this CI/CD pipeline, you need to configure the following secrets in your 
   ```
 
 ### Stripe Payment Processing
+
 - **`STRIPE_SECRET_KEY`** - Your Stripe secret key from the Stripe Dashboard
 - **`VITE_STRIPE_PUBLIC_KEY`** - Your Stripe publishable key (used by Vite build)
 
 ### AI Integration
+
 - **`CLAUDE_API_KEY`** - Your Claude API key from Anthropic (optional)
 
 ## Setting Up Secrets
@@ -43,6 +47,7 @@ You should set up two environments in GitHub:
 2. **production** - for the `main` branch deployments
 
 To create environments:
+
 1. Go to **Settings** → **Environments**
 2. Click **New environment**
 3. Name it `staging` or `production`
@@ -53,17 +58,20 @@ To create environments:
 The CI/CD pipeline includes the following jobs:
 
 ### Quality Assurance
+
 - **ESLint** - Code quality and style checking
 - **TypeScript Check** - Type safety validation
 - **Jest Tests** - Unit and integration testing
 - **Security Audit** - Dependency vulnerability scanning
 
 ### Build & Deploy
+
 - **Vite Build** - Frontend application building
 - **Database Schema** - Drizzle schema validation
 - **Environment Check** - Required secrets validation
 
 ### Deployment
+
 - **Staging Deploy** - Automatic deployment on `dev` branch push
 - **Production Deploy** - Automatic deployment on `main` branch push
 - **Notifications** - Success/failure notifications
@@ -73,11 +81,13 @@ The CI/CD pipeline includes the following jobs:
 The workflow is configured for **Railway** deployment, but can be easily adapted for other platforms:
 
 ### Railway Setup
+
 1. Install Railway CLI: `npm install -g @railway/cli`
 2. Login to Railway: `railway login`
 3. Connect your project: `railway link`
 
 ### Alternative Platforms
+
 To use other platforms, modify the deployment steps in `.github/workflows/ci-cd.yml`:
 
 - **Vercel**: Replace Railway commands with Vercel CLI
@@ -105,6 +115,7 @@ You can also trigger deployments manually:
 ### Debug Mode
 
 To enable verbose logging, add this to your workflow file:
+
 ```yaml
 env:
   DEBUG: true

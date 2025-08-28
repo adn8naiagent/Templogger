@@ -1,23 +1,23 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/hooks/useAuth';
-import { Link, useLocation } from 'wouter';
-import { 
-  ArrowLeft, 
-  Thermometer, 
-  MapPin, 
-  Clock, 
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+import { Link, useLocation } from "wouter";
+import {
+  ArrowLeft,
+  Thermometer,
+  MapPin,
+  Clock,
   Settings,
   Plus,
   Eye,
   Power,
   PowerOff,
-  Refrigerator
-} from 'lucide-react';
-import type { Fridge } from '@shared/schema';
+  Refrigerator,
+} from "lucide-react";
+import type { Fridge } from "@shared/schema";
 
 interface FridgeWithLogs extends Fridge {
   lastReading: string | null;
@@ -31,30 +31,43 @@ export default function ViewFridges() {
   const [, setLocation] = useLocation();
 
   const { data: fridges = [], isLoading } = useQuery<FridgeWithLogs[]>({
-    queryKey: ['/api/fridges/all'],
+    queryKey: ["/api/fridges/all"],
     enabled: !!user,
   });
 
   const getStatusBadge = (fridge: FridgeWithLogs) => {
     if (!fridge.isActive) {
-      return <Badge variant="secondary" className="gap-1"><PowerOff className="h-3 w-3" />Inactive</Badge>;
+      return (
+        <Badge variant="secondary" className="gap-1">
+          <PowerOff className="h-3 w-3" />
+          Inactive
+        </Badge>
+      );
     }
     if (fridge.recentAlert) {
-      return <Badge variant="destructive" className="gap-1"><Thermometer className="h-3 w-3" />Alert</Badge>;
+      return (
+        <Badge variant="destructive" className="gap-1">
+          <Thermometer className="h-3 w-3" />
+          Alert
+        </Badge>
+      );
     }
-    return <Badge variant="default" className="gap-1 bg-green-600"><Power className="h-3 w-3" />Active</Badge>;
+    return (
+      <Badge variant="default" className="gap-1 bg-green-600">
+        <Power className="h-3 w-3" />
+        Active
+      </Badge>
+    );
   };
 
   const getTemperatureDisplay = (fridge: FridgeWithLogs) => {
-    if (!fridge.lastTemperature) return 'No readings';
-    
+    if (!fridge.lastTemperature) return "No readings";
+
     const temp = fridge.lastTemperature;
     const isOutOfRange = temp < parseFloat(fridge.minTemp) || temp > parseFloat(fridge.maxTemp);
-    
+
     return (
-      <span className={isOutOfRange ? 'text-red-600 font-medium' : 'text-green-600'}>
-        {temp}°C
-      </span>
+      <span className={isOutOfRange ? "text-red-600 font-medium" : "text-green-600"}>{temp}°C</span>
     );
   };
 
@@ -64,7 +77,12 @@ export default function ViewFridges() {
         <header className="bg-card border-b border-border sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 py-4">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => setLocation('/dashboard')} data-testid="button-back">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocation("/dashboard")}
+                data-testid="button-back"
+              >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Dashboard
               </Button>
@@ -75,7 +93,7 @@ export default function ViewFridges() {
             </div>
           </div>
         </header>
-        
+
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
@@ -105,7 +123,12 @@ export default function ViewFridges() {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => setLocation('/dashboard')} data-testid="button-back">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocation("/dashboard")}
+                data-testid="button-back"
+              >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Dashboard
               </Button>
@@ -114,7 +137,7 @@ export default function ViewFridges() {
                 <h1 className="text-xl font-bold text-foreground">All Fridges</h1>
               </div>
             </div>
-            
+
             <Button asChild data-testid="button-add-fridge">
               <Link to="/add-fridge">
                 <Plus className="h-4 w-4 mr-2" />
@@ -129,7 +152,9 @@ export default function ViewFridges() {
         {fridges.length === 0 ? (
           <div className="text-center py-12">
             <Thermometer className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">No fridges found</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              No fridges found
+            </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               Get started by adding your first fridge for temperature monitoring.
             </p>
@@ -145,9 +170,8 @@ export default function ViewFridges() {
             <div className="mb-6">
               <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
                 Monitoring {fridges.filter((f: FridgeWithLogs) => f.isActive).length} active fridges
-                {fridges.filter((f: FridgeWithLogs) => !f.isActive).length > 0 && 
-                  ` (${fridges.filter((f: FridgeWithLogs) => !f.isActive).length} inactive)`
-                }
+                {fridges.filter((f: FridgeWithLogs) => !f.isActive).length > 0 &&
+                  ` (${fridges.filter((f: FridgeWithLogs) => !f.isActive).length} inactive)`}
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Click on any fridge to view detailed logs and temperature history
@@ -156,14 +180,14 @@ export default function ViewFridges() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {fridges.map((fridge: FridgeWithLogs) => (
-                <Card 
-                  key={fridge._id} 
+                <Card
+                  key={fridge._id}
                   className={`cursor-pointer hover:shadow-lg transition-shadow ${
-                    !fridge.isActive ? 'opacity-75' : ''
+                    !fridge.isActive ? "opacity-75" : ""
                   }`}
-                  style={{ 
-                    borderLeft: `5px solid ${fridge.color || '#3b82f6'}`,
-                    background: `linear-gradient(135deg, ${fridge.color || '#3b82f6'}08, transparent 50%)`
+                  style={{
+                    borderLeft: `5px solid ${fridge.color || "#3b82f6"}`,
+                    background: `linear-gradient(135deg, ${fridge.color || "#3b82f6"}08, transparent 50%)`,
                   }}
                   data-testid={`fridge-card-${fridge._id}`}
                 >
@@ -172,14 +196,16 @@ export default function ViewFridges() {
                       <div className="flex-1">
                         <CardTitle className="text-lg flex items-center gap-3">
                           <div className="relative">
-                            <div 
-                              className="w-7 h-7 rounded-lg flex items-center justify-center shadow-sm" 
-                              style={{ backgroundColor: fridge.color || '#3b82f6' }}
+                            <div
+                              className="w-7 h-7 rounded-lg flex items-center justify-center shadow-sm"
+                              style={{ backgroundColor: fridge.color || "#3b82f6" }}
                             >
                               <Refrigerator className="w-4 h-4 text-white" />
                             </div>
                           </div>
-                          <span className={!fridge.isActive ? 'text-gray-500' : ''}>{fridge.name}</span>
+                          <span className={!fridge.isActive ? "text-gray-500" : ""}>
+                            {fridge.name}
+                          </span>
                         </CardTitle>
                         {fridge.location && (
                           <CardDescription className="flex items-center gap-1 mt-1">
@@ -203,36 +229,44 @@ export default function ViewFridges() {
                       </div>
                     </div>
                   </CardHeader>
-                  
+
                   <CardContent>
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Temperature Range:</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          Temperature Range:
+                        </span>
                         <span className="text-sm font-medium">
                           {fridge.minTemp}°C to {fridge.maxTemp}°C
                         </span>
                       </div>
-                      
+
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Last Reading:</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          Last Reading:
+                        </span>
                         <span className="text-sm">{getTemperatureDisplay(fridge)}</span>
                       </div>
-                      
+
                       {fridge.lastReading && (
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">Last Check:</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            Last Check:
+                          </span>
                           <span className="text-sm flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             {new Date(fridge.lastReading).toLocaleDateString()}
                           </span>
                         </div>
                       )}
-                      
+
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Total Logs:</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          Total Logs:
+                        </span>
                         <span className="text-sm font-medium">{fridge.logsCount}</span>
                       </div>
-                      
+
                       {fridge.notes && (
                         <div className="pt-2 border-t">
                           <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
@@ -241,11 +275,11 @@ export default function ViewFridges() {
                         </div>
                       )}
                     </div>
-                    
+
                     <div className="flex gap-2 mt-4">
-                      <Button 
-                        variant="default" 
-                        size="sm" 
+                      <Button
+                        variant="default"
+                        size="sm"
                         className="flex-1"
                         asChild
                         data-testid={`button-view-${fridge._id}`}

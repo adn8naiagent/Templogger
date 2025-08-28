@@ -4,17 +4,16 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Session storage table for Replit Auth
-export const sessions = pgTable(
-  "sessions",
-  {
-    sid: varchar("sid").primaryKey(),
-    sess: text("sess").notNull(),
-    expire: timestamp("expire").notNull(),
-  }
-);
+export const sessions = pgTable("sessions", {
+  sid: varchar("sid").primaryKey(),
+  sess: text("sess").notNull(),
+  expire: timestamp("expire").notNull(),
+});
 
 export const users = pgTable("users", {
-  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  _id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   email: text("email").unique().notNull(),
   password: text("password").notNull(),
   firstName: text("first_name").notNull(),
@@ -32,8 +31,12 @@ export const users = pgTable("users", {
 });
 
 export const subscriptions = pgTable("subscriptions", {
-  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  _userId: varchar("user_id").notNull().references(() => users._id),
+  _id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id")
+    .notNull()
+    .references(() => users._id),
   tier: text("tier").notNull(),
   status: text("status").notNull(),
   stripeSubscriptionId: text("stripe_subscription_id"),
@@ -43,8 +46,12 @@ export const subscriptions = pgTable("subscriptions", {
 });
 
 export const fridges = pgTable("fridges", {
-  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  _userId: varchar("user_id").notNull().references(() => users._id),
+  _id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id")
+    .notNull()
+    .references(() => users._id),
   name: text("name").notNull(),
   location: text("location"),
   notes: text("notes"),
@@ -61,8 +68,12 @@ export const fridges = pgTable("fridges", {
 });
 
 export const labels = pgTable("labels", {
-  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  _userId: varchar("user_id").notNull().references(() => users._id),
+  _id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id")
+    .notNull()
+    .references(() => users._id),
   name: text("name").notNull(),
   color: text("color").default("#6b7280"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -70,9 +81,15 @@ export const labels = pgTable("labels", {
 
 // Time windows for fridge monitoring schedules
 export const timeWindows = pgTable("time_windows", {
-  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  _userId: varchar("user_id").notNull().references(() => users._id),
-  _fridgeId: varchar("fridge_id").notNull().references(() => fridges._id),
+  _id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id")
+    .notNull()
+    .references(() => users._id),
+  _fridgeId: varchar("fridge_id")
+    .notNull()
+    .references(() => fridges._id),
   label: text("label").notNull(), // e.g. "Morning", "Afternoon", "Daily Check"
   checkType: text("check_type").notNull().default("specific"), // "specific" or "daily"
   startTime: text("start_time"), // HH:MM format - nullable for daily checks
@@ -84,9 +101,15 @@ export const timeWindows = pgTable("time_windows", {
 
 // Enhanced temperature logs with compliance tracking
 export const temperatureLogs = pgTable("temperature_logs", {
-  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  _userId: varchar("user_id").notNull().references(() => users._id),
-  _fridgeId: varchar("fridge_id").notNull().references(() => fridges._id),
+  _id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id")
+    .notNull()
+    .references(() => users._id),
+  _fridgeId: varchar("fridge_id")
+    .notNull()
+    .references(() => fridges._id),
   timeWindowId: varchar("time_window_id").references(() => timeWindows._id),
   minTempReading: decimal("min_temp_reading", { precision: 4, scale: 1 }).notNull(),
   maxTempReading: decimal("max_temp_reading", { precision: 4, scale: 1 }).notNull(),
@@ -102,13 +125,21 @@ export const temperatureLogs = pgTable("temperature_logs", {
 
 // Compliance records for tracking at different levels
 export const complianceRecords = pgTable("compliance_records", {
-  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  _userId: varchar("user_id").notNull().references(() => users._id),
-  _fridgeId: varchar("fridge_id").notNull().references(() => fridges._id),
+  _id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id")
+    .notNull()
+    .references(() => users._id),
+  _fridgeId: varchar("fridge_id")
+    .notNull()
+    .references(() => fridges._id),
   date: timestamp("date").notNull(),
   level: text("level").notNull(), // "window", "fridge-day", "overall"
   status: text("status").notNull(), // "compliant", "missed", "partial", "late"
-  temperatureCompliance: decimal("temperature_compliance", { precision: 5, scale: 2 }).default("100.00"),
+  temperatureCompliance: decimal("temperature_compliance", { precision: 5, scale: 2 }).default(
+    "100.00"
+  ),
   checkingCompliance: decimal("checking_compliance", { precision: 5, scale: 2 }).default("100.00"),
   requiredChecks: decimal("required_checks", { precision: 3, scale: 0 }).notNull().default("0"),
   completedChecks: decimal("completed_checks", { precision: 3, scale: 0 }).notNull().default("0"),
@@ -119,9 +150,15 @@ export const complianceRecords = pgTable("compliance_records", {
 
 // Missed checks tracking with manual override capability
 export const missedChecks = pgTable("missed_checks", {
-  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  _userId: varchar("user_id").notNull().references(() => users._id),
-  _fridgeId: varchar("fridge_id").notNull().references(() => fridges._id),
+  _id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id")
+    .notNull()
+    .references(() => users._id),
+  _fridgeId: varchar("fridge_id")
+    .notNull()
+    .references(() => fridges._id),
   timeWindowId: varchar("time_window_id").references(() => timeWindows._id),
   missedDate: timestamp("missed_date").notNull(),
   checkType: text("check_type").notNull(), // "specific" or "daily"
@@ -135,21 +172,31 @@ export const missedChecks = pgTable("missed_checks", {
 
 // Custom checklists for admin-created tasks
 export const checklists = pgTable("checklists", {
-  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  _id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   title: text("title").notNull(),
   description: text("description"),
   frequency: text("frequency").notNull(), // "daily", "weekly", "monthly"
   isActive: boolean("is_active").notNull().default(true),
   _fridgeId: varchar("fridge_id").references(() => fridges._id), // Optional - can be global
-  createdBy: varchar("created_by").notNull().references(() => users._id),
+  createdBy: varchar("created_by")
+    .notNull()
+    .references(() => users._id),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Checklist items 
+// Checklist items
 export const checklistItems = pgTable("checklist_items", {
-  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  _userId: varchar("user_id").notNull().references(() => users._id),
-  checklistId: varchar("checklist_id").notNull().references(() => checklists._id),
+  _id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id")
+    .notNull()
+    .references(() => users._id),
+  checklistId: varchar("checklist_id")
+    .notNull()
+    .references(() => checklists._id),
   title: text("title").notNull(),
   description: text("description"),
   isRequired: boolean("is_required").notNull().default(true),
@@ -159,11 +206,19 @@ export const checklistItems = pgTable("checklist_items", {
 
 // Checklist completions
 export const checklistCompletions = pgTable("checklist_completions", {
-  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  _userId: varchar("user_id").notNull().references(() => users._id),
-  checklistId: varchar("checklist_id").notNull().references(() => checklists._id),
+  _id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id")
+    .notNull()
+    .references(() => users._id),
+  checklistId: varchar("checklist_id")
+    .notNull()
+    .references(() => checklists._id),
   _fridgeId: varchar("fridge_id").references(() => fridges._id),
-  completedBy: varchar("completed_by").notNull().references(() => users._id),
+  completedBy: varchar("completed_by")
+    .notNull()
+    .references(() => users._id),
   completedItems: text("completed_items").array(), // Array of checklist item IDs
   notes: text("notes"),
   completedAt: timestamp("completed_at").defaultNow(),
@@ -171,10 +226,18 @@ export const checklistCompletions = pgTable("checklist_completions", {
 
 // Out-of-range events tracking
 export const outOfRangeEvents = pgTable("out_of_range_events", {
-  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  _userId: varchar("user_id").notNull().references(() => users._id),
-  temperatureLogId: varchar("temperature_log_id").notNull().references(() => temperatureLogs._id),
-  _fridgeId: varchar("fridge_id").notNull().references(() => fridges._id),
+  _id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id")
+    .notNull()
+    .references(() => users._id),
+  temperatureLogId: varchar("temperature_log_id")
+    .notNull()
+    .references(() => temperatureLogs._id),
+  _fridgeId: varchar("fridge_id")
+    .notNull()
+    .references(() => fridges._id),
   violationType: text("violation_type").notNull(), // "min", "max", "current", "multiple"
   minTempReading: decimal("min_temp_reading", { precision: 4, scale: 1 }),
   maxTempReading: decimal("max_temp_reading", { precision: 4, scale: 1 }),
@@ -190,9 +253,15 @@ export const outOfRangeEvents = pgTable("out_of_range_events", {
 
 // Calibration records for fridge thermometers
 export const calibrationRecords = pgTable("calibration_records", {
-  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  _userId: varchar("user_id").notNull().references(() => users._id),
-  _fridgeId: varchar("fridge_id").notNull().references(() => fridges._id),
+  _id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id")
+    .notNull()
+    .references(() => users._id),
+  _fridgeId: varchar("fridge_id")
+    .notNull()
+    .references(() => fridges._id),
   calibrationDate: timestamp("calibration_date").notNull(),
   nextCalibrationDue: timestamp("next_calibration_due").notNull(),
   performedBy: text("performed_by").notNull(),
@@ -210,9 +279,15 @@ export const calibrationRecords = pgTable("calibration_records", {
 
 // Maintenance records for fridges
 export const maintenanceRecords = pgTable("maintenance_records", {
-  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  _userId: varchar("user_id").notNull().references(() => users._id),
-  _fridgeId: varchar("fridge_id").notNull().references(() => fridges._id),
+  _id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id")
+    .notNull()
+    .references(() => users._id),
+  _fridgeId: varchar("fridge_id")
+    .notNull()
+    .references(() => fridges._id),
   maintenanceDate: timestamp("maintenance_date").notNull(),
   maintenanceType: text("maintenance_type").notNull(), // "routine", "repair", "emergency", "cleaning"
   performedBy: text("performed_by").notNull(),
@@ -382,10 +457,13 @@ export const insertMaintenanceRecordSchema = createInsertSchema(maintenanceRecor
 // Sign up schema for frontend forms
 export const signUpSchema = z.object({
   email: z.string().email("Invalid email address"),
-  password: z.string()
+  password: z
+    .string()
     .min(8, "Password must be at least 8 characters")
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 
-      "Password must include uppercase, lowercase, numbers, and symbols"),
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+      "Password must include uppercase, lowercase, numbers, and symbols"
+    ),
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
 });
@@ -408,102 +486,138 @@ export const updateProfileSchema = z.object({
 // Change password schema
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required"),
-  newPassword: z.string()
+  newPassword: z
+    .string()
     .min(8, "Password must be at least 8 characters")
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 
-      "Password must include uppercase, lowercase, numbers, and symbols"),
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+      "Password must include uppercase, lowercase, numbers, and symbols"
+    ),
 });
 
 // Reset password schema (no current password required)
-export const resetPasswordSchema = z.object({
-  newPassword: z.string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 
-      "Password must include uppercase, lowercase, numbers, and symbols"),
-  confirmPassword: z.string(),
-}).refine((_data) => _data.newPassword === _data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+export const resetPasswordSchema = z
+  .object({
+    newPassword: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+        "Password must include uppercase, lowercase, numbers, and symbols"
+      ),
+    confirmPassword: z.string(),
+  })
+  .refine((_data) => _data.newPassword === _data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 // Fridge management schemas
-export const createFridgeSchema = z.object({
-  name: z.string().min(1, "Fridge name is required"),
-  location: z.string().optional(),
-  notes: z.string().optional(),
-  color: z.string().regex(/^#[0-9A-F]{6}$/i, "Invalid color format").default("#3b82f6"),
-  labels: z.array(z.string()).default([]),
-  minTemp: z.string().refine((val) => {
-    const num = parseFloat(val);
-    return !isNaN(num) && num >= -50 && num <= 50;
-  }, "Minimum temperature must be between -50°C and 50°C"),
-  maxTemp: z.string().refine((val) => {
-    const num = parseFloat(val);
-    return !isNaN(num) && num >= -50 && num <= 50;
-  }, "Maximum temperature must be between -50°C and 50°C"),
-}).refine((_data) => {
-  const min = parseFloat(_data.minTemp);
-  const max = parseFloat(_data.maxTemp);
-  return min < max;
-}, {
-  message: "Minimum temperature must be less than maximum temperature",
-  path: ["maxTemp"],
-});
+export const createFridgeSchema = z
+  .object({
+    name: z.string().min(1, "Fridge name is required"),
+    location: z.string().optional(),
+    notes: z.string().optional(),
+    color: z
+      .string()
+      .regex(/^#[0-9A-F]{6}$/i, "Invalid color format")
+      .default("#3b82f6"),
+    labels: z.array(z.string()).default([]),
+    minTemp: z.string().refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= -50 && num <= 50;
+    }, "Minimum temperature must be between -50°C and 50°C"),
+    maxTemp: z.string().refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= -50 && num <= 50;
+    }, "Maximum temperature must be between -50°C and 50°C"),
+  })
+  .refine(
+    (_data) => {
+      const min = parseFloat(_data.minTemp);
+      const max = parseFloat(_data.maxTemp);
+      return min < max;
+    },
+    {
+      message: "Minimum temperature must be less than maximum temperature",
+      path: ["maxTemp"],
+    }
+  );
 
 export const createLabelSchema = z.object({
   name: z.string().min(1, "Label name is required"),
-  color: z.string().regex(/^#[0-9A-F]{6}$/i, "Invalid color format").default("#6b7280"),
+  color: z
+    .string()
+    .regex(/^#[0-9A-F]{6}$/i, "Invalid color format")
+    .default("#6b7280"),
 });
 
-export const logTemperatureSchema = z.object({
-  _fridgeId: z.string().min(1, "Fridge selection is required"),
-  timeWindowId: z.string().optional(),
-  minTempReading: z.string().refine((val) => {
-    const num = parseFloat(val);
-    return !isNaN(num) && num >= -50 && num <= 50;
-  }, "Minimum temperature reading must be between -50°C and 50°C"),
-  maxTempReading: z.string().refine((val) => {
-    const num = parseFloat(val);
-    return !isNaN(num) && num >= -50 && num <= 50;
-  }, "Maximum temperature reading must be between -50°C and 50°C"),
-  currentTempReading: z.string().refine((val) => {
-    const num = parseFloat(val);
-    return !isNaN(num) && num >= -50 && num <= 50;
-  }, "Current temperature reading must be between -50°C and 50°C"),
-  personName: z.string().min(1, "Person name is required"),
-  notes: z.string().optional(),
-  isOnTime: z.boolean().default(true),
-  lateReason: z.string().optional(),
-  correctiveAction: z.string().optional(),
-  correctiveNotes: z.string().optional(),
-}).refine((_data) => {
-  const min = parseFloat(_data.minTempReading);
-  const max = parseFloat(_data.maxTempReading);
-  const current = parseFloat(_data.currentTempReading);
-  return min <= current && current <= max;
-}, {
-  message: "Current temperature must be between minimum and maximum readings",
-  path: ["currentTempReading"],
-});
+export const logTemperatureSchema = z
+  .object({
+    _fridgeId: z.string().min(1, "Fridge selection is required"),
+    timeWindowId: z.string().optional(),
+    minTempReading: z.string().refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= -50 && num <= 50;
+    }, "Minimum temperature reading must be between -50°C and 50°C"),
+    maxTempReading: z.string().refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= -50 && num <= 50;
+    }, "Maximum temperature reading must be between -50°C and 50°C"),
+    currentTempReading: z.string().refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= -50 && num <= 50;
+    }, "Current temperature reading must be between -50°C and 50°C"),
+    personName: z.string().min(1, "Person name is required"),
+    notes: z.string().optional(),
+    isOnTime: z.boolean().default(true),
+    lateReason: z.string().optional(),
+    correctiveAction: z.string().optional(),
+    correctiveNotes: z.string().optional(),
+  })
+  .refine(
+    (_data) => {
+      const min = parseFloat(_data.minTempReading);
+      const max = parseFloat(_data.maxTempReading);
+      const current = parseFloat(_data.currentTempReading);
+      return min <= current && current <= max;
+    },
+    {
+      message: "Current temperature must be between minimum and maximum readings",
+      path: ["currentTempReading"],
+    }
+  );
 
 // Time window schema
-export const createTimeWindowSchema = z.object({
-  _fridgeId: z.string().min(1, "Please select a fridge"),
-  label: z.string().min(1, "Label is required"),
-  checkType: z.enum(["specific", "daily"]).default("specific"),
-  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)").optional(),
-  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)").optional(),
-  excludedDays: z.array(z.number().min(0).max(6)).default([]), // 0=Sunday, 6=Saturday
-}).refine((_data) => {
-  // For specific checks, require start and end times
-  if (_data.checkType === "specific") {
-    return _data.startTime && _data.endTime && _data.startTime < _data.endTime;
-  }
-  return true;
-}, {
-  message: "Start and end times are required for specific checks, and end time must be after start time",
-  path: ["endTime"],
-});
+export const createTimeWindowSchema = z
+  .object({
+    _fridgeId: z.string().min(1, "Please select a fridge"),
+    label: z.string().min(1, "Label is required"),
+    checkType: z.enum(["specific", "daily"]).default("specific"),
+    startTime: z
+      .string()
+      .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)")
+      .optional(),
+    endTime: z
+      .string()
+      .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)")
+      .optional(),
+    excludedDays: z.array(z.number().min(0).max(6)).default([]), // 0=Sunday, 6=Saturday
+  })
+  .refine(
+    (_data) => {
+      // For specific checks, require start and end times
+      if (_data.checkType === "specific") {
+        return _data.startTime && _data.endTime && _data.startTime < _data.endTime;
+      }
+      return true;
+    },
+    {
+      message:
+        "Start and end times are required for specific checks, and end time must be after start time",
+      path: ["endTime"],
+    }
+  );
 
 // Checklist schema
 export const createChecklistSchema = z.object({
@@ -511,11 +625,15 @@ export const createChecklistSchema = z.object({
   description: z.string().optional(),
   frequency: z.enum(["daily", "weekly", "monthly"]),
   _fridgeId: z.string().optional(),
-  items: z.array(z.object({
-    title: z.string().min(1, "Item title is required"),
-    description: z.string().optional(),
-    isRequired: z.boolean().default(true),
-  })).min(1, "At least one checklist item is required"),
+  items: z
+    .array(
+      z.object({
+        title: z.string().min(1, "Item title is required"),
+        description: z.string().optional(),
+        isRequired: z.boolean().default(true),
+      })
+    )
+    .min(1, "At least one checklist item is required"),
 });
 
 // Checklist completion schema
@@ -529,46 +647,65 @@ export const completeChecklistSchema = z.object({
 // Calibration record schema
 export const createCalibrationRecordSchema = z.object({
   _fridgeId: z.string().min(1, "Fridge selection is required"),
-  calibrationDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Valid calibration date is required"),
+  calibrationDate: z
+    .string()
+    .refine((val) => !isNaN(Date.parse(val)), "Valid calibration date is required"),
   performedBy: z.string().min(1, "Performed by is required"),
   calibrationStandard: z.string().optional(),
-  beforeCalibrationReading: z.string().optional().refine((val) => {
-    if (!val) return true;
-    const num = parseFloat(val);
-    return !isNaN(num) && num >= -50 && num <= 50;
-  }, "Before calibration reading must be between -50°C and 50°C"),
-  afterCalibrationReading: z.string().optional().refine((val) => {
-    if (!val) return true;
-    const num = parseFloat(val);
-    return !isNaN(num) && num >= -50 && num <= 50;
-  }, "After calibration reading must be between -50°C and 50°C"),
-  accuracy: z.string().optional().refine((val) => {
-    if (!val) return true;
-    const num = parseFloat(val);
-    return !isNaN(num) && num >= 0 && num <= 10;
-  }, "Accuracy must be between 0 and 10°C"),
+  beforeCalibrationReading: z
+    .string()
+    .optional()
+    .refine((val) => {
+      if (!val) return true;
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= -50 && num <= 50;
+    }, "Before calibration reading must be between -50°C and 50°C"),
+  afterCalibrationReading: z
+    .string()
+    .optional()
+    .refine((val) => {
+      if (!val) return true;
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= -50 && num <= 50;
+    }, "After calibration reading must be between -50°C and 50°C"),
+  accuracy: z
+    .string()
+    .optional()
+    .refine((val) => {
+      if (!val) return true;
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0 && num <= 10;
+    }, "Accuracy must be between 0 and 10°C"),
   notes: z.string().optional(),
 });
 
 // Maintenance record schema
 export const createMaintenanceRecordSchema = z.object({
   _fridgeId: z.string().min(1, "Fridge selection is required"),
-  maintenanceDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Valid maintenance date is required"),
+  maintenanceDate: z
+    .string()
+    .refine((val) => !isNaN(Date.parse(val)), "Valid maintenance date is required"),
   maintenanceType: z.enum(["routine", "repair", "emergency", "cleaning"], {
     required_error: "Maintenance type is required",
   }),
   performedBy: z.string().min(1, "Performed by is required"),
   description: z.string().min(1, "Description is required"),
   partsReplaced: z.array(z.string()).default([]),
-  cost: z.string().optional().refine((val) => {
-    if (!val) return true;
-    const num = parseFloat(val);
-    return !isNaN(num) && num >= 0;
-  }, "Cost must be a positive number"),
-  nextMaintenanceDue: z.string().optional().refine((val) => {
-    if (!val) return true;
-    return !isNaN(Date.parse(val));
-  }, "Valid next maintenance date required"),
+  cost: z
+    .string()
+    .optional()
+    .refine((val) => {
+      if (!val) return true;
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0;
+    }, "Cost must be a positive number"),
+  nextMaintenanceDue: z
+    .string()
+    .optional()
+    .refine((val) => {
+      if (!val) return true;
+      return !isNaN(Date.parse(val));
+    }, "Valid next maintenance date required"),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -603,7 +740,7 @@ export type OutOfRangeEvent = typeof outOfRangeEvents.$inferSelect;
 export type CalibrationRecord = typeof calibrationRecords.$inferSelect;
 export type MaintenanceRecord = typeof maintenanceRecords.$inferSelect;
 
-// Insert types 
+// Insert types
 export type InsertTimeWindow = z.infer<typeof insertTimeWindowSchema>;
 export type InsertComplianceRecord = z.infer<typeof insertComplianceRecordSchema>;
 export type InsertChecklist = z.infer<typeof insertChecklistSchema>;
@@ -615,8 +752,12 @@ export type InsertMaintenanceRecord = z.infer<typeof insertMaintenanceRecordSche
 
 // Self-audit checklist tables
 export const auditTemplates = pgTable("audit_templates", {
-  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  _userId: varchar("user_id").notNull().references(() => users._id),
+  _id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id")
+    .notNull()
+    .references(() => users._id),
   name: text("name").notNull(),
   description: text("description"),
   isDefault: boolean("is_default").notNull().default(false),
@@ -625,8 +766,12 @@ export const auditTemplates = pgTable("audit_templates", {
 });
 
 export const auditSections = pgTable("audit_sections", {
-  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  _templateId: varchar("template_id").notNull().references(() => auditTemplates._id, { onDelete: 'cascade' }),
+  _id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  _templateId: varchar("template_id")
+    .notNull()
+    .references(() => auditTemplates._id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   description: text("description"),
   orderIndex: decimal("order_index", { precision: 3, scale: 0 }).notNull().default("0"),
@@ -634,8 +779,12 @@ export const auditSections = pgTable("audit_sections", {
 });
 
 export const auditItems = pgTable("audit_items", {
-  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  sectionId: varchar("section_id").notNull().references(() => auditSections._id, { onDelete: 'cascade' }),
+  _id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  sectionId: varchar("section_id")
+    .notNull()
+    .references(() => auditSections._id, { onDelete: "cascade" }),
   text: text("text").notNull(),
   isRequired: boolean("is_required").notNull().default(true),
   orderIndex: decimal("order_index", { precision: 3, scale: 0 }).notNull().default("0"),
@@ -644,11 +793,19 @@ export const auditItems = pgTable("audit_items", {
 });
 
 export const auditCompletions = pgTable("audit_completions", {
-  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  _userId: varchar("user_id").notNull().references(() => users._id),
-  _templateId: varchar("template_id").notNull().references(() => auditTemplates._id),
+  _id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  _userId: varchar("user_id")
+    .notNull()
+    .references(() => users._id),
+  _templateId: varchar("template_id")
+    .notNull()
+    .references(() => auditTemplates._id),
   templateName: text("template_name").notNull(), // Snapshot for historical reference
-  completedBy: varchar("completed_by").notNull().references(() => users._id),
+  completedBy: varchar("completed_by")
+    .notNull()
+    .references(() => users._id),
   completedAt: timestamp("completed_at").defaultNow(),
   notes: text("notes"),
   complianceRate: decimal("compliance_rate", { precision: 5, scale: 2 }).notNull().default("0"),
@@ -656,8 +813,12 @@ export const auditCompletions = pgTable("audit_completions", {
 });
 
 export const auditResponses = pgTable("audit_responses", {
-  _id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  _completionId: varchar("completion_id").notNull().references(() => auditCompletions._id, { onDelete: 'cascade' }),
+  _id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  _completionId: varchar("completion_id")
+    .notNull()
+    .references(() => auditCompletions._id, { onDelete: "cascade" }),
   sectionId: varchar("section_id").notNull(),
   sectionTitle: text("section_title").notNull(), // Snapshot for historical reference
   itemId: varchar("item_id").notNull(),
@@ -739,14 +900,14 @@ export function isTrialExpired(trialEndDate: Date | null): boolean {
 
 export const subscriptionStatus = {
   TRIAL: "trial",
-  PAID: "paid"
+  PAID: "paid",
 } as const;
 
 export const userRoles = {
   STAFF: "staff",
-  MANAGER: "manager", 
-  ADMIN: "admin"
+  MANAGER: "manager",
+  ADMIN: "admin",
 } as const;
 
-export type SubscriptionStatus = typeof subscriptionStatus[keyof typeof subscriptionStatus];
-export type UserRole = typeof userRoles[keyof typeof userRoles];
+export type SubscriptionStatus = (typeof subscriptionStatus)[keyof typeof subscriptionStatus];
+export type UserRole = (typeof userRoles)[keyof typeof userRoles];

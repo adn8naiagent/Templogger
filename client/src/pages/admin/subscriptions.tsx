@@ -2,15 +2,26 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from "recharts";
 import { CreditCard, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "wouter";
@@ -49,7 +60,7 @@ export default function AdminSubscriptions() {
   });
 
   // Then conditional logic and early returns
-  if (currentUser?.role !== 'admin') {
+  if (currentUser?.role !== "admin") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
@@ -74,18 +85,18 @@ export default function AdminSubscriptions() {
     totalRevenue: users.filter((u: AdminUser) => u.subscriptionStatus === "paid").length * 29,
     monthlyRevenue: users.filter((u: AdminUser) => u.subscriptionStatus === "paid").length * 29,
     subscriptionBreakdown: [
-      { 
-        tier: "Trial", 
+      {
+        tier: "Trial",
         count: users.filter((u: AdminUser) => u.subscriptionStatus === "trial").length,
         color: "#94a3b8",
-        revenue: 0
+        revenue: 0,
       },
-      { 
-        tier: "Paid", 
+      {
+        tier: "Paid",
         count: users.filter((u: AdminUser) => u.subscriptionStatus === "paid").length,
         color: "#22c55e",
-        revenue: users.filter((u: AdminUser) => u.subscriptionStatus === "paid").length * 29
-      }
+        revenue: users.filter((u: AdminUser) => u.subscriptionStatus === "paid").length * 29,
+      },
     ],
     revenueGrowth: [
       { month: "Jul", revenue: 2500 },
@@ -93,8 +104,8 @@ export default function AdminSubscriptions() {
       { month: "Sep", revenue: 3800 },
       { month: "Oct", revenue: 4200 },
       { month: "Nov", revenue: 4800 },
-      { month: "Dec", revenue: 5500 }
-    ]
+      { month: "Dec", revenue: 5500 },
+    ],
   };
 
   const getSubscriptionBadge = (tier: string) => {
@@ -113,7 +124,10 @@ export default function AdminSubscriptions() {
   const subscribedUsers = users.filter((u: AdminUser) => u.subscriptionTier !== "free");
 
   return (
-    <div className="min-h-screen bg-background p-4 max-w-7xl mx-auto" data-testid="admin-subscriptions">
+    <div
+      className="min-h-screen bg-background p-4 max-w-7xl mx-auto"
+      data-testid="admin-subscriptions"
+    >
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-4 mb-4">
@@ -138,11 +152,13 @@ export default function AdminSubscriptions() {
             <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${subscriptionStats.monthlyRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">
+              ${subscriptionStats.monthlyRevenue.toLocaleString()}
+            </div>
             <p className="text-xs text-muted-foreground">Current month</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Total Subscribers</CardTitle>
@@ -159,7 +175,7 @@ export default function AdminSubscriptions() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {users.filter((u: AdminUser) => u.subscriptionStatus === 'trial').length}
+              {users.filter((u: AdminUser) => u.subscriptionStatus === "trial").length}
             </div>
             <p className="text-xs text-muted-foreground">Free trial period</p>
           </CardContent>
@@ -171,9 +187,11 @@ export default function AdminSubscriptions() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {users.filter((u: AdminUser) => u.subscriptionStatus === 'paid').length}
+              {users.filter((u: AdminUser) => u.subscriptionStatus === "paid").length}
             </div>
-            <p className="text-xs text-muted-foreground">${users.filter((u: AdminUser) => u.subscriptionStatus === 'paid').length * 29}/mo</p>
+            <p className="text-xs text-muted-foreground">
+              ${users.filter((u: AdminUser) => u.subscriptionStatus === "paid").length * 29}/mo
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -212,9 +230,15 @@ export default function AdminSubscriptions() {
                 </ResponsiveContainer>
                 <div className="space-y-2">
                   {subscriptionStats.subscriptionBreakdown.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between gap-4 min-w-[200px]">
+                    <div
+                      key={index}
+                      className="flex items-center justify-between gap-4 min-w-[200px]"
+                    >
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: item.color }}
+                        ></div>
                         <span className="text-sm">{item.tier}</span>
                       </div>
                       <div className="text-right">
@@ -255,9 +279,7 @@ export default function AdminSubscriptions() {
             <CreditCard className="h-5 w-5" />
             Active Subscribers
           </CardTitle>
-          <CardDescription>
-            All users with paid subscription plans
-          </CardDescription>
+          <CardDescription>All users with paid subscription plans</CardDescription>
         </CardHeader>
         <CardContent>
           {usersLoading ? (
@@ -284,7 +306,7 @@ export default function AdminSubscriptions() {
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
                             <span className="text-sm font-bold text-purple-600">
-                              {user.firstName?.charAt(0) || 'U'}
+                              {user.firstName?.charAt(0) || "U"}
                             </span>
                           </div>
                           <span className="font-medium">
@@ -293,10 +315,17 @@ export default function AdminSubscriptions() {
                         </div>
                       </TableCell>
                       <TableCell>{user.email}</TableCell>
-                      <TableCell>{getSubscriptionBadge(user.subscriptionStatus || 'free')}</TableCell>
+                      <TableCell>
+                        {getSubscriptionBadge(user.subscriptionStatus || "free")}
+                      </TableCell>
                       <TableCell>
                         <span className="font-semibold text-green-600">
-                          ${user.subscriptionStatus === 'pro' ? '29' : user.subscriptionStatus === 'enterprise' ? '99' : '0'}
+                          $
+                          {user.subscriptionStatus === "pro"
+                            ? "29"
+                            : user.subscriptionStatus === "enterprise"
+                              ? "99"
+                              : "0"}
                         </span>
                       </TableCell>
                       <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>

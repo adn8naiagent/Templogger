@@ -6,13 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 // import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// import { 
-//   Dialog, 
-//   DialogContent, 
-//   DialogDescription, 
-//   DialogHeader, 
-//   DialogTitle, 
-//   DialogTrigger 
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogDescription,
+//   DialogHeader,
+//   DialogTitle,
+//   DialogTrigger
 // } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -64,7 +64,7 @@ interface ChecklistItem {
 interface ChecklistSchedule {
   _id: string;
   checklistId: string;
-  cadence: 'DAILY' | 'DOW' | 'WEEKLY';
+  cadence: "DAILY" | "DOW" | "WEEKLY";
   daysOfWeek?: number[];
   startDate: string;
   endDate?: string;
@@ -90,11 +90,13 @@ export default function Checklists() {
   const { toast } = useToast();
   const { user: _user, isAuthenticated, isLoading, logout } = useAuth();
   const queryClient = useQueryClient();
-  
+
   const [searchQuery, setSearchQuery] = useState("");
   const [activeOnly, setActiveOnly] = useState(true);
   // eslint-disable-next-line max-len
-  const [selectedChecklist, setSelectedChecklist] = useState<ChecklistWithScheduleAndItems | null>(null);
+  const [selectedChecklist, setSelectedChecklist] = useState<ChecklistWithScheduleAndItems | null>(
+    null
+  );
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isScheduleEditorOpen, setIsScheduleEditorOpen] = useState(false);
 
@@ -114,14 +116,14 @@ export default function Checklists() {
   }, [isAuthenticated, isLoading, toast]);
 
   // Fetch checklists
-  const { 
-    data: checklists = [], 
-    isLoading: checklistsLoading, 
-    error: _checklistsError 
+  const {
+    data: checklists = [],
+    isLoading: checklistsLoading,
+    error: _checklistsError,
   } = useQuery({
-    queryKey: ['checklists', { activeOnly }],
+    queryKey: ["checklists", { activeOnly }],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/v2/checklists?active=${activeOnly}`);
+      const response = await apiRequest("GET", `/api/v2/checklists?active=${activeOnly}`);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -139,8 +141,12 @@ export default function Checklists() {
 
   // Create/Update checklist mutation
   const createChecklistMutation = useMutation({
-    mutationFn: async (_data: { name: string; description?: string; items: Omit<ChecklistItem, '_id'>[] }) => {
-      const response = await apiRequest('POST', '/api/v2/checklists', _data);
+    mutationFn: async (_data: {
+      name: string;
+      description?: string;
+      items: Omit<ChecklistItem, "_id">[];
+    }) => {
+      const response = await apiRequest("POST", "/api/v2/checklists", _data);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -154,7 +160,7 @@ export default function Checklists() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['checklists'] });
+      queryClient.invalidateQueries({ queryKey: ["checklists"] });
       setIsEditorOpen(false);
       setSelectedChecklist(null);
       toast({
@@ -174,7 +180,7 @@ export default function Checklists() {
   // Delete checklist mutation
   const deleteChecklistMutation = useMutation({
     mutationFn: async (checklistId: string) => {
-      const response = await apiRequest('DELETE', `/api/v2/checklists/${checklistId}`);
+      const response = await apiRequest("DELETE", `/api/v2/checklists/${checklistId}`);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -188,7 +194,7 @@ export default function Checklists() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['checklists'] });
+      queryClient.invalidateQueries({ queryKey: ["checklists"] });
       toast({
         title: "Success",
         description: "Checklist deleted successfully",
@@ -204,9 +210,10 @@ export default function Checklists() {
   });
 
   // Filter checklists based on search query
-  const filteredChecklists = checklists.filter((checklist: ChecklistWithScheduleAndItems) =>
-    checklist.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    checklist.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredChecklists = checklists.filter(
+    (checklist: ChecklistWithScheduleAndItems) =>
+      checklist.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      checklist.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleCreateChecklist = () => {
@@ -281,7 +288,7 @@ export default function Checklists() {
                     className="pl-10"
                   />
                 </div>
-                
+
                 <Button
                   variant={activeOnly ? "default" : "outline"}
                   onClick={() => setActiveOnly(!activeOnly)}
@@ -306,10 +313,9 @@ export default function Checklists() {
                     {searchQuery ? "No checklists found" : "No checklists yet"}
                   </h3>
                   <p className="text-muted-foreground mb-4">
-                    {searchQuery 
+                    {searchQuery
                       ? `No checklists match "${searchQuery}"`
-                      : "Create your first checklist to get started"
-                    }
+                      : "Create your first checklist to get started"}
                   </p>
                   {!searchQuery && (
                     <Button onClick={handleCreateChecklist}>
@@ -333,7 +339,7 @@ export default function Checklists() {
                             </CardDescription>
                           )}
                         </div>
-                        
+
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm">
@@ -350,7 +356,7 @@ export default function Checklists() {
                               Schedule
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               onClick={() => handleDeleteChecklist(checklist._id)}
                               className="text-destructive"
                             >
@@ -360,7 +366,7 @@ export default function Checklists() {
                         </DropdownMenu>
                       </div>
                     </CardHeader>
-                    
+
                     <CardContent>
                       <div className="space-y-3">
                         {/* Status and Schedule */}
@@ -368,7 +374,7 @@ export default function Checklists() {
                           <Badge variant={checklist.isActive ? "default" : "secondary"}>
                             {checklist.isActive ? "Active" : "Inactive"}
                           </Badge>
-                          
+
                           {checklist.schedule && (
                             <div className="flex items-center text-sm text-muted-foreground">
                               <Clock className="w-3 h-3 mr-1" />
@@ -376,18 +382,18 @@ export default function Checklists() {
                             </div>
                           )}
                         </div>
-                        
+
                         {/* Items Count */}
                         <div className="text-sm text-muted-foreground">
-                          {checklist.items.length} item{checklist.items.length !== 1 ? 's' : ''}
-                          {checklist.items.filter(i => i.required).length > 0 && (
+                          {checklist.items.length} item{checklist.items.length !== 1 ? "s" : ""}
+                          {checklist.items.filter((i) => i.required).length > 0 && (
                             <span>
-                              {' • '}
-                              {checklist.items.filter(i => i.required).length} required
+                              {" • "}
+                              {checklist.items.filter((i) => i.required).length} required
                             </span>
                           )}
                         </div>
-                        
+
                         {/* Schedule Info */}
                         {checklist.schedule && (
                           <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2">
@@ -401,20 +407,20 @@ export default function Checklists() {
                             )}
                           </div>
                         )}
-                        
+
                         {/* Action Buttons */}
                         <div className="flex gap-2 pt-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => handleEditChecklist(checklist)}
                             className="flex-1"
                           >
                             <Edit className="w-3 h-3 mr-1" />
                             Edit
                           </Button>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => handleScheduleChecklist(checklist)}
                             className="flex-1"

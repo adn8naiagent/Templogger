@@ -22,7 +22,11 @@
       "Bash(npx eslint:*)",
       "Bash(perl:*)",
       "Bash(npx tsc:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(git log:*)",
+      "Bash(git push:*)",
+      "Bash(npx prettier:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

@@ -11,20 +11,10 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle } from "@/components/ui/dialog";
-import {
-  DragDropContext,
-  Droppable,
-  Draggable,
-  DropResult } from "react-beautiful-dnd";
-import {
-  Plus,
-  Trash2,
-  GripVertical,
-  CheckSquare,
-  Square,
-  Save,
-  X } from "lucide-react";
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
+import { Plus, Trash2, GripVertical, CheckSquare, Square, Save, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ChecklistItem {
@@ -50,7 +40,11 @@ interface ChecklistEditorProps {
   isOpen: boolean;
   onOpenChange: (_open: boolean) => void;
   checklist?: ChecklistWithScheduleAndItems | null;
-  onSave: (_data: { name: string; description?: string; items: Omit<ChecklistItem, '_id'>[] }) => void;
+  onSave: (_data: {
+    name: string;
+    description?: string;
+    items: Omit<ChecklistItem, "_id">[];
+  }) => void;
   isSaving: boolean;
 }
 
@@ -67,7 +61,8 @@ export default function ChecklistEditor({
   onOpenChange,
   checklist,
   onSave,
-  isSaving }: ChecklistEditorProps) {
+  isSaving,
+}: ChecklistEditorProps) {
   const { toast } = useToast();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -79,7 +74,7 @@ export default function ChecklistEditor({
     if (checklist) {
       setName(checklist.name);
       setDescription(checklist.description || "");
-      setItems(checklist.items.map(item => ({ ...item })));
+      setItems(checklist.items.map((item) => ({ ...item })));
     } else {
       setName("");
       setDescription("");
@@ -95,21 +90,20 @@ export default function ChecklistEditor({
       label: "",
       required: true,
       orderIndex: items.length,
-      note: "" };
+      note: "",
+    };
     setItems([...items, newItem]);
     setEditingItemId(newItem._id);
   };
 
   // Update item
   const updateItem = (_id: string, _updates: Partial<EditingItem>) => {
-    setItems(items.map(item => 
-      item._id === _id ? { ...item, ..._updates } : item
-    ));
+    setItems(items.map((item) => (item._id === _id ? { ...item, ..._updates } : item)));
   };
 
   // Remove item
   const removeItem = (_id: string) => {
-    setItems(items.filter(item => item._id !== _id));
+    setItems(items.filter((item) => item._id !== _id));
     if (editingItemId === _id) {
       setEditingItemId(null);
     }
@@ -128,7 +122,8 @@ export default function ChecklistEditor({
     // Update order indices
     const updatedItems = reorderedItems.map((item, index) => ({
       ...item,
-      orderIndex: index }));
+      orderIndex: index,
+    }));
 
     setItems(updatedItems);
   };
@@ -139,7 +134,8 @@ export default function ChecklistEditor({
       toast({
         title: "Validation Error",
         description: "Checklist name is required",
-        variant: "destructive" });
+        variant: "destructive",
+      });
       return false;
     }
 
@@ -147,16 +143,18 @@ export default function ChecklistEditor({
       toast({
         title: "Validation Error",
         description: "At least one checklist item is required",
-        variant: "destructive" });
+        variant: "destructive",
+      });
       return false;
     }
 
-    const emptyItems = items.filter(item => !item.label.trim());
+    const emptyItems = items.filter((item) => !item.label.trim());
     if (emptyItems.length > 0) {
       toast({
         title: "Validation Error",
         description: "All items must have a label",
-        variant: "destructive" });
+        variant: "destructive",
+      });
       return false;
     }
 
@@ -173,7 +171,9 @@ export default function ChecklistEditor({
       items: items.map(({ _id, ...item }) => ({
         label: item.label.trim(),
         required: item.required,
-        orderIndex: item.orderIndex })) };
+        orderIndex: item.orderIndex,
+      })),
+    };
 
     onSave(saveData);
   };
@@ -183,7 +183,7 @@ export default function ChecklistEditor({
     if (checklist) {
       setName(checklist.name);
       setDescription(checklist.description || "");
-      setItems(checklist.items.map(item => ({ ...item })));
+      setItems(checklist.items.map((item) => ({ ...item })));
     } else {
       setName("");
       setDescription("");
@@ -197,14 +197,11 @@ export default function ChecklistEditor({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>
-            {checklist ? "Edit Checklist" : "Create New Checklist"}
-          </DialogTitle>
+          <DialogTitle>{checklist ? "Edit Checklist" : "Create New Checklist"}</DialogTitle>
           <DialogDescription>
-            {checklist 
+            {checklist
               ? "Modify your checklist details and items"
-              : "Create a new checklist with items that can be scheduled"
-            }
+              : "Create a new checklist with items that can be scheduled"}
           </DialogDescription>
         </DialogHeader>
 
@@ -238,15 +235,8 @@ export default function ChecklistEditor({
           {/* Items Section */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <Label className="text-base font-medium">
-                Checklist Items ({items.length})
-              </Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addItem}
-              >
+              <Label className="text-base font-medium">Checklist Items ({items.length})</Label>
+              <Button type="button" variant="outline" size="sm" onClick={addItem}>
                 <Plus className="w-4 h-4 mr-1" />
                 Add Item
               </Button>
@@ -267,24 +257,14 @@ export default function ChecklistEditor({
               <DragDropContext onDragEnd={handleDragEnd}>
                 <Droppable droppableId="items">
                   {(provided) => (
-                    <div
-                      {...provided.droppableProps}
-                      ref={provided.innerRef}
-                      className="space-y-2"
-                    >
+                    <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
                       {items.map((item, index) => (
-                        <Draggable
-                          key={item._id}
-                          draggableId={item._id}
-                          index={index}
-                        >
+                        <Draggable key={item._id} draggableId={item._id} index={index}>
                           {(provided, snapshot) => (
                             <Card
                               ref={provided.innerRef}
                               {...provided.draggableProps}
-                              className={`${
-                                snapshot.isDragging ? "shadow-lg" : ""
-                              }`}
+                              className={`${snapshot.isDragging ? "shadow-lg" : ""}`}
                             >
                               <CardContent className="p-4">
                                 <div className="flex items-start gap-3">
@@ -300,10 +280,9 @@ export default function ChecklistEditor({
                                   <div className="flex items-center mt-2">
                                     <button
                                       type="button"
-                                      onClick={() => updateItem(
-                                        item._id,
-                                        { required: !item.required }
-                                      )}
+                                      onClick={() =>
+                                        updateItem(item._id, { required: !item.required })
+                                      }
                                       className="text-muted-foreground hover:text-foreground"
                                     >
                                       {item.required ? (
@@ -320,10 +299,9 @@ export default function ChecklistEditor({
                                       <Input
                                         placeholder="Item label..."
                                         value={item.label}
-                                        onChange={(e) => updateItem(
-                                          item._id,
-                                          { label: e.target.value }
-                                        )}
+                                        onChange={(e) =>
+                                          updateItem(item._id, { label: e.target.value })
+                                        }
                                         className="flex-1"
                                       />
                                       <Badge variant={item.required ? "default" : "secondary"}>
@@ -335,10 +313,9 @@ export default function ChecklistEditor({
                                       <Textarea
                                         placeholder="Optional notes for this item..."
                                         value={item.note || ""}
-                                        onChange={(e) => updateItem(
-                                          item._id,
-                                          { note: e.target.value }
-                                        )}
+                                        onChange={(e) =>
+                                          updateItem(item._id, { note: e.target.value })
+                                        }
                                         rows={2}
                                       />
                                     )}
@@ -350,7 +327,7 @@ export default function ChecklistEditor({
                                           type="button"
                                           variant="ghost"
                                           size="sm"
-                                          onClick={() => 
+                                          onClick={() =>
                                             setEditingItemId(
                                               editingItemId === item._id ? null : item._id
                                             )
@@ -386,12 +363,7 @@ export default function ChecklistEditor({
         </div>
 
         <DialogFooter className="gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isSaving}
-          >
+          <Button type="button" variant="outline" onClick={handleCancel} disabled={isSaving}>
             <X className="w-4 h-4 mr-2" />
             Cancel
           </Button>

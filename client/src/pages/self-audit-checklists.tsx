@@ -6,14 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 // import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  // Dialog, 
-  // DialogContent, 
-  // DialogDescription, 
-  // DialogHeader, 
-  // DialogTitle, 
-  // DialogTrigger 
-} from "@/components/ui/dialog";
+import {} from // Dialog,
+// DialogContent,
+// DialogDescription,
+// DialogHeader,
+// DialogTitle,
+// DialogTrigger
+"@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,7 +40,7 @@ import {
   // Copy,
   Trash2,
   PlayCircle,
-  History
+  History,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -87,7 +86,7 @@ export default function SelfAuditChecklists() {
   const { toast } = useToast();
   const { user: _user, isAuthenticated, isLoading, logout: _logout } = useAuth();
   const queryClient = useQueryClient();
-  
+
   const [searchQuery, setSearchQuery] = useState("");
   const [_selectedTemplate, _setSelectedTemplate] = useState<AuditTemplate | null>(null);
   const [_isTemplateEditorOpen, _setIsTemplateEditorOpen] = useState(false);
@@ -109,14 +108,14 @@ export default function SelfAuditChecklists() {
   }, [isAuthenticated, isLoading, toast]);
 
   // Fetch audit templates
-  const { 
-    data: templates = [], 
-    isLoading: templatesLoading, 
-    error: _templatesError 
+  const {
+    data: templates = [],
+    isLoading: templatesLoading,
+    error: _templatesError,
   } = useQuery({
-    queryKey: ['audit-templates'],
+    queryKey: ["audit-templates"],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/audit-templates');
+      const response = await apiRequest("GET", "/api/audit-templates");
       if (!response.ok) {
         const errorText = await response.text();
         const error = new Error(`Failed to fetch templates: ${response.status} - ${errorText}`);
@@ -132,10 +131,10 @@ export default function SelfAuditChecklists() {
 
   // Fetch recent completions
   const { data: recentCompletions = [] } = useQuery({
-    queryKey: ['audit-completions-recent'],
+    queryKey: ["audit-completions-recent"],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/audit-completions');
-      if (!response.ok) throw new Error('Failed to fetch completions');
+      const response = await apiRequest("GET", "/api/audit-completions");
+      if (!response.ok) throw new Error("Failed to fetch completions");
       return response.json();
     },
     enabled: isAuthenticated,
@@ -144,7 +143,7 @@ export default function SelfAuditChecklists() {
   // Create default template mutation
   const createDefaultMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/audit-templates/default');
+      const response = await apiRequest("POST", "/api/audit-templates/default");
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to create default template: ${response.status} - ${errorText}`);
@@ -152,7 +151,7 @@ export default function SelfAuditChecklists() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['audit-templates'] });
+      queryClient.invalidateQueries({ queryKey: ["audit-templates"] });
       toast({
         title: "Success",
         description: "Default compliance checklist created successfully",
@@ -170,7 +169,7 @@ export default function SelfAuditChecklists() {
   // Delete template mutation
   const deleteTemplateMutation = useMutation({
     mutationFn: async (_templateId: string) => {
-      const response = await apiRequest('DELETE', `/api/audit-templates/${_templateId}`);
+      const response = await apiRequest("DELETE", `/api/audit-templates/${_templateId}`);
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to delete template: ${response.status} - ${errorText}`);
@@ -178,7 +177,7 @@ export default function SelfAuditChecklists() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['audit-templates'] });
+      queryClient.invalidateQueries({ queryKey: ["audit-templates"] });
       toast({
         title: "Success",
         description: "Template deleted successfully",
@@ -194,9 +193,10 @@ export default function SelfAuditChecklists() {
   });
 
   // Filter templates based on search query
-  const filteredTemplates = templates.filter((template: AuditTemplate) =>
-    template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    template.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredTemplates = templates.filter(
+    (template: AuditTemplate) =>
+      template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      template.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleCreateDefaultTemplate = () => {
@@ -219,8 +219,10 @@ export default function SelfAuditChecklists() {
   };
 
   const getRequiredItems = (template: AuditTemplate) => {
-    return template.sections.reduce((total, section) => 
-      total + section.items.filter(item => item.isRequired).length, 0);
+    return template.sections.reduce(
+      (total, section) => total + section.items.filter((item) => item.isRequired).length,
+      0
+    );
   };
 
   // Loading state
@@ -291,14 +293,17 @@ export default function SelfAuditChecklists() {
                     {searchQuery ? "No templates found" : "No templates yet"}
                   </h3>
                   <p className="text-muted-foreground mb-4">
-                    {searchQuery 
+                    {searchQuery
                       ? `No templates match "${searchQuery}"`
-                      : "Create your first self-audit template to get started"
-                    }
+                      : "Create your first self-audit template to get started"}
                   </p>
                   {!searchQuery && (
                     <div className="flex items-center space-x-2 justify-center">
-                      <Button onClick={handleCreateDefaultTemplate} disabled={createDefaultMutation.isPending} variant="outline">
+                      <Button
+                        onClick={handleCreateDefaultTemplate}
+                        disabled={createDefaultMutation.isPending}
+                        variant="outline"
+                      >
                         <Star className="w-4 h-4 mr-2" />
                         Create Default Template
                       </Button>
@@ -334,7 +339,7 @@ export default function SelfAuditChecklists() {
                             </CardDescription>
                           )}
                         </div>
-                        
+
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm">
@@ -353,7 +358,7 @@ export default function SelfAuditChecklists() {
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               onClick={() => handleDeleteTemplate(template._id)}
                               className="text-destructive"
                             >
@@ -364,16 +369,18 @@ export default function SelfAuditChecklists() {
                         </DropdownMenu>
                       </div>
                     </CardHeader>
-                    
+
                     <CardContent>
                       <div className="space-y-3">
                         <div className="text-sm text-muted-foreground">
-                          {template.sections.length} section{template.sections.length !== 1 ? 's' : ''} • {getTotalItems(template)} items
+                          {template.sections.length} section
+                          {template.sections.length !== 1 ? "s" : ""} • {getTotalItems(template)}{" "}
+                          items
                           {getRequiredItems(template) > 0 && (
                             <span> • {getRequiredItems(template)} required</span>
                           )}
                         </div>
-                        
+
                         {/* Section Preview */}
                         <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2 max-h-20 overflow-hidden">
                           <div className="font-medium mb-1">Sections:</div>
@@ -384,23 +391,18 @@ export default function SelfAuditChecklists() {
                             <div>• ... and {template.sections.length - 3} more</div>
                           )}
                         </div>
-                        
+
                         {/* Action Buttons */}
                         <div className="flex gap-2 pt-2">
-                          <Button 
-                            variant="default" 
-                            size="sm"
-                            asChild
-                            className="flex-1"
-                          >
+                          <Button variant="default" size="sm" asChild className="flex-1">
                             <Link to={`/self-audit/${template._id}/complete`}>
                               <PlayCircle className="w-3 h-3 mr-1" />
                               Complete
                             </Link>
                           </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => handleEditTemplate(template)}
                             className="flex-1"
                           >
@@ -433,19 +435,32 @@ export default function SelfAuditChecklists() {
                   <div className="text-center py-8">
                     <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-lg font-medium mb-2">No completed audits</h3>
-                    <p className="text-muted-foreground">Complete your first audit to see results here</p>
+                    <p className="text-muted-foreground">
+                      Complete your first audit to see results here
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {recentCompletions.slice(0, 10).map((completion: AuditCompletion) => (
-                      <div key={completion._id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div
+                        key={completion._id}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
                         <div className="flex-1">
                           <h4 className="font-medium">{completion.templateName}</h4>
                           <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                             <span>
                               Completed: {new Date(completion.completedAt).toLocaleDateString()}
                             </span>
-                            <Badge variant={completion.complianceRate >= 90 ? "default" : completion.complianceRate >= 70 ? "secondary" : "destructive"}>
+                            <Badge
+                              variant={
+                                completion.complianceRate >= 90
+                                  ? "default"
+                                  : completion.complianceRate >= 70
+                                    ? "secondary"
+                                    : "destructive"
+                              }
+                            >
                               {completion.complianceRate}% Compliant
                             </Badge>
                           </div>
@@ -475,7 +490,7 @@ export default function SelfAuditChecklists() {
                   <div className="text-2xl font-bold">{templates.length}</div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Completed Audits</CardTitle>
@@ -493,15 +508,15 @@ export default function SelfAuditChecklists() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {recentCompletions.length > 0 
+                    {recentCompletions.length > 0
                       ? Math.round(
                           recentCompletions.reduce(
-                            (sum: number, c: AuditCompletion) => sum + c.complianceRate, 
+                            (sum: number, c: AuditCompletion) => sum + c.complianceRate,
                             0
                           ) / recentCompletions.length
                         )
-                      : 0
-                    }%
+                      : 0}
+                    %
                   </div>
                 </CardContent>
               </Card>
@@ -513,12 +528,16 @@ export default function SelfAuditChecklists() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {recentCompletions.filter((c: AuditCompletion) => {
-                      const completedDate = new Date(c.completedAt);
-                      const now = new Date();
-                      return completedDate.getMonth() === now.getMonth() && 
-                             completedDate.getFullYear() === now.getFullYear();
-                    }).length}
+                    {
+                      recentCompletions.filter((c: AuditCompletion) => {
+                        const completedDate = new Date(c.completedAt);
+                        const now = new Date();
+                        return (
+                          completedDate.getMonth() === now.getMonth() &&
+                          completedDate.getFullYear() === now.getFullYear()
+                        );
+                      }).length
+                    }
                   </div>
                 </CardContent>
               </Card>

@@ -1,6 +1,6 @@
-import { useStripe, Elements, PaymentElement, useElements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
-import { useEffect, useState } from 'react';
+import { useStripe, Elements, PaymentElement, useElements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import { Link, useLocation } from "wouter";
 
 // Load Stripe with public key
 if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
+  throw new Error("Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY");
 }
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -70,9 +70,9 @@ const SubscribeForm = () => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <PaymentElement />
-          <Button 
-            type="submit" 
-            className="w-full" 
+          <Button
+            type="submit"
+            className="w-full"
             disabled={!stripe || !elements || isProcessing}
             data-testid="button-subscribe"
           >
@@ -113,7 +113,10 @@ export default function Subscribe() {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardContent className="flex items-center justify-center p-8">
-            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading"/>
+            <div
+              className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"
+              aria-label="Loading"
+            />
           </CardContent>
         </Card>
       </div>

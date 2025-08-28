@@ -37,7 +37,7 @@ function Router() {
       {/* Public routes - accessible when not authenticated */}
       <Route path="/auth/login" component={Login} />
       <Route path="/auth/signup" component={Signup} />
-      
+
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (

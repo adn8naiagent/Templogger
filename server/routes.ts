@@ -4,8 +4,8 @@ import { storage } from "./storage";
 import "./types";
 import { requireAuth, requireAdmin, signUp, signIn, signOut, getCurrentUser } from "./auth";
 import { body as _body, validationResult } from "express-validator";
-import { 
-  updateProfileSchema, 
+import {
+  updateProfileSchema,
   changePasswordSchema as _changePasswordSchema,
   createFridgeSchema,
   createLabelSchema,
@@ -15,23 +15,23 @@ import {
   completeChecklistSchema,
   insertOutOfRangeEventSchema as _insertOutOfRangeEventSchema,
   userRoles as _userRoles,
-  type User as _User 
+  type User as _User,
 } from "@shared/schema";
 import { ChecklistService } from "./checklist-service";
-import { 
+import {
   createChecklistRequestSchema,
   scheduleChecklistRequestSchema,
   completeChecklistInstanceRequestSchema,
   calendarRequestSchema,
   summariesRequestSchema,
-  generateInstancesRequestSchema
+  generateInstancesRequestSchema,
 } from "@shared/checklist-types";
 import bcrypt from "bcrypt";
 import Stripe from "stripe";
 
 // Initialize Stripe
 if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+  throw new Error("Missing required Stripe secret: STRIPE_SECRET_KEY");
 }
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-07-30.basil",
@@ -43,9 +43,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 function _handleValidationErrors(req: Request, res: Response, next: NextFunction): void | Response {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ 
-      error: "Validation failed", 
-      details: errors.array() 
+    return res.status(400).json({
+      error: "Validation failed",
+      details: errors.array(),
     });
   }
   next();
@@ -54,17 +54,23 @@ function _handleValidationErrors(req: Request, res: Response, next: NextFunction
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize services
   const checklistService = new ChecklistService(storage);
-  
+
   // Authentication routes
-  app.post('/api/auth/signup', signUp);
-  app.post('/api/auth/signin', signIn);
-  app.post('/api/auth/signout', signOut);
-  app.get('/api/auth/user', getCurrentUser);
+  app.post("/api/auth/signup", signUp);
+  app.post("/api/auth/signin", signIn);
+  app.post("/api/auth/signout", signOut);
+  app.get("/api/auth/user", getCurrentUser);
 
   // Get current user profile
-  app.get("/api/user/profile", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/user/profile", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
@@ -80,36 +86,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user profile
-  app.put("/api/user/profile", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.put("/api/user/profile", requireAuth, async (req, res) => {
     try {
       const result = updateProfileSchema.safeParse(req.body);
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid input data", 
-          details: result.error.errors 
+        return res.status(400).json({
+          error: "Invalid input data",
+          details: result.error.errors,
         });
       }
 
       const userId = req.userId;
-      
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
       // Check if email is being updated and if it's already taken
       if (result.data.email) {
         const existingUser = await storage.getUserByEmail(result.data.email);
         if (existingUser && existingUser._id !== userId) {
-          return res.status(400).json({ 
-            error: "Email already in use by another account" 
+          return res.status(400).json({
+            error: "Email already in use by another account",
           });
         }
       }
-      
+
       const updatedUser = await storage.updateUser(userId, result.data);
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
 
-      res.json({ 
-        message: "Profile updated successfully", 
-        user: updatedUser 
+      res.json({
+        message: "Profile updated successfully",
+        user: updatedUser,
       });
     } catch (error: Error | unknown) {
       console.error("Update profile error:", error);
@@ -118,19 +127,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Settings update (dark mode, etc)
-  app.put("/api/user/settings", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.put("/api/user/settings", requireAuth, async (req, res) => {
     try {
       const { darkMode } = req.body;
       const userId = req.userId;
-      
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
       const updatedUser = await storage.updateUser(userId, { darkMode });
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
 
-      res.json({ 
-        message: "Settings updated successfully", 
-        user: updatedUser 
+      res.json({
+        message: "Settings updated successfully",
+        user: updatedUser,
       });
     } catch (error: Error | unknown) {
       console.error("Update settings error:", error);
@@ -139,18 +151,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reset password (no current password required)
-  app.put("/api/user/reset-password", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.put("/api/user/reset-password", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const { newPassword } = req.body;
-      
+
       // Hash the new password
       const hashedPassword = await bcrypt.hash(newPassword, 10);
-      
-      const updatedUser = await storage.updateUser(userId, { 
-        password: hashedPassword 
+
+      const updatedUser = await storage.updateUser(userId, {
+        password: hashedPassword,
       });
-      
+
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -163,9 +178,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete account
-  app.delete("/api/user/account", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.delete("/api/user/account", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const deleted = await storage.deleteUser(userId);
       if (!deleted) {
         return res.status(404).json({ error: "User not found" });
@@ -179,9 +197,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export user data
-  app.get("/api/user/export", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/user/export", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
@@ -189,23 +213,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get user's temperature logs as well
       const temperatureLogs = await storage.getAllTemperatureLogsForUser(userId);
-      
+
       // Set CSV headers
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', 'attachment; filename="my-data.csv"');
-      
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", 'attachment; filename="my-data.csv"');
+
       // Create comprehensive CSV content
-      let csvContent = 'User Profile\n';
+      let csvContent = "User Profile\n";
       csvContent += `ID,Email,First Name,Last Name,Role,Subscription Status,Dark Mode,Created At\n`;
-      csvContent += `"${user._id}","${user.email || ''}","${user.firstName || ''}","${user.lastName || ''}","${user.role}","${user.subscriptionStatus}","${user.darkMode}","${user.createdAt}"\n\n`;
-      
-      csvContent += 'Temperature Logs\n';
-      csvContent += 'Fridge Name,Temperature,Person Name,Date,Time,Alert Status\n';
-      temperatureLogs.forEach(log => {
+      csvContent += `"${user._id}","${user.email || ""}","${user.firstName || ""}","${user.lastName || ""}","${user.role}","${user.subscriptionStatus}","${user.darkMode}","${user.createdAt}"\n\n`;
+
+      csvContent += "Temperature Logs\n";
+      csvContent += "Fridge Name,Temperature,Person Name,Date,Time,Alert Status\n";
+      temperatureLogs.forEach((log) => {
         const date = new Date(log.createdAt!);
-        csvContent += `"${log.fridgeName}","${log.currentTempReading}","${log.personName}","${date.toLocaleDateString()}","${date.toLocaleTimeString()}","${log.isAlert ? 'ALERT' : 'Normal'}"\n`;
+        csvContent += `"${log.fridgeName}","${log.currentTempReading}","${log.personName}","${date.toLocaleDateString()}","${date.toLocaleTimeString()}","${log.isAlert ? "ALERT" : "Normal"}"\n`;
       });
-      
+
       res.send(csvContent);
     } catch (error: Error | unknown) {
       console.error("Export data error:", error);
@@ -214,19 +238,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Stripe subscription endpoints
-  
+
   // Create subscription for trial users
-  app.post('/api/create-subscription', requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.post("/api/create-subscription", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const user = await storage.getUser(userId);
-      
+
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
 
       // Check if user already has a subscription
-      if (user.subscriptionStatus === 'paid') {
+      if (user.subscriptionStatus === "paid") {
         return res.status(400).json({ error: "User already has a paid subscription" });
       }
 
@@ -238,34 +268,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: user.email,
           name: `${user.firstName} ${user.lastName}`,
         });
-        
+
         stripeCustomerId = customer.id;
         await storage.updateUser(userId, { stripeCustomerId });
       }
 
       // Create a product and price first
       const product = await stripe.products.create({
-        name: 'FridgeSafe Pro Monthly',
-        description: 'Professional temperature monitoring for healthcare facilities',
+        name: "FridgeSafe Pro Monthly",
+        description: "Professional temperature monitoring for healthcare facilities",
       });
 
       const price = await stripe.prices.create({
         product: product.id,
-        currency: 'usd',
+        currency: "usd",
         unit_amount: 1000, // $10.00 in cents
         recurring: {
-          interval: 'month',
+          interval: "month",
         },
       });
 
       // Create subscription
       const subscription = await stripe.subscriptions.create({
         customer: stripeCustomerId,
-        items: [{
-          price: price.id,
-        }],
-        payment_behavior: 'default_incomplete',
-        expand: ['latest_invoice.payment_intent'],
+        items: [
+          {
+            price: price.id,
+          },
+        ],
+        payment_behavior: "default_incomplete",
+        expand: ["latest_invoice.payment_intent"],
       });
 
       // Update user with subscription info
@@ -276,7 +308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const latestInvoice = subscription.latest_invoice as Stripe.Invoice;
       res.json({
         subscriptionId: subscription.id,
-        clientSecret: latestInvoice?.payment_intent?.client_secret,
+        clientSecret: (latestInvoice?.payment_intent as any)?.client_secret,
       });
     } catch (error: Error | unknown) {
       console.error("Create subscription error:", error);
@@ -285,28 +317,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Handle successful subscription payment
-  app.post('/api/subscription-success', requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.post("/api/subscription-success", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const { subscriptionId } = req.body;
 
       // Verify subscription with Stripe
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-      
-      if (subscription.status === 'active') {
+
+      if (subscription.status === "active") {
         // Update user to paid status
         await storage.updateUser(userId, {
-          subscriptionStatus: 'paid',
+          subscriptionStatus: "paid",
         });
 
-        res.json({ 
+        res.json({
           message: "Subscription activated successfully",
-          status: "active"
+          status: "active",
         });
       } else {
-        res.status(400).json({ 
+        res.status(400).json({
           error: "Subscription payment not completed",
-          status: subscription.status
+          status: subscription.status,
         });
       }
     } catch (error: Error | unknown) {
@@ -316,11 +351,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get subscription status
-  app.get('/api/subscription-status', requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/subscription-status", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const user = await storage.getUser(userId);
-      
+
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -352,7 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Get all users
-  app.get("/api/admin/users", requireAdmin, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/admin/users", requireAdmin, async (req, res) => {
     try {
       const users = await storage.getAllUsers();
       res.json(users);
@@ -363,19 +404,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Update user role/subscription
-  app.put("/api/admin/users/:userId", requireAdmin, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.put("/api/admin/users/:userId", requireAdmin, async (req, res) => {
     try {
       const { userId } = req.params;
       const { role, subscriptionStatus } = req.body;
-      
+
       const updatedUser = await storage.updateUser(userId, { role, subscriptionStatus });
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
 
-      res.json({ 
-        message: "User updated successfully", 
-        user: updatedUser 
+      res.json({
+        message: "User updated successfully",
+        user: updatedUser,
       });
     } catch (error: Error | unknown) {
       console.error("Admin update user error:", error);
@@ -384,7 +425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Delete user
-  app.delete("/api/admin/users/:userId", requireAdmin, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.delete("/api/admin/users/:userId", requireAdmin, async (req, res) => {
     try {
       const { userId } = req.params;
       const deleted = await storage.deleteUser(userId);
@@ -400,11 +441,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Temperature Logging API Endpoints
-  
+
   // Get user's fridges
-  app.get("/api/fridges", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/fridges", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const fridges = await storage.getFridges(userId);
       res.json(fridges);
     } catch (error: Error | unknown) {
@@ -414,19 +458,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new fridge
-  app.post("/api/fridges", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.post("/api/fridges", requireAuth, async (req, res) => {
     try {
       const result = createFridgeSchema.safeParse(req.body);
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid input data", 
-          details: result.error.errors 
+        return res.status(400).json({
+          error: "Invalid input data",
+          details: result.error.errors,
         });
       }
 
       const { name, location, notes, color, labels, minTemp, maxTemp } = result.data;
       const userId = req.userId;
-      
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
       const newFridge = await storage.createFridge({
         _userId: userId,
         name,
@@ -438,9 +485,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maxTemp,
       });
 
-      res.status(201).json({ 
-        message: "Fridge created successfully", 
-        fridge: newFridge 
+      res.status(201).json({
+        message: "Fridge created successfully",
+        fridge: newFridge,
       });
     } catch (error: Error | unknown) {
       console.error("Create fridge error:", error);
@@ -449,17 +496,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced temperature logging with compliance tracking
-  app.post("/api/temperature-logs", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.post("/api/temperature-logs", requireAuth, async (req, res) => {
     try {
       const result = logTemperatureSchema.safeParse(req.body);
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid input data", 
-          details: result.error.errors 
+        return res.status(400).json({
+          error: "Invalid input data",
+          details: result.error.errors,
         });
       }
 
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const {
         _fridgeId,
         timeWindowId,
@@ -470,9 +520,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isOnTime = true,
         lateReason,
         correctiveAction,
-        correctiveNotes
+        correctiveNotes,
       } = result.data;
-      
+
       // Verify fridge ownership
       const fridge = await storage.getFridge(_fridgeId, userId);
       if (!fridge) {
@@ -482,15 +532,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if any temperature is out of range and create alert
       const minTemp = parseFloat(fridge.minTemp);
       const maxTemp = parseFloat(fridge.maxTemp);
-      
+
       let isAlert = false;
       const minReading = parseFloat(minTempReading);
       const maxReading = parseFloat(maxTempReading);
       const currentReading = parseFloat(currentTempReading);
-      
-      if ((minReading < minTemp || minReading > maxTemp) ||
-          (maxReading < minTemp || maxReading > maxTemp) ||
-          (currentReading < minTemp || currentReading > maxTemp)) {
+
+      if (
+        minReading < minTemp ||
+        minReading > maxTemp ||
+        maxReading < minTemp ||
+        maxReading > maxTemp ||
+        currentReading < minTemp ||
+        currentReading > maxTemp
+      ) {
         isAlert = true;
       }
 
@@ -519,10 +574,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get temperature logs for a fridge
-  app.get("/api/fridges/:fridgeId/logs", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/fridges/:fridgeId/logs", requireAuth, async (req, res) => {
     try {
       const { fridgeId } = req.params;
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const logs = await storage.getTemperatureLogs(fridgeId, userId);
       res.json(logs);
     } catch (error: Error | unknown) {
@@ -532,9 +590,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced fridges with compliance data
-  app.get("/api/fridges/recent-temps", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/fridges/recent-temps", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       console.log(`[API] getFridgesWithRecentTemps called for user: ${userId}`);
       const fridgesWithData = await storage.getFridgesWithRecentTemps(userId);
       console.log(`[API] Returning ${fridgesWithData.length} fridges`);
@@ -546,9 +607,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all fridges for view fridges page
-  app.get("/api/fridges/all", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/fridges/all", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const fridges = await storage.getAllFridgesWithLogs(userId);
       res.json(fridges);
     } catch (error: Error | unknown) {
@@ -558,9 +622,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get single fridge with detailed logs
-  app.get("/api/fridge/:id", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/fridge/:id", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const fridge = await storage.getFridgeWithLogs(userId, req.params.id);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
@@ -573,9 +640,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update fridge
-  app.patch("/api/fridge/:id", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.patch("/api/fridge/:id", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const fridge = await storage.updateFridge(req.params.id, userId, req.body);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
@@ -588,9 +658,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Soft delete (deactivate) fridge
-  app.patch("/api/fridge/:id/deactivate", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.patch("/api/fridge/:id/deactivate", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const fridge = await storage.deactivateFridge(userId, req.params.id);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
@@ -603,9 +676,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reactivate fridge
-  app.patch("/api/fridge/:id/activate", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.patch("/api/fridge/:id/activate", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const fridge = await storage.reactivateFridge(userId, req.params.id);
       if (!fridge) {
         return res.status(404).json({ error: "Fridge not found" });
@@ -618,9 +694,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Hard delete fridge
-  app.delete("/api/fridge/:id", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.delete("/api/fridge/:id", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const success = await storage.deleteFridge(req.params.id, userId);
       if (!success) {
         return res.status(404).json({ error: "Fridge not found" });
@@ -633,11 +712,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Label management endpoints
-  
+
   // Get user's labels
-  app.get("/api/labels", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/labels", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const labels = await storage.getLabels(userId);
       res.json(labels);
     } catch (error: Error | unknown) {
@@ -647,20 +729,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new label
-  app.post("/api/labels", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.post("/api/labels", requireAuth, async (req, res) => {
     try {
       const result = createLabelSchema.safeParse(req.body);
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid input data", 
-          details: result.error.errors 
+        return res.status(400).json({
+          error: "Invalid input data",
+          details: result.error.errors,
         });
       }
 
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const newLabel = await storage.createLabel({
         ...result.data,
-        _userId: userId
+        _userId: userId,
       });
 
       res.status(201).json(newLabel);
@@ -671,16 +756,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update label
-  app.put("/api/labels/:labelId", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.put("/api/labels/:labelId", requireAuth, async (req, res) => {
     try {
       const { labelId } = req.params;
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const result = createLabelSchema.safeParse(req.body);
-      
+
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid input data", 
-          details: result.error.errors 
+        return res.status(400).json({
+          error: "Invalid input data",
+          details: result.error.errors,
         });
       }
 
@@ -697,11 +785,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete label
-  app.delete("/api/labels/:labelId", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.delete("/api/labels/:labelId", requireAuth, async (req, res) => {
     try {
       const { labelId } = req.params;
       const userId = req.userId;
-      
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
       const deleted = await storage.deleteLabel(labelId, userId);
       if (!deleted) {
         return res.status(404).json({ error: "Label not found" });
@@ -715,37 +806,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export all temperature logs as CSV
-  app.get("/api/export/temperature-logs", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/export/temperature-logs", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const logs = await storage.getAllTemperatureLogsForUser(userId);
-      
+
       // Set CSV headers
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', 'attachment; filename="temperature-logs.csv"');
-      
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", 'attachment; filename="temperature-logs.csv"');
+
       // Create CSV content
-      const headers = ['Fridge Name', 'Temperature (°C)', 'Person Name', 'Date', 'Time', 'Alert Status'];
-      const csvRows = [headers.join(',')];
-      
-      logs.forEach(log => {
+      const headers = [
+        "Fridge Name",
+        "Temperature (°C)",
+        "Person Name",
+        "Date",
+        "Time",
+        "Alert Status",
+      ];
+      const csvRows = [headers.join(",")];
+
+      logs.forEach((log) => {
         const date = new Date(log.createdAt!);
         const dateStr = date.toLocaleDateString();
         const timeStr = date.toLocaleTimeString();
-        const alertStatus = log.isAlert ? 'ALERT' : 'Normal';
-        
+        const alertStatus = log.isAlert ? "ALERT" : "Normal";
+
         const row = [
           `"${log.fridgeName}"`,
           log.currentTempReading,
           `"${log.personName}"`,
           dateStr,
           timeStr,
-          alertStatus
+          alertStatus,
         ];
-        csvRows.push(row.join(','));
+        csvRows.push(row.join(","));
       });
-      
-      const csvContent = csvRows.join('\n');
+
+      const csvContent = csvRows.join("\n");
       res.send(csvContent);
     } catch (error: Error | unknown) {
       console.error("Export temperature logs error:", error);
@@ -756,18 +857,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint
   app.get("/api/health", async (req: Request, res: Response) => {
     try {
-      res.json({ 
-        status: "ok", 
+      res.json({
+        status: "ok",
         timestamp: new Date().toISOString(),
         services: {
           database: "connected",
-          server: "running"
-        }
+          server: "running",
+        },
       });
     } catch (error: Error | unknown) {
-      res.status(500).json({ 
-        status: "error", 
-        message: error.message 
+      res.status(500).json({
+        status: "error",
+        message: error.message,
       });
     }
   });
@@ -784,20 +885,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const totalVars = Object.keys(envVars).length;
-      const configuredVars = Object.values(envVars).filter(val => val !== "missing").length;
+      const configuredVars = Object.values(envVars).filter((val) => val !== "missing").length;
 
       res.json({
         variables: envVars,
         summary: {
           total: totalVars,
           configured: configuredVars,
-          status: configuredVars === totalVars ? "complete" : "partial"
-        }
+          status: configuredVars === totalVars ? "complete" : "partial",
+        },
       });
     } catch (error: Error | unknown) {
-      res.status(500).json({ 
-        status: "error", 
-        message: error.message 
+      res.status(500).json({
+        status: "error",
+        message: error.message,
       });
     }
   });
@@ -809,22 +910,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         frontend: {
           port: 3000,
           status: "running",
-          url: `http://localhost:3000`
+          url: `http://localhost:3000`,
         },
         backend: {
-          port: parseInt(process.env.PORT || '5000'),
-          status: "running", 
-          url: `http://localhost:${process.env.PORT || '5000'}`
+          port: parseInt(process.env.PORT || "5000"),
+          status: "running",
+          url: `http://localhost:${process.env.PORT || "5000"}`,
         },
         hotReload: {
           vite: "active",
-          nodemon: "active"
-        }
+          nodemon: "active",
+        },
       });
     } catch (error: Error | unknown) {
-      res.status(500).json({ 
-        status: "error", 
-        message: error.message 
+      res.status(500).json({
+        status: "error",
+        message: error.message,
       });
     }
   });
@@ -836,23 +937,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         client: {
           status: "clean",
           errors: 0,
-          warnings: 0
+          warnings: 0,
         },
         server: {
-          status: "clean", 
+          status: "clean",
           errors: 0,
-          warnings: 0
+          warnings: 0,
         },
         shared: {
           status: "clean",
           errors: 0,
-          warnings: 0
-        }
+          warnings: 0,
+        },
       });
     } catch (error: Error | unknown) {
-      res.status(500).json({ 
-        status: "error", 
-        message: error.message 
+      res.status(500).json({
+        status: "error",
+        message: error.message,
       });
     }
   });
@@ -868,36 +969,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
           features: {
             connection: process.env.DATABASE_URL ? "✓" : "✗",
             clientLibrary: "✓",
-            healthCheck: "✓"
-          }
+            healthCheck: "✓",
+          },
         },
         stripe: {
-          name: "Stripe", 
+          name: "Stripe",
           status: process.env.STRIPE_SECRET_KEY ? "connected" : "disconnected",
           description: "Payments",
           features: {
             testMode: process.env.STRIPE_SECRET_KEY ? "✓" : "✗",
             webhookEndpoint: "✓",
-            clientSetup: "✓"
-          }
+            clientSetup: "✓",
+          },
         },
         claude: {
           name: "Claude Code",
-          status: process.env.CLAUDE_API_KEY ? "connected" : "disconnected", 
+          status: process.env.CLAUDE_API_KEY ? "connected" : "disconnected",
           description: "AI Assistant",
           features: {
             cliInstalled: "✓",
             workspace: "✓",
-            context: "✓"
-          }
-        }
+            context: "✓",
+          },
+        },
       };
 
       res.json(services);
     } catch (error: Error | unknown) {
-      res.status(500).json({ 
-        status: "error", 
-        message: error.message 
+      res.status(500).json({
+        status: "error",
+        message: error.message,
       });
     }
   });
@@ -911,47 +1012,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
           price: 0,
           currency: "USD",
           interval: "month",
-          features: [
-            "Basic features",
-            "Community support",
-            "Limited usage"
-          ],
-          limitations: [
-            "Advanced features"
-          ]
+          features: ["Basic features", "Community support", "Limited usage"],
+          limitations: ["Advanced features"],
         },
         pro: {
-          name: "Pro", 
+          name: "Pro",
           price: 19,
           currency: "USD",
           interval: "month",
           popular: true,
           features: [
             "All basic features",
-            "Advanced features", 
+            "Advanced features",
             "Priority support",
-            "Higher usage limits"
-          ]
+            "Higher usage limits",
+          ],
         },
         enterprise: {
           name: "Enterprise",
           price: 99,
-          currency: "USD", 
+          currency: "USD",
           interval: "month",
           features: [
             "All pro features",
             "Custom integrations",
             "Dedicated support",
-            "Unlimited usage"
-          ]
-        }
+            "Unlimited usage",
+          ],
+        },
       };
 
       res.json(tiers);
     } catch (error: Error | unknown) {
-      res.status(500).json({ 
-        status: "error", 
-        message: error.message 
+      res.status(500).json({
+        status: "error",
+        message: error.message,
       });
     }
   });
@@ -964,30 +1059,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           eslint: { status: "configured", description: "TypeScript, React, Node rules" },
           prettier: { status: "active", description: "Code formatting" },
           preCommitHooks: { status: "ready", description: "Husky setup" },
-          testing: { status: "ready", description: "Jest framework" }
+          testing: { status: "ready", description: "Jest framework" },
         },
         buildDeploy: {
           railwayConfig: { status: "ready", description: "Deployment ready" },
           githubActions: { status: "configured", description: "CI/CD pipeline" },
           buildScripts: { status: "ready", description: "Production builds" },
-          monorepoStrategy: { status: "configured", description: "Workspace setup" }
-        }
+          monorepoStrategy: { status: "configured", description: "Workspace setup" },
+        },
       });
     } catch (error: Error | unknown) {
-      res.status(500).json({ 
-        status: "error", 
-        message: error.message 
+      res.status(500).json({
+        status: "error",
+        message: error.message,
       });
     }
   });
 
   // Admin Stats API
-  app.get("/api/admin/stats", requireAdmin, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/admin/stats", requireAdmin, async (req, res) => {
     try {
       const users = await storage.getAllUsers();
       const totalUsers = users.length;
-      const totalSubscriptions = users.filter(u => u.subscriptionStatus === "paid").length;
-      
+      const totalSubscriptions = users.filter((u) => u.subscriptionStatus === "paid").length;
+
       // Calculate monthly revenue (simplified $29/month for paid users)
       const monthlyRevenue = totalSubscriptions * 29;
 
@@ -999,16 +1094,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Generate subscription breakdown
       const subscriptionBreakdown = [
-        { 
-          tier: "Trial", 
-          count: users.filter(u => u.subscriptionStatus === "trial").length,
-          color: "#94a3b8"
+        {
+          tier: "Trial",
+          count: users.filter((u) => u.subscriptionStatus === "trial").length,
+          color: "#94a3b8",
         },
-        { 
-          tier: "Paid", 
-          count: users.filter(u => u.subscriptionStatus === "paid").length,
-          color: "#22c55e"
-        }
+        {
+          tier: "Paid",
+          count: users.filter((u) => u.subscriptionStatus === "paid").length,
+          color: "#22c55e",
+        },
       ];
 
       res.json({
@@ -1017,7 +1112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         monthlyRevenue,
         activeAlerts,
         userGrowth,
-        subscriptionBreakdown
+        subscriptionBreakdown,
       });
     } catch (error: Error | unknown) {
       console.error("Admin stats error:", error);
@@ -1026,11 +1121,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user by admin
-  app.put("/api/admin/users/:userId", requireAdmin, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.put("/api/admin/users/:userId", requireAdmin, async (req, res) => {
     try {
       const { userId } = req.params;
       const { role, subscriptionStatus } = req.body;
-      
+
       const updatedUser = await storage.updateUser(userId, { role, subscriptionStatus });
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
@@ -1044,10 +1139,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete user by admin
-  app.delete("/api/admin/users/:userId", requireAdmin, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.delete("/api/admin/users/:userId", requireAdmin, async (req, res) => {
     try {
       const { userId } = req.params;
-      
+
       const deleted = await storage.deleteUser(userId);
       if (!deleted) {
         return res.status(404).json({ error: "User not found" });
@@ -1064,23 +1159,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   async function generateRealUserGrowthData() {
     const months = [];
     const currentDate = new Date();
-    
+
     for (let i = 5; i >= 0; i--) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
       const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - i + 1, 1);
-      const monthName = date.toLocaleDateString('en-US', { month: 'short' });
-      
+      const monthName = date.toLocaleDateString("en-US", { month: "short" });
+
       // Get actual users created in this month
       const allUsers = await storage.getAllUsers();
-      const userCount = allUsers.filter(user => {
+      const userCount = allUsers.filter((user) => {
         if (!user.createdAt) return false;
         const createdDate = new Date(user.createdAt);
         return createdDate >= date && createdDate < nextMonth;
       }).length;
-      
+
       months.push({ month: monthName, users: userCount });
     }
-    
+
     return months;
   }
 
@@ -1088,14 +1183,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/test-connection/:service", async (req: Request, res: Response) => {
     try {
       const service = req.params.service;
-      
+
       switch (service) {
         case "supabase":
           // Test database connection here
           res.json({ status: "success", message: "Database connection successful" });
           break;
         case "stripe":
-          // Test Stripe connection here  
+          // Test Stripe connection here
           res.json({ status: "success", message: "Stripe connection successful" });
           break;
         case "claude":
@@ -1106,9 +1201,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           res.status(400).json({ status: "error", message: "Unknown service" });
       }
     } catch (error: Error | unknown) {
-      res.status(500).json({ 
-        status: "error", 
-        message: error.message 
+      res.status(500).json({
+        status: "error",
+        message: error.message,
       });
     }
   });
@@ -1118,11 +1213,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =========================
 
   // Get time windows for a fridge
-  app.get("/api/fridges/:fridgeId/time-windows", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/fridges/:fridgeId/time-windows", requireAuth, async (req, res) => {
     try {
       const { fridgeId } = req.params;
       const userId = req.userId;
-      
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
       const timeWindows = await storage.getTimeWindows(fridgeId, userId);
       res.json(timeWindows);
     } catch (error: Error | unknown) {
@@ -1132,19 +1230,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create time window
-  app.post("/api/time-windows", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.post("/api/time-windows", requireAuth, async (req, res) => {
     try {
       const result = createTimeWindowSchema.safeParse(req.body);
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid input data", 
-          details: result.error.errors 
+        return res.status(400).json({
+          error: "Invalid input data",
+          details: result.error.errors,
         });
       }
 
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const { _fridgeId, label, startTime, endTime } = result.data;
-      
+
       // Verify fridge ownership
       const fridge = await storage.getFridge(_fridgeId, userId);
       if (!fridge) {
@@ -1172,11 +1273,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =========================
 
   // Get compliance overview
-  app.get("/api/compliance/overview", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/compliance/overview", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const date = req.query.date ? new Date(req.query.date as string) : undefined;
-      
+
       const overview = await storage.getComplianceOverview(userId, date);
       res.json(overview);
     } catch (error: Error | unknown) {
@@ -1186,9 +1290,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get unresolved out-of-range events count
-  app.get("/api/out-of-range-events/unresolved/count", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/out-of-range-events/unresolved/count", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const count = await storage.getUnresolvedEventsCount(userId);
       res.json({ count });
     } catch (error: Error | unknown) {
@@ -1198,15 +1305,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // =========================
-  // CHECKLIST ENDPOINTS  
+  // CHECKLIST ENDPOINTS
   // =========================
 
   // Get checklists
-  app.get("/api/checklists", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/checklists", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const { fridgeId } = req.query;
-      
+
       const checklists = await storage.getChecklists(userId, fridgeId as string);
       res.json(checklists);
     } catch (error: Error | unknown) {
@@ -1216,9 +1326,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get due checklists
-  app.get("/api/checklists/due", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/checklists/due", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const dueChecklists = await storage.getDueChecklists(userId);
       res.json(dueChecklists);
     } catch (error: Error | unknown) {
@@ -1228,26 +1341,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create checklist (Admin/Manager only)
-  app.post("/api/checklists", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.post("/api/checklists", requireAuth, async (req, res) => {
     try {
       const result = createChecklistSchema.safeParse(req.body);
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid input data", 
-          details: result.error.errors 
+        return res.status(400).json({
+          error: "Invalid input data",
+          details: result.error.errors,
         });
       }
 
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const user = await storage.getUser(userId);
-      
+
       // Check if user has permission to create checklists
-      if (!user || (user.role !== 'admin' && user.role !== 'manager')) {
+      if (!user || (user.role !== "admin" && user.role !== "manager")) {
         return res.status(403).json({ error: "Insufficient permissions to create checklists" });
       }
 
       const { title, description, frequency, _fridgeId, items } = result.data;
-      
+
       const checklistData = {
         title,
         description: description || null,
@@ -1262,7 +1378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: item.description || null,
         isRequired: item.isRequired,
         sortOrder: index.toString(),
-        checklistId: '', // Will be set in storage method
+        checklistId: "", // Will be set in storage method
       }));
 
       const checklist = await storage.createChecklist(checklistData, itemsData);
@@ -1274,21 +1390,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Complete checklist
-  app.post("/api/checklists/:id/complete", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.post("/api/checklists/:id/complete", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const userId = req.userId;
-      
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
       const result = completeChecklistSchema.safeParse(req.body);
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid input data", 
-          details: result.error.errors 
+        return res.status(400).json({
+          error: "Invalid input data",
+          details: result.error.errors,
         });
       }
 
       const { _fridgeId, completedItems, notes } = result.data;
-      
+
       const completionData = {
         checklistId: id,
         _fridgeId: _fridgeId || null,
@@ -1310,12 +1429,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =========================
 
   // Get enhanced checklists with scheduling
-  app.get("/api/v2/checklists", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/v2/checklists", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const { active } = req.query;
-      const activeOnly = active === 'true';
-      
+      const activeOnly = active === "true";
+
       const checklists = await checklistService.listChecklists(userId, activeOnly);
       res.json(checklists);
     } catch (error: Error | unknown) {
@@ -1325,175 +1447,222 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create enhanced checklist
-  app.post("/api/v2/checklists", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.post("/api/v2/checklists", requireAuth, async (req, res) => {
     try {
       const result = createChecklistRequestSchema.safeParse(req.body);
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid input data", 
-          details: result.error.errors 
+        return res.status(400).json({
+          error: "Invalid input data",
+          details: result.error.errors,
         });
       }
 
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const checklist = await checklistService.createChecklist(userId, result.data);
       res.status(201).json(checklist);
     } catch (error: Error | unknown) {
       console.error("Create enhanced checklist error:", error);
-      res.status(error.statusCode || 500).json({ error: error.message || "Failed to create checklist" });
+      res
+        .status(error.statusCode || 500)
+        .json({ error: error.message || "Failed to create checklist" });
     }
   });
 
   // Update enhanced checklist
-  app.put("/api/v2/checklists/:id", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.put("/api/v2/checklists/:id", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const result = createChecklistRequestSchema.safeParse(req.body);
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid input data", 
-          details: result.error.errors 
+        return res.status(400).json({
+          error: "Invalid input data",
+          details: result.error.errors,
         });
       }
 
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const checklist = await checklistService.updateChecklist(userId, id, result.data);
       res.json(checklist);
     } catch (error: Error | unknown) {
       console.error("Update enhanced checklist error:", error);
-      res.status(error.statusCode || 500).json({ error: error.message || "Failed to update checklist" });
+      res
+        .status(error.statusCode || 500)
+        .json({ error: error.message || "Failed to update checklist" });
     }
   });
 
   // Schedule checklist
-  app.post("/api/v2/checklists/:id/schedule", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.post("/api/v2/checklists/:id/schedule", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const result = scheduleChecklistRequestSchema.safeParse(req.body);
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid schedule data", 
-          details: result.error.errors 
+        return res.status(400).json({
+          error: "Invalid schedule data",
+          details: result.error.errors,
         });
       }
 
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const schedule = await checklistService.createOrReplaceSchedule(userId, id, result.data);
       res.json(schedule);
     } catch (error: Error | unknown) {
       console.error("Schedule checklist error:", error);
-      res.status(error.statusCode || 500).json({ error: error.message || "Failed to schedule checklist" });
+      res
+        .status(error.statusCode || 500)
+        .json({ error: error.message || "Failed to schedule checklist" });
     }
   });
 
   // Get calendar view
-  app.get("/api/v2/calendar", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/v2/calendar", requireAuth, async (req, res) => {
     try {
       const result = calendarRequestSchema.safeParse(req.query);
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid calendar parameters", 
-          details: result.error.errors 
+        return res.status(400).json({
+          error: "Invalid calendar parameters",
+          details: result.error.errors,
         });
       }
 
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const { from, to } = result.data;
       const calendarData = await checklistService.getCalendarInstances(userId, from, to);
       res.json(calendarData);
     } catch (error: Error | unknown) {
       console.error("Get calendar error:", error);
-      res.status(error.statusCode || 500).json({ error: error.message || "Failed to get calendar data" });
+      res
+        .status(error.statusCode || 500)
+        .json({ error: error.message || "Failed to get calendar data" });
     }
   });
 
   // Generate instances
-  app.post("/api/v2/instances/generate", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.post("/api/v2/instances/generate", requireAuth, async (req, res) => {
     try {
       const result = generateInstancesRequestSchema.safeParse(req.query);
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid generate parameters", 
-          details: result.error.errors 
+        return res.status(400).json({
+          error: "Invalid generate parameters",
+          details: result.error.errors,
         });
       }
 
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const { from, to } = result.data;
       await checklistService.generateInstances(userId, from, to);
       res.json({ message: "Instances generated successfully" });
     } catch (error: Error | unknown) {
       console.error("Generate instances error:", error);
-      res.status(error.statusCode || 500).json({ error: error.message || "Failed to generate instances" });
+      res
+        .status(error.statusCode || 500)
+        .json({ error: error.message || "Failed to generate instances" });
     }
   });
 
   // Complete checklist instance
-  app.post("/api/v2/instances/:instanceId/complete", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.post("/api/v2/instances/:instanceId/complete", requireAuth, async (req, res) => {
     try {
       const { instanceId } = req.params;
       const result = completeChecklistInstanceRequestSchema.safeParse(req.body);
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid completion data", 
-          details: result.error.errors 
+        return res.status(400).json({
+          error: "Invalid completion data",
+          details: result.error.errors,
         });
       }
 
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const instance = await checklistService.completeInstance(userId, instanceId, result.data);
       res.json(instance);
     } catch (error: Error | unknown) {
       console.error("Complete instance error:", error);
-      res.status(error.statusCode || 500).json({ error: error.message || "Failed to complete instance" });
+      res
+        .status(error.statusCode || 500)
+        .json({ error: error.message || "Failed to complete instance" });
     }
   });
 
   // Get summaries for dashboard
-  app.get("/api/v2/summaries", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/v2/summaries", requireAuth, async (req, res) => {
     try {
       const result = summariesRequestSchema.safeParse(req.query);
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid summary parameters", 
-          details: result.error.errors 
+        return res.status(400).json({
+          error: "Invalid summary parameters",
+          details: result.error.errors,
         });
       }
 
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const { from, to, checklistId, cadence } = result.data;
       const summaries = await checklistService.getSummaries(userId, from, to, checklistId, cadence);
       res.json(summaries);
     } catch (error: Error | unknown) {
       console.error("Get summaries error:", error);
-      res.status(error.statusCode || 500).json({ error: error.message || "Failed to get summaries" });
+      res
+        .status(error.statusCode || 500)
+        .json({ error: error.message || "Failed to get summaries" });
     }
   });
 
   // Export checklist CSV
-  app.get("/api/v2/export/checklists", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/v2/export/checklists", requireAuth, async (req, res) => {
     try {
       const result = summariesRequestSchema.safeParse(req.query);
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid export parameters", 
-          details: result.error.errors 
+        return res.status(400).json({
+          error: "Invalid export parameters",
+          details: result.error.errors,
         });
       }
 
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const { from, to } = result.data;
       const csvData = await checklistService.exportCSV(userId, from, to);
-      
+
       // Set CSV headers
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', 'attachment; filename="checklist-report.csv"');
-      
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", 'attachment; filename="checklist-report.csv"');
+
       // Create CSV content
-      const headers = ['Date/Week', 'Checklist Name', 'Cadence', 'Required', 'Completed', 'On Time', 'Completed At', 'Completed By'];
-      const csvRows = [headers.join(',')];
-      
-      csvData.forEach(record => {
+      const headers = [
+        "Date/Week",
+        "Checklist Name",
+        "Cadence",
+        "Required",
+        "Completed",
+        "On Time",
+        "Completed At",
+        "Completed By",
+      ];
+      const csvRows = [headers.join(",")];
+
+      csvData.forEach((record) => {
         const row = [
           `"${record.date_or_week}"`,
           `"${record.checklist_name}"`,
@@ -1502,29 +1671,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
           record.completed,
           record.on_time,
           `"${record.completed_at}"`,
-          `"${record.completed_by}"`
+          `"${record.completed_by}"`,
         ];
-        csvRows.push(row.join(','));
+        csvRows.push(row.join(","));
       });
-      
-      const csvContent = csvRows.join('\n');
+
+      const csvContent = csvRows.join("\n");
       res.send(csvContent);
     } catch (error: Error | unknown) {
       console.error("Export checklists error:", error);
-      res.status(error.statusCode || 500).json({ error: error.message || "Failed to export checklists" });
+      res
+        .status(error.statusCode || 500)
+        .json({ error: error.message || "Failed to export checklists" });
     }
   });
 
   // =========================
-  // CALIBRATION RECORD ENDPOINTS  
+  // CALIBRATION RECORD ENDPOINTS
   // =========================
 
   // Get calibration records for a fridge
-  app.get("/api/fridges/:fridgeId/calibrations", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/fridges/:fridgeId/calibrations", requireAuth, async (req, res) => {
     try {
       const { fridgeId } = req.params;
       const userId = req.userId;
-      
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
       const records = await storage.getCalibrationRecords(fridgeId, userId);
       res.json(records);
     } catch (error: Error | unknown) {
@@ -1534,21 +1708,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create calibration record
-  app.post(
-    "/api/calibration-records",
-    requireAuth,
-    async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.post("/api/calibration-records", requireAuth, async (req, res) => {
     try {
       const { createCalibrationRecordSchema } = await import("@shared/schema");
       const result = createCalibrationRecordSchema.safeParse(req.body);
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid input data", 
-          details: result.error.errors 
+        return res.status(400).json({
+          error: "Invalid input data",
+          details: result.error.errors,
         });
       }
 
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const {
         _fridgeId,
         calibrationDate,
@@ -1557,9 +1731,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         beforeCalibrationReading,
         afterCalibrationReading,
         accuracy,
-        notes
+        notes,
       } = result.data;
-      
+
       // Verify fridge ownership
       const fridge = await storage.getFridge(_fridgeId, userId);
       if (!fridge) {
@@ -1591,24 +1765,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Create calibration record error:", error);
       return res.status(500).json({ error: "Failed to create calibration record" });
     }
-    }
-  );
+  });
 
   // Update calibration record
-  app.put(
-    "/api/calibration-records/:recordId",
-    requireAuth,
-    async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.put("/api/calibration-records/:recordId", requireAuth, async (req, res) => {
     try {
       const { recordId } = req.params;
       const userId = req.userId;
-      
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
       const { createCalibrationRecordSchema } = await import("@shared/schema");
       const result = createCalibrationRecordSchema.safeParse(req.body);
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid input data", 
-          details: result.error.errors 
+        return res.status(400).json({
+          error: "Invalid input data",
+          details: result.error.errors,
         });
       }
 
@@ -1619,9 +1792,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         beforeCalibrationReading,
         afterCalibrationReading,
         accuracy,
-        notes
+        notes,
       } = result.data;
-      
+
       // Calculate next calibration due (1 year from calibration date)
       const nextDue = new Date(calibrationDate);
       nextDue.setFullYear(nextDue.getFullYear() + 1);
@@ -1647,15 +1820,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Update calibration record error:", error);
       return res.status(500).json({ error: "Failed to update calibration record" });
     }
-    }
-  );
+  });
 
   // Delete calibration record
-  app.delete("/api/calibration-records/:recordId", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.delete("/api/calibration-records/:recordId", requireAuth, async (req, res) => {
     try {
       const { recordId } = req.params;
       const userId = req.userId;
-      
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
       const deleted = await storage.deleteCalibrationRecord(recordId, userId);
       if (!deleted) {
         return res.status(404).json({ error: "Calibration record not found" });
@@ -1669,124 +1844,147 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export compliance report as CSV
-  app.get("/api/export/compliance-report", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/export/compliance-report", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
-      
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
       // Get comprehensive compliance data
       const logs = await storage.getAllTemperatureLogsForUser(userId);
       const overview = await storage.getComplianceOverview(userId);
-      
+
       // Set CSV headers
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', 'attachment; filename="compliance-report.csv"');
-      
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", 'attachment; filename="compliance-report.csv"');
+
       // Create CSV content for compliance report
       const headers = [
-        'Report Type',
-        'Fridge Name', 
-        'Date', 
-        'Time',
-        'Temperature (°C)', 
-        'Temperature Status',
-        'Person Name', 
-        'Check Status',
-        'On Time',
-        'Late Reason',
-        'Corrective Action',
-        'Alert Level'
+        "Report Type",
+        "Fridge Name",
+        "Date",
+        "Time",
+        "Temperature (°C)",
+        "Temperature Status",
+        "Person Name",
+        "Check Status",
+        "On Time",
+        "Late Reason",
+        "Corrective Action",
+        "Alert Level",
       ];
-      const csvRows = [headers.join(',')];
-      
+      const csvRows = [headers.join(",")];
+
       // Add summary row
-      csvRows.push([
-        'SUMMARY',
-        'All Fridges',
-        new Date().toLocaleDateString(),
-        new Date().toLocaleTimeString(),
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        overview?.missedReadings > 0 ? 'HIGH' : 'NORMAL'
-      ].map(field => `"${field}"`).join(','));
-      
+      csvRows.push(
+        [
+          "SUMMARY",
+          "All Fridges",
+          new Date().toLocaleDateString(),
+          new Date().toLocaleTimeString(),
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          overview?.missedReadings > 0 ? "HIGH" : "NORMAL",
+        ]
+          .map((field) => `"${field}"`)
+          .join(",")
+      );
+
       // Add overview statistics
-      csvRows.push([
-        'STATISTICS',
-        'Total Fridges',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        overview?.totalFridges?.toString() || '0'
-      ].map(field => `"${field}"`).join(','));
-      
-      csvRows.push([
-        'STATISTICS',
-        'Compliant Fridges',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        overview?.compliantFridges?.toString() || '0'
-      ].map(field => `"${field}"`).join(','));
-      
-      csvRows.push([
-        'STATISTICS',
-        'Missed Checks',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        overview?.missedReadings?.toString() || '0'
-      ].map(field => `"${field}"`).join(','));
-      
-      csvRows.push([
-        'STATISTICS',
-        'Late Checks',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        '-',
-        overview?.recentActivity?.lateEntries?.toString() || '0'
-      ].map(field => `"${field}"`).join(','));
-      
+      csvRows.push(
+        [
+          "STATISTICS",
+          "Total Fridges",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          overview?.totalFridges?.toString() || "0",
+        ]
+          .map((field) => `"${field}"`)
+          .join(",")
+      );
+
+      csvRows.push(
+        [
+          "STATISTICS",
+          "Compliant Fridges",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          overview?.compliantFridges?.toString() || "0",
+        ]
+          .map((field) => `"${field}"`)
+          .join(",")
+      );
+
+      csvRows.push(
+        [
+          "STATISTICS",
+          "Missed Checks",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          overview?.missedReadings?.toString() || "0",
+        ]
+          .map((field) => `"${field}"`)
+          .join(",")
+      );
+
+      csvRows.push(
+        [
+          "STATISTICS",
+          "Late Checks",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          overview?.recentActivity?.lateEntries?.toString() || "0",
+        ]
+          .map((field) => `"${field}"`)
+          .join(",")
+      );
+
       // Add detailed temperature log rows
-      logs.forEach(log => {
+      logs.forEach((log) => {
         const date = new Date(log.createdAt!);
         const dateStr = date.toLocaleDateString();
         const timeStr = date.toLocaleTimeString();
-        const tempStatus = log.isAlert ? 'OUT_OF_RANGE' : 'IN_RANGE';
-        const checkStatus = 'COMPLETED';
-        const onTime = log.isOnTime ? 'YES' : 'NO';
-        const alertLevel = log.isAlert ? 'HIGH' : 'NORMAL';
-        
+        const tempStatus = log.isAlert ? "OUT_OF_RANGE" : "IN_RANGE";
+        const checkStatus = "COMPLETED";
+        const onTime = log.isOnTime ? "YES" : "NO";
+        const alertLevel = log.isAlert ? "HIGH" : "NORMAL";
+
         const row = [
-          'TEMPERATURE_LOG',
+          "TEMPERATURE_LOG",
           log.fridgeName,
           dateStr,
           timeStr,
@@ -1795,14 +1993,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           log.personName,
           checkStatus,
           onTime,
-          log.lateReason || '-',
-          log.correctiveAction || '-',
-          alertLevel
+          log.lateReason || "-",
+          log.correctiveAction || "-",
+          alertLevel,
         ];
-        csvRows.push(row.map(field => `"${field}"`).join(','));
+        csvRows.push(row.map((field) => `"${field}"`).join(","));
       });
-      
-      const csvContent = csvRows.join('\n');
+
+      const csvContent = csvRows.join("\n");
       res.send(csvContent);
     } catch (error: Error | unknown) {
       console.error("Export compliance report error:", error);
@@ -1813,11 +2011,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =========================
   // SELF-AUDIT CHECKLIST ENDPOINTS
   // =========================
-  
+
   // Get audit templates
-  app.get("/api/audit-templates", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/audit-templates", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const templates = await storage.getAuditTemplates(userId);
       res.json(templates);
     } catch (error: Error | unknown) {
@@ -1827,16 +2028,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get specific audit template
-  app.get("/api/audit-templates/:templateId", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/audit-templates/:templateId", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const { templateId } = req.params;
-      
+
       const template = await storage.getAuditTemplate(templateId, userId);
       if (!template) {
         return res.status(404).json({ error: "Template not found" });
       }
-      
+
       res.json(template);
     } catch (error: Error | unknown) {
       console.error("Get audit template error:", error);
@@ -1845,16 +2049,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create audit template
-  app.post("/api/audit-templates", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.post("/api/audit-templates", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const { createAuditTemplateSchema } = await import("@shared/self-audit-types");
-      
+
       const result = createAuditTemplateSchema.safeParse(req.body);
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid template data", 
-          details: result.error.errors 
+        return res.status(400).json({
+          error: "Invalid template data",
+          details: result.error.errors,
         });
       }
 
@@ -1862,7 +2069,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         _userId: userId,
         name: result.data.name,
         description: result.data.description,
-        isDefault: false
+        isDefault: false,
       };
 
       const template = await storage.createAuditTemplate(templateData, result.data);
@@ -1874,20 +2081,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update audit template
-  app.put(
-    "/api/audit-templates/:templateId",
-    requireAuth,
-    async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.put("/api/audit-templates/:templateId", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const { templateId } = req.params;
       const { updateAuditTemplateSchema } = await import("@shared/self-audit-types");
-      
+
       const result = updateAuditTemplateSchema.safeParse({ ...req.body, _id: templateId });
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid template data", 
-          details: result.error.errors 
+        return res.status(400).json({
+          error: "Invalid template data",
+          details: result.error.errors,
         });
       }
 
@@ -1903,7 +2110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!template) {
         return res.status(404).json({ error: "Template not found" });
       }
-      
+
       res.json(template);
     } catch (error: Error | unknown) {
       console.error("Update audit template error:", error);
@@ -1912,16 +2119,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete audit template
-  app.delete("/api/audit-templates/:templateId", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.delete("/api/audit-templates/:templateId", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const { templateId } = req.params;
-      
+
       const success = await storage.deleteAuditTemplate(templateId, userId);
       if (!success) {
         return res.status(404).json({ error: "Template not found" });
       }
-      
+
       res.json({ message: "Template deleted successfully" });
     } catch (error: Error | unknown) {
       console.error("Delete audit template error:", error);
@@ -1930,9 +2140,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create default audit template
-  app.post("/api/audit-templates/default", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.post("/api/audit-templates/default", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const template = await storage.createDefaultAuditTemplate(userId);
       res.status(201).json(template);
     } catch (error: Error | unknown) {
@@ -1942,16 +2155,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Complete audit checklist
-  app.post("/api/audit-completions", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.post("/api/audit-completions", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
-      const { completeAuditSchema, calculateComplianceRate } = await import("@shared/self-audit-types");
-      
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      const { completeAuditSchema, calculateComplianceRate } = await import(
+        "@shared/self-audit-types"
+      );
+
       const result = completeAuditSchema.safeParse(req.body);
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Invalid completion data", 
-          details: result.error.errors 
+        return res.status(400).json({
+          error: "Invalid completion data",
+          details: result.error.errors,
         });
       }
 
@@ -1962,22 +2180,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Map responses to include section and item details first
-      const responsesData = result.data.responses.map(response => {
+      const responsesData = result.data.responses.map((response) => {
         const section = template.sections.find(
           (s: { _id: string; items: { _id: string }[] }) => s._id === response.sectionId
         );
         const item = section?.items.find((i: { _id: string }) => i._id === response.itemId);
-        
+
         return {
-          _id: '', // Will be set by storage method
-          _completionId: '', // Will be set by storage method
+          _id: "", // Will be set by storage method
+          _completionId: "", // Will be set by storage method
           sectionId: response.sectionId,
-          sectionTitle: section?.title || 'Unknown Section',
+          sectionTitle: section?.title || "Unknown Section",
           itemId: response.itemId,
-          itemText: item?.text || 'Unknown Item',
+          itemText: item?.text || "Unknown Item",
           isCompliant: response.isCompliant,
           notes: response.notes,
-          actionRequired: response.actionRequired
+          actionRequired: response.actionRequired,
         };
       });
 
@@ -1990,7 +2208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         templateName: template.name,
         completedBy: userId,
         notes: result.data.notes,
-        complianceRate: complianceRate.toString()
+        complianceRate: complianceRate.toString(),
       };
 
       const completion = await storage.createAuditCompletion(completionData, responsesData);
@@ -2002,11 +2220,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get audit completions
-  app.get("/api/audit-completions", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/audit-completions", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const { auditFiltersSchema: _auditFiltersSchema } = await import("@shared/self-audit-types");
-      
+
       const filters: Record<string, unknown> = {};
       if (req.query._templateId) filters._templateId = req.query._templateId as string;
       if (req.query.startDate) filters.startDate = new Date(req.query.startDate as string);
@@ -2022,11 +2243,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get specific audit completion
-  app.get("/api/audit-completions/:completionId", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/audit-completions/:completionId", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const { completionId } = req.params;
-      
+
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -2034,7 +2258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!completion) {
         return res.status(404).json({ error: "Completion not found" });
       }
-      
+
       res.json(completion);
     } catch (error: Error | unknown) {
       console.error("Get audit completion error:", error);
@@ -2043,9 +2267,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get audit completion statistics
-  app.get("/api/audit-stats", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/audit-stats", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const stats = await storage.getAuditCompletionStats(userId);
       res.json(stats);
     } catch (error: Error | unknown) {
@@ -2055,20 +2282,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Security status endpoint (development only)
-  app.get("/api/security/status", requireAuth, async (req: Request & { userId: string }, res: Response): Promise<void | Response> => {
+  app.get("/api/security/status", requireAuth, async (req, res) => {
     try {
       // Only allow in development environment
-      if (process.env.NODE_ENV !== 'development') {
+      if (process.env.NODE_ENV !== "development") {
         return res.status(404).json({ error: "Endpoint not available in production" });
       }
 
       // Try to read security status from file
-      const fs = await import('fs/promises');
-      const path = await import('path');
-      
+      const fs = await import("fs/promises");
+      const path = await import("path");
+
       try {
-        const statusFile = path.join(process.cwd(), '.security-status.json');
-        const statusContent = await fs.readFile(statusFile, 'utf-8');
+        const statusFile = path.join(process.cwd(), ".security-status.json");
+        const statusContent = await fs.readFile(statusFile, "utf-8");
         const status = JSON.parse(statusContent);
         res.json(status);
       } catch {
@@ -2078,7 +2305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           lastScan: null,
           packagesScanned: 0,
           hasIssues: false,
-          message: "No security scan has been run yet"
+          message: "No security scan has been run yet",
         });
       }
     } catch (error: Error | unknown) {

@@ -23,7 +23,7 @@ import {
   AlertTriangle,
   FileText,
   // Save,
-  Send
+  Send,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -87,19 +87,19 @@ export default function CompleteSelfAudit() {
   }, [isAuthenticated, isLoading, toast]);
 
   // Fetch template
-  const { 
-    data: template, 
-    isLoading: templateLoading, 
-    error: templateError 
+  const {
+    data: template,
+    isLoading: templateLoading,
+    error: templateError,
   } = useQuery({
-    queryKey: ['audit-template', templateId],
+    queryKey: ["audit-template", templateId],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/audit-templates/${templateId}`);
+      const response = await apiRequest("GET", `/api/audit-templates/${templateId}`);
       if (!response.ok) {
         if (response.status === 404) {
-          throw new Error('Template not found');
+          throw new Error("Template not found");
         }
-        throw new Error('Failed to fetch template');
+        throw new Error("Failed to fetch template");
       }
       return response.json() as Promise<AuditTemplate>;
     },
@@ -109,10 +109,10 @@ export default function CompleteSelfAudit() {
   // Submit audit completion
   const completeMutation = useMutation({
     mutationFn: async (_data: { responses: AuditResponse[]; notes?: string }) => {
-      const response = await apiRequest('POST', '/api/audit-completions', {
+      const response = await apiRequest("POST", "/api/audit-completions", {
         templateId,
         responses: _data.responses,
-        notes: _data.notes
+        notes: _data.notes,
       });
       if (!response.ok) {
         const errorText = await response.text();
@@ -121,12 +121,12 @@ export default function CompleteSelfAudit() {
       return response.json();
     },
     onSuccess: (_data) => {
-      queryClient.invalidateQueries({ queryKey: ['audit-completions'] });
+      queryClient.invalidateQueries({ queryKey: ["audit-completions"] });
       toast({
         title: "Audit Completed!",
         description: `Compliance rate: ${calculateComplianceRate()}%. View your results in the completed audits section.`,
       });
-      setLocation('/self-audit-checklists');
+      setLocation("/self-audit-checklists");
     },
     onError: (error) => {
       toast({
@@ -138,22 +138,22 @@ export default function CompleteSelfAudit() {
   });
 
   const handleResponseChange = (
-    sectionId: string, 
-    itemId: string, 
-    field: keyof AuditResponse, 
+    sectionId: string,
+    itemId: string,
+    field: keyof AuditResponse,
     value: string | boolean
   ) => {
     const key = `${sectionId}-${itemId}`;
-    setResponses(prev => ({
+    setResponses((prev) => ({
       ...prev,
       [key]: {
         ...prev[key],
         sectionId,
         itemId,
-        isCompliant: field === 'isCompliant' ? value as boolean : prev[key]?.isCompliant || false,
-        notes: field === 'notes' ? value as string : prev[key]?.notes,
-        actionRequired: field === 'actionRequired' ? value as string : prev[key]?.actionRequired,
-      } as AuditResponse
+        isCompliant: field === "isCompliant" ? (value as boolean) : prev[key]?.isCompliant || false,
+        notes: field === "notes" ? (value as string) : prev[key]?.notes,
+        actionRequired: field === "actionRequired" ? (value as string) : prev[key]?.actionRequired,
+      } as AuditResponse,
     }));
   };
 
@@ -164,31 +164,35 @@ export default function CompleteSelfAudit() {
 
   const calculateComplianceRate = (): number => {
     if (!template) return 0;
-    
-    const totalItems = template.sections.reduce((total: number, section: AuditSection) => 
-      total + section.items.length, 0);
-    
+
+    const totalItems = template.sections.reduce(
+      (total: number, section: AuditSection) => total + section.items.length,
+      0
+    );
+
     if (totalItems === 0) return 100;
-    
-    const compliantItems = Object.values(responses).filter(r => r.isCompliant).length;
+
+    const compliantItems = Object.values(responses).filter((r) => r.isCompliant).length;
     return Math.round((compliantItems / totalItems) * 100);
   };
 
   const getTotalProgress = (): number => {
     if (!template) return 0;
-    
-    const totalItems = template.sections.reduce((total: number, section: AuditSection) => 
-      total + section.items.length, 0);
-    
+
+    const totalItems = template.sections.reduce(
+      (total: number, section: AuditSection) => total + section.items.length,
+      0
+    );
+
     if (totalItems === 0) return 100;
-    
+
     const respondedItems = Object.keys(responses).length;
     return Math.round((respondedItems / totalItems) * 100);
   };
 
   const canSubmit = (): boolean => {
     if (!template) return false;
-    
+
     // Check that all required items have responses
     for (const section of template.sections) {
       for (const item of section.items) {
@@ -219,7 +223,7 @@ export default function CompleteSelfAudit() {
     const responseArray = Object.values(responses);
     completeMutation.mutate({
       responses: responseArray,
-      notes: overallNotes || undefined
+      notes: overallNotes || undefined,
     });
     setShowConfirmDialog(false);
   };
@@ -250,7 +254,7 @@ export default function CompleteSelfAudit() {
               <p className="text-muted-foreground mb-4">
                 The audit template could not be found or you don&apos;t have access to it.
               </p>
-              <Button onClick={() => setLocation('/self-audit-checklists')}>
+              <Button onClick={() => setLocation("/self-audit-checklists")}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Templates
               </Button>
@@ -271,7 +275,11 @@ export default function CompleteSelfAudit() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" onClick={() => setLocation('/self-audit-checklists')}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocation("/self-audit-checklists")}
+              >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Templates
               </Button>
@@ -282,7 +290,7 @@ export default function CompleteSelfAudit() {
                 )}
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <div className="text-right">
                 <div className="text-sm text-muted-foreground">Progress</div>
@@ -291,8 +299,8 @@ export default function CompleteSelfAudit() {
               <div className="w-24">
                 <Progress value={progress} />
               </div>
-              <Button 
-                onClick={handleSubmit} 
+              <Button
+                onClick={handleSubmit}
                 disabled={!canSubmit() || completeMutation.isPending}
                 className="min-w-[120px]"
               >
@@ -356,9 +364,7 @@ export default function CompleteSelfAudit() {
                         {section.title}
                       </CardTitle>
                       {section.description && (
-                        <CardDescription className="mt-2">
-                          {section.description}
-                        </CardDescription>
+                        <CardDescription className="mt-2">{section.description}</CardDescription>
                       )}
                     </div>
                   </div>
@@ -370,16 +376,16 @@ export default function CompleteSelfAudit() {
                       .map((item: AuditItem, itemIndex: number) => {
                         const response = getResponse(section._id, item._id);
                         const isCompliant = response?.isCompliant;
-                        
+
                         return (
-                          <div 
-                            key={item.id} 
+                          <div
+                            key={item._id}
                             className={`p-4 rounded-lg border-2 transition-colors ${
-                              isCompliant === true 
-                                ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950' 
-                                : isCompliant === false 
-                                ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950' 
-                                : 'border-gray-200 dark:border-gray-800'
+                              isCompliant === true
+                                ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950"
+                                : isCompliant === false
+                                  ? "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950"
+                                  : "border-gray-200 dark:border-gray-800"
                             }`}
                           >
                             <div className="flex items-start gap-3">
@@ -401,14 +407,25 @@ export default function CompleteSelfAudit() {
                                       </p>
                                     )}
                                   </div>
-                                  
+
                                   <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-2">
                                       <Button
                                         variant={isCompliant === true ? "default" : "outline"}
                                         size="sm"
-                                        onClick={() => handleResponseChange(section._id, item._id, 'isCompliant', true)}
-                                        className={isCompliant === true ? "bg-green-600 hover:bg-green-700" : ""}
+                                        onClick={() =>
+                                          handleResponseChange(
+                                            section._id,
+                                            item._id,
+                                            "isCompliant",
+                                            true
+                                          )
+                                        }
+                                        className={
+                                          isCompliant === true
+                                            ? "bg-green-600 hover:bg-green-700"
+                                            : ""
+                                        }
                                       >
                                         <CheckCircle className="h-4 w-4 mr-1" />
                                         Compliant
@@ -416,8 +433,17 @@ export default function CompleteSelfAudit() {
                                       <Button
                                         variant={isCompliant === false ? "default" : "outline"}
                                         size="sm"
-                                        onClick={() => handleResponseChange(section._id, item._id, 'isCompliant', false)}
-                                        className={isCompliant === false ? "bg-red-600 hover:bg-red-700" : ""}
+                                        onClick={() =>
+                                          handleResponseChange(
+                                            section._id,
+                                            item._id,
+                                            "isCompliant",
+                                            false
+                                          )
+                                        }
+                                        className={
+                                          isCompliant === false ? "bg-red-600 hover:bg-red-700" : ""
+                                        }
                                       >
                                         <XCircle className="h-4 w-4 mr-1" />
                                         Non-Compliant
@@ -425,34 +451,54 @@ export default function CompleteSelfAudit() {
                                     </div>
                                   </div>
                                 </div>
-                                
+
                                 {/* Additional Notes/Action Required */}
                                 {isCompliant !== undefined && (
                                   <div className="mt-4 space-y-3">
                                     <div>
-                                      <Label htmlFor={`notes-${item.id}`} className="text-sm font-medium">
+                                      <Label
+                                        htmlFor={`notes-${item._id}`}
+                                        className="text-sm font-medium"
+                                      >
                                         Notes
                                       </Label>
                                       <Textarea
-                                        id={`notes-${item.id}`}
+                                        id={`notes-${item._id}`}
                                         placeholder="Add any additional notes or observations..."
                                         value={response?.notes || ""}
-                                        onChange={(e) => handleResponseChange(section._id, item._id, 'notes', e.target.value)}
+                                        onChange={(e) =>
+                                          handleResponseChange(
+                                            section._id,
+                                            item._id,
+                                            "notes",
+                                            e.target.value
+                                          )
+                                        }
                                         className="mt-1"
                                         rows={2}
                                       />
                                     </div>
-                                    
+
                                     {isCompliant === false && (
                                       <div>
-                                        <Label htmlFor={`action-${item.id}`} className="text-sm font-medium">
+                                        <Label
+                                          htmlFor={`action-${item._id}`}
+                                          className="text-sm font-medium"
+                                        >
                                           Action Required
                                         </Label>
                                         <Textarea
-                                          id={`action-${item.id}`}
+                                          id={`action-${item._id}`}
                                           placeholder="What corrective actions need to be taken?"
                                           value={response?.actionRequired || ""}
-                                          onChange={(e) => handleResponseChange(section._id, item._id, 'actionRequired', e.target.value)}
+                                          onChange={(e) =>
+                                            handleResponseChange(
+                                              section._id,
+                                              item._id,
+                                              "actionRequired",
+                                              e.target.value
+                                            )
+                                          }
                                           className="mt-1"
                                           rows={2}
                                         />
@@ -496,8 +542,8 @@ export default function CompleteSelfAudit() {
               <div>
                 <h3 className="font-semibold">Ready to Submit?</h3>
                 <p className="text-sm text-muted-foreground">
-                  Current compliance rate: <strong>{complianceRate}%</strong> • 
-                  Progress: <strong>{progress}% complete</strong>
+                  Current compliance rate: <strong>{complianceRate}%</strong> • Progress:{" "}
+                  <strong>{progress}% complete</strong>
                 </p>
                 {!canSubmit() && (
                   <Alert className="mt-2">
@@ -508,9 +554,9 @@ export default function CompleteSelfAudit() {
                   </Alert>
                 )}
               </div>
-              
-              <Button 
-                onClick={handleSubmit} 
+
+              <Button
+                onClick={handleSubmit}
                 disabled={!canSubmit() || completeMutation.isPending}
                 size="lg"
                 className="min-w-[140px]"
@@ -533,19 +579,16 @@ export default function CompleteSelfAudit() {
       </div>
 
       {/* Confirmation Dialog */}
-      <Dialog 
-        open={showConfirmDialog} 
-        onOpenChange={setShowConfirmDialog}
-      >
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirm Audit Submission</DialogTitle>
             <DialogDescription>
-              Are you sure you want to submit this audit? You won&apos;t be able
-              to make changes after submission.
+              Are you sure you want to submit this audit? You won&apos;t be able to make changes
+              after submission.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div className="bg-muted rounded-lg p-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
@@ -559,7 +602,7 @@ export default function CompleteSelfAudit() {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
                 Cancel

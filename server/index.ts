@@ -16,22 +16,24 @@ const MemoryStoreSession = MemoryStore(session);
 const app = express();
 
 // Trust proxy for rate limiting to work correctly in deployment
-app.set('trust proxy', 1);
+app.set("trust proxy", 1);
 
-// Security middleware  
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com"],
-      imgSrc: ["'self'", "_data:", "https:"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      connectSrc: ["'self'", "ws:", "wss:", "https://api.stripe.com"],
-      frameSrc: ["'self'", "https://js.stripe.com", "https://hooks.stripe.com"],
+// Security middleware
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com"],
+        imgSrc: ["'self'", "_data:", "https:"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        connectSrc: ["'self'", "ws:", "wss:", "https://api.stripe.com"],
+        frameSrc: ["'self'", "https://js.stripe.com", "https://hooks.stripe.com"],
+      },
     },
-  },
-}));
+  })
+);
 
 // Rate limiting - increased for development
 const limiter = rateLimit({
@@ -50,34 +52,37 @@ const authLimiter = rateLimit({
 app.use("/auth", authLimiter);
 
 // Session configuration - simplified for debugging
-app.use(session({
-  store: new MemoryStoreSession({
-    checkPeriod: 86400000
-  }),
-  secret: process.env.SESSION_SECRET || "dev-secret-change-in-production",
-  resave: true, // Change to true to force session save
-  saveUninitialized: true,
-  name: "sessionId", // Use simpler name
-  cookie: {
-    secure: false, // Try false first to eliminate HTTPS issues
-    httpOnly: false,
-    maxAge: 24 * 60 * 60 * 1000,
-    sameSite: false, // Disable SameSite completely
-  },
-}));
+app.use(
+  session({
+    store: new MemoryStoreSession({
+      checkPeriod: 86400000,
+    }),
+    secret: process.env.SESSION_SECRET || "dev-secret-change-in-production",
+    resave: true, // Change to true to force session save
+    saveUninitialized: true,
+    name: "sessionId", // Use simpler name
+    cookie: {
+      secure: false, // Try false first to eliminate HTTPS issues
+      httpOnly: false,
+      maxAge: 24 * 60 * 60 * 1000,
+      sameSite: false, // Disable SameSite completely
+    },
+  })
+);
 
+// CORS configuration for credentials
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+    exposedHeaders: ["Set-Cookie"],
+  })
+);
 
-// CORS configuration for credentials  
-app.use(cors({
-  origin: true,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
-  exposedHeaders: ['Set-Cookie'],
-}));
-
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: false, limit: "10mb" }));
 
 // Extend Request type for session user
 declare module "express-session" {
@@ -134,14 +139,13 @@ app.use((req, res, next) => {
 
 // Additional session error handling
 app.use((err: Error | unknown, req: Request, res: Response, next: NextFunction) => {
-  if (err && err.message && err.message.includes('session')) {
+  if (err && err.message && err.message.includes("session")) {
     console.error("Session middleware error:", err);
     // Continue without session in case of database connection error
     return next();
   }
   next(err);
 });
-
 
 (async () => {
   const server = await registerRoutes(app);
@@ -153,7 +157,7 @@ app.use((err: Error | unknown, req: Request, res: Response, next: NextFunction) 
     if (!res.headersSent) {
       res.status(status).json({ message });
     }
-    console.error('Error handled:', err);
+    console.error("Error handled:", err);
   });
 
   // importantly only setup vite in development and after
@@ -163,11 +167,11 @@ app.use((err: Error | unknown, req: Request, res: Response, next: NextFunction) 
     await setupVite(app, server);
   } else {
     // Serve static files from React build
-    app.use(express.static(path.join(__dirname, '../client/dist')));
-    
+    app.use(express.static(path.join(__dirname, "../client/dist")));
+
     // Handle React routing, return index.html for all non-API routes
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+    app.get("*", (req, res) => {
+      res.sendFile(path.join(__dirname, "../client/dist/index.html"));
     });
   }
 
@@ -175,12 +179,15 @@ app.use((err: Error | unknown, req: Request, res: Response, next: NextFunction) 
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
+  const port = parseInt(process.env.PORT || "5000", 10);
+  server.listen(
+    {
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    },
+    () => {
+      log(`serving on port ${port}`);
+    }
+  );
 })();

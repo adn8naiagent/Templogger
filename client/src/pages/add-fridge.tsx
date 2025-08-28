@@ -11,8 +11,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 // import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { HexColorPicker } from "react-colorful";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { 
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
   ArrowLeft,
   Save,
   Thermometer,
@@ -22,7 +29,7 @@ import {
   Tag,
   Clock,
   Plus,
-  Trash2
+  Trash2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -39,7 +46,7 @@ interface Label {
 interface TimeWindow {
   id?: string;
   label: string;
-  checkType: 'specific' | 'daily';
+  checkType: "specific" | "daily";
   startTime?: string;
   endTime?: string;
   excludedDays: number[];
@@ -49,15 +56,15 @@ export default function AddFridge() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   // Temperature check scheduling state
   const [_enableScheduledChecks, _setEnableScheduledChecks] = useState(true);
-  const [checkFrequency, setCheckFrequency] = useState<'once' | 'twice' | 'multiple'>('twice');
+  const [checkFrequency, setCheckFrequency] = useState<"once" | "twice" | "multiple">("twice");
   const [timeWindows, setTimeWindows] = useState<TimeWindow[]>([]);
   const [excludedDays, setExcludedDays] = useState<number[]>([]);
 
   // Day names for display
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
   // Fetch labels
   const { data: labels = [] } = useQuery<Label[]>({
@@ -108,18 +115,18 @@ export default function AddFridge() {
           });
         }
       }
-      
+
       toast({
         title: "Fridge created!",
-        description: _enableScheduledChecks ? 
-          "New fridge with scheduled temperature checks has been added successfully." :
-          "New fridge has been added successfully.",
+        description: _enableScheduledChecks
+          ? "New fridge with scheduled temperature checks has been added successfully."
+          : "New fridge has been added successfully.",
       });
-      
+
       // Invalidate queries and prefetch the data to ensure it's ready when we navigate
       await queryClient.invalidateQueries({ queryKey: ["/api/fridges/recent-temps"] });
       await queryClient.refetchQueries({ queryKey: ["/api/fridges/recent-temps"] });
-      
+
       setLocation("/");
     },
     onError: (error: Error) => {
@@ -138,7 +145,7 @@ export default function AddFridge() {
   const addTimeWindow = () => {
     const newWindow: TimeWindow = {
       label: `Check ${timeWindows.length + 1}`,
-      checkType: 'specific',
+      checkType: "specific",
       startTime: "09:00",
       endTime: "09:30",
       excludedDays: [],
@@ -149,10 +156,10 @@ export default function AddFridge() {
   const toggleExcludedDay = (dayIndex: number) => {
     // Convert Monday-first index to Sunday-first index for backend compatibility
     const sundayFirstIndex = dayIndex === 6 ? 0 : dayIndex + 1;
-    
-    setExcludedDays(prev => 
-      prev.includes(sundayFirstIndex) 
-        ? prev.filter(d => d !== sundayFirstIndex)
+
+    setExcludedDays((prev) =>
+      prev.includes(sundayFirstIndex)
+        ? prev.filter((d) => d !== sundayFirstIndex)
         : [...prev, sundayFirstIndex]
     );
   };
@@ -176,9 +183,9 @@ export default function AddFridge() {
   };
 
   const validateTimeWindow = (window: TimeWindow): string | null => {
-    if (window.checkType === 'specific' && window.startTime && window.endTime) {
+    if (window.checkType === "specific" && window.startTime && window.endTime) {
       if (window.startTime >= window.endTime) {
-        return 'End time must be after start time';
+        return "End time must be after start time";
       }
     }
     return null;
@@ -186,7 +193,7 @@ export default function AddFridge() {
 
   const onSubmit = async (_data: CreateFridgeData) => {
     // Validate time windows if scheduled checks are enabled
-    if (_enableScheduledChecks && checkFrequency === 'multiple' && timeWindows.length === 0) {
+    if (_enableScheduledChecks && checkFrequency === "multiple" && timeWindows.length === 0) {
       toast({
         title: "Validation Error",
         description: "Please add at least one temperature check time.",
@@ -196,7 +203,7 @@ export default function AddFridge() {
     }
 
     // Validate each time window for proper start/end time ordering
-    if (_enableScheduledChecks && checkFrequency === 'multiple') {
+    if (_enableScheduledChecks && checkFrequency === "multiple") {
       for (let i = 0; i < timeWindows.length; i++) {
         const window = timeWindows[i];
         if (!window) continue;
@@ -211,20 +218,20 @@ export default function AddFridge() {
         }
       }
     }
-    
+
     // Set default once-per-day check if selected and create the fridge with time windows
-    if (_enableScheduledChecks && checkFrequency === 'once') {
+    if (_enableScheduledChecks && checkFrequency === "once") {
       const dailyCheck = {
         label: "Daily Check",
         checkType: "daily",
         excludedDays: excludedDays,
       };
-      
+
       // Create fridge first, then add the daily check
       const fridgeData = { ..._data };
       const response = await apiRequest("POST", "/api/fridges", fridgeData);
       const newFridge = await response.json();
-      
+
       // Add the daily time window
       try {
         await apiRequest("POST", "/api/time-windows", {
@@ -237,24 +244,24 @@ export default function AddFridge() {
         // eslint-disable-next-line no-console
         console.error("Error creating daily check:", error);
       }
-      
+
       toast({
         title: "Fridge created!",
         description: "New fridge with daily temperature check has been added successfully.",
       });
-      
+
       // Invalidate queries and prefetch the data to ensure it's ready when we navigate
       await queryClient.invalidateQueries({ queryKey: ["/api/fridges/recent-temps"] });
       await queryClient.refetchQueries({ queryKey: ["/api/fridges/recent-temps"] });
-      
+
       setLocation("/");
       return;
-    } else if (_enableScheduledChecks && checkFrequency === 'twice') {
+    } else if (_enableScheduledChecks && checkFrequency === "twice") {
       // Create fridge first, then add AM and PM checks
       const fridgeData = { ..._data };
       const response = await apiRequest("POST", "/api/fridges", fridgeData);
       const newFridge = await response.json();
-      
+
       // Add AM and PM time windows
       try {
         await apiRequest("POST", "/api/time-windows", {
@@ -265,7 +272,7 @@ export default function AddFridge() {
           endTime: "12:00",
           excludedDays: excludedDays,
         });
-        
+
         await apiRequest("POST", "/api/time-windows", {
           _fridgeId: newFridge._id,
           label: "Evening Check",
@@ -278,20 +285,20 @@ export default function AddFridge() {
         // eslint-disable-next-line no-console
         console.error("Error creating AM/PM checks:", error);
       }
-      
+
       toast({
         title: "Fridge created!",
         description: "New fridge with AM/PM temperature checks has been added successfully.",
       });
-      
+
       // Invalidate queries and prefetch the data to ensure it's ready when we navigate
       await queryClient.invalidateQueries({ queryKey: ["/api/fridges/recent-temps"] });
       await queryClient.refetchQueries({ queryKey: ["/api/fridges/recent-temps"] });
-      
+
       setLocation("/");
       return;
     }
-    
+
     createFridgeMutation.mutate(_data);
   };
 
@@ -321,7 +328,7 @@ export default function AddFridge() {
               Configure temperature monitoring for a new fridge with compliance tracking
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -332,7 +339,11 @@ export default function AddFridge() {
                     <FormItem>
                       <FormLabel>Fridge Name *</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Main Vaccine Fridge" data-testid="input-fridge-name" />
+                        <Input
+                          {...field}
+                          placeholder="Main Vaccine Fridge"
+                          data-testid="input-fridge-name"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -349,7 +360,11 @@ export default function AddFridge() {
                         Location (Optional)
                       </FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Pharmacy Main Floor" data-testid="input-fridge-location" />
+                        <Input
+                          {...field}
+                          placeholder="Pharmacy Main Floor"
+                          data-testid="input-fridge-location"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -366,7 +381,12 @@ export default function AddFridge() {
                         Notes (Optional)
                       </FormLabel>
                       <FormControl>
-                        <Textarea {...field} placeholder="Additional information about this fridge..." rows={3} data-testid="input-fridge-notes" />
+                        <Textarea
+                          {...field}
+                          placeholder="Additional information about this fridge..."
+                          rows={3}
+                          data-testid="input-fridge-notes"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -390,8 +410,8 @@ export default function AddFridge() {
                               className="w-full justify-start"
                               data-testid="button-color-picker"
                             >
-                              <div 
-                                className="w-4 h-4 rounded mr-2 border" 
+                              <div
+                                className="w-4 h-4 rounded mr-2 border"
                                 style={{ backgroundColor: field.value }}
                               />
                               {field.value}
@@ -431,14 +451,19 @@ export default function AddFridge() {
                                       field.onChange([...field.value, label.name]);
                                     } else {
                                       // eslint-disable-next-line max-len
-                                      field.onChange(field.value.filter((l: string) => l !== label.name));
+                                      field.onChange(
+                                        field.value.filter((l: string) => l !== label.name)
+                                      );
                                     }
                                   }}
                                   data-testid={`checkbox-label-${label.name}`}
                                 />
-                                <label htmlFor={label._id} className="flex items-center gap-2 text-sm cursor-pointer">
-                                  <div 
-                                    className="w-3 h-3 rounded" 
+                                <label
+                                  htmlFor={label._id}
+                                  className="flex items-center gap-2 text-sm cursor-pointer"
+                                >
+                                  <div
+                                    className="w-3 h-3 rounded"
                                     style={{ backgroundColor: label.color }}
                                   />
                                   {label.name}
@@ -499,7 +524,9 @@ export default function AddFridge() {
                     <div className="space-y-4 pt-2 border-t">
                       <RadioGroup
                         value={checkFrequency}
-                        onValueChange={(value: 'once' | 'twice' | 'multiple') => setCheckFrequency(value)}
+                        onValueChange={(value: "once" | "twice" | "multiple") =>
+                          setCheckFrequency(value)
+                        }
                         className="space-y-3"
                       >
                         <div className="flex items-center space-x-2">
@@ -509,20 +536,28 @@ export default function AddFridge() {
                           </label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="twice" id="twice" data-testid="radio-twice-daily" />
+                          <RadioGroupItem
+                            value="twice"
+                            id="twice"
+                            data-testid="radio-twice-daily"
+                          />
                           <label htmlFor="twice" className="text-sm font-medium cursor-pointer">
                             Check twice a day (AM/PM)
                           </label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="multiple" id="multiple" data-testid="radio-multiple-times" />
+                          <RadioGroupItem
+                            value="multiple"
+                            id="multiple"
+                            data-testid="radio-multiple-times"
+                          />
                           <label htmlFor="multiple" className="text-sm font-medium cursor-pointer">
                             Set times for multiple checks a day
                           </label>
                         </div>
                       </RadioGroup>
 
-                      {checkFrequency === 'multiple' && (
+                      {checkFrequency === "multiple" && (
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
                             <p className="text-sm text-muted-foreground">
@@ -543,38 +578,51 @@ export default function AddFridge() {
                           {/* eslint-disable-next-line max-len */}
                           {timeWindows.length === 0 ? (
                             <div className="text-center py-4 text-sm text-muted-foreground border border-dashed rounded">
-                              No check times added yet. Click &quot;Add Time&quot; to set your 
-                              first check.
+                              No check times added yet. Click &quot;Add Time&quot; to set your first
+                              check.
                             </div>
                           ) : (
                             <div className="space-y-2">
                               {timeWindows.map((window, index) => (
-                                <div key={index} className="flex items-center gap-2 p-3 border rounded bg-background">
+                                <div
+                                  key={index}
+                                  className="flex items-center gap-2 p-3 border rounded bg-background"
+                                >
                                   <div className="flex-1">
                                     <Input
                                       type="text"
                                       placeholder="Check label"
                                       value={window.label}
-                                      onChange={(e) => updateTimeWindow(index, 'label', e.target.value)}
+                                      onChange={(e) =>
+                                        updateTimeWindow(index, "label", e.target.value)
+                                      }
                                       className="mb-2"
                                       data-testid={`input-check-label-${index}`}
                                     />
                                     <div className="grid grid-cols-2 gap-2">
                                       <div>
-                                        <label className="text-xs text-muted-foreground">Start Time</label>
+                                        <label className="text-xs text-muted-foreground">
+                                          Start Time
+                                        </label>
                                         <Input
                                           type="time"
                                           value={window.startTime}
-                                          onChange={(e) => updateTimeWindow(index, 'startTime', e.target.value)}
+                                          onChange={(e) =>
+                                            updateTimeWindow(index, "startTime", e.target.value)
+                                          }
                                           data-testid={`input-start-time-${index}`}
                                         />
                                       </div>
                                       <div>
-                                        <label className="text-xs text-muted-foreground">End Time</label>
+                                        <label className="text-xs text-muted-foreground">
+                                          End Time
+                                        </label>
                                         <Input
                                           type="time"
                                           value={window.endTime}
-                                          onChange={(e) => updateTimeWindow(index, 'endTime', e.target.value)}
+                                          onChange={(e) =>
+                                            updateTimeWindow(index, "endTime", e.target.value)
+                                          }
                                           data-testid={`input-end-time-${index}`}
                                         />
                                       </div>
@@ -602,27 +650,26 @@ export default function AddFridge() {
                         </div>
                       )}
 
-                      {checkFrequency === 'twice' && (
+                      {checkFrequency === "twice" && (
                         <div className="space-y-3">
                           {/* eslint-disable-next-line max-len */}
                           <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded border border-green-200 dark:border-green-800">
                             <p className="text-sm text-green-800 dark:text-green-200">
                               <Clock className="h-4 w-4 inline mr-1" />
-                              Two temperature checks will be required each day: one in the 
-                              morning (AM) and one in the evening (PM)
+                              Two temperature checks will be required each day: one in the morning
+                              (AM) and one in the evening (PM)
                             </p>
                           </div>
                         </div>
                       )}
 
-                      {checkFrequency === 'once' && (
+                      {checkFrequency === "once" && (
                         <div className="space-y-3">
                           {/* eslint-disable-next-line max-len */}
                           <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded border border-blue-200 dark:border-blue-800">
                             <p className="text-sm text-blue-800 dark:text-blue-200">
-                              <Clock className="h-4 w-4 inline mr-1" />
-                              A daily temperature check will be required each day 
-                              (any time during the day)
+                              <Clock className="h-4 w-4 inline mr-1" />A daily temperature check
+                              will be required each day (any time during the day)
                             </p>
                           </div>
                         </div>
@@ -643,7 +690,10 @@ export default function AddFridge() {
                                 onCheckedChange={() => toggleExcludedDay(index)}
                                 data-testid={`checkbox-exclude-${day.toLowerCase()}`}
                               />
-                              <label htmlFor={`exclude-day-${index}`} className="text-sm cursor-pointer">
+                              <label
+                                htmlFor={`exclude-day-${index}`}
+                                className="text-sm cursor-pointer"
+                              >
                                 {day}
                               </label>
                             </div>
@@ -656,18 +706,18 @@ export default function AddFridge() {
 
                 {/* Action Buttons */}
                 <div className="flex gap-3 pt-6">
-                  <Button 
+                  <Button
                     type="button"
-                    variant="outline" 
+                    variant="outline"
                     className="flex-1"
                     onClick={handleCancel}
                     data-testid="button-cancel"
                   >
                     Cancel
                   </Button>
-                  <Button 
-                    type="submit" 
-                    className="flex-1" 
+                  <Button
+                    type="submit"
+                    className="flex-1"
                     disabled={createFridgeMutation.isPending}
                     data-testid="button-save"
                   >

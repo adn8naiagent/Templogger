@@ -1,15 +1,22 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useParams, useLocation, Link } from 'wouter';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { 
-  ArrowLeft, 
-  Thermometer, 
-  MapPin, 
-  Clock, 
+import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useParams, useLocation, Link } from "wouter";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  ArrowLeft,
+  Thermometer,
+  MapPin,
+  Clock,
   Settings,
   AlertTriangle,
   CheckCircle,
@@ -22,9 +29,15 @@ import {
   // Award,
   // Plus,
   // Upload
-} from 'lucide-react';
-import type { Fridge, TemperatureLog, CalibrationRecord, MaintenanceRecord, TimeWindow } from '@shared/schema';
-import CalibrationManager from '@/components/calibration/calibration-manager';
+} from "lucide-react";
+import type {
+  Fridge,
+  TemperatureLog,
+  CalibrationRecord,
+  MaintenanceRecord,
+  TimeWindow,
+} from "@shared/schema";
+import CalibrationManager from "@/components/calibration/calibration-manager";
 
 interface FridgeWithLogs extends Fridge {
   logs: (TemperatureLog & { fridgeName: string })[];
@@ -36,7 +49,7 @@ interface FridgeWithLogs extends Fridge {
 export default function FridgeDetail() {
   const { id } = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   const { data: fridge, isLoading } = useQuery<FridgeWithLogs>({
     queryKey: [`/api/fridge/${id}`],
@@ -59,50 +72,79 @@ export default function FridgeDetail() {
   });
 
   const handleSort = () => {
-    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    setSortOrder(sortOrder === "asc" ? "desc" : "asc");
   };
 
   const getTemperatureStatus = (log: TemperatureLog, _fridge: Fridge) => {
     if (log.isAlert) {
-      return <Badge variant="destructive" className="gap-1"><AlertTriangle className="h-3 w-3" />Out of Range</Badge>;
+      return (
+        <Badge variant="destructive" className="gap-1">
+          <AlertTriangle className="h-3 w-3" />
+          Out of Range
+        </Badge>
+      );
     }
-    return <Badge variant="default" className="gap-1 bg-green-600"><CheckCircle className="h-3 w-3" />Normal</Badge>;
+    return (
+      <Badge variant="default" className="gap-1 bg-green-600">
+        <CheckCircle className="h-3 w-3" />
+        Normal
+      </Badge>
+    );
   };
 
   const getTimingStatus = (log: TemperatureLog) => {
     if (!log.isOnTime) {
-      return <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3" />Late</Badge>;
+      return (
+        <Badge variant="secondary" className="gap-1">
+          <Clock className="h-3 w-3" />
+          Late
+        </Badge>
+      );
     }
-    return <Badge variant="outline" className="gap-1"><Clock className="h-3 w-3" />On Time</Badge>;
+    return (
+      <Badge variant="outline" className="gap-1">
+        <Clock className="h-3 w-3" />
+        On Time
+      </Badge>
+    );
   };
 
   const exportLogs = () => {
     if (!fridge?.logs) return;
-    
-    const csvHeaders = ['Date', 'Time', 'Temperature (°C)', 'Person', 'Status', 'On Time', 'Late Reason', 'Notes'];
-    const csvRows = [csvHeaders.join(',')];
-    
-    fridge.logs.forEach(log => {
+
+    const csvHeaders = [
+      "Date",
+      "Time",
+      "Temperature (°C)",
+      "Person",
+      "Status",
+      "On Time",
+      "Late Reason",
+      "Notes",
+    ];
+    const csvRows = [csvHeaders.join(",")];
+
+    fridge.logs.forEach((log) => {
       const date = new Date(log.createdAt!);
       const row = [
         date.toLocaleDateString(),
         date.toLocaleTimeString(),
         log.currentTempReading.toString(),
         `"${log.personName}"`,
-        log.isAlert ? 'Out of Range' : 'Normal',
-        log.isOnTime ? 'Yes' : 'No',
-        log.lateReason ? `"${log.lateReason}"` : '',
-        log.correctiveNotes ? `"${log.correctiveNotes}"` : ''
+        log.isAlert ? "Out of Range" : "Normal",
+        log.isOnTime ? "Yes" : "No",
+        log.lateReason ? `"${log.lateReason}"` : "",
+        log.correctiveNotes ? `"${log.correctiveNotes}"` : "",
       ];
-      csvRows.push(row.join(','));
+      csvRows.push(row.join(","));
     });
-    
-    const csvContent = csvRows.join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+
+    const csvContent = csvRows.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `${fridge.name}-logs-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `${fridge.name}-logs-${new Date().toISOString().split("T")[0]}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -115,7 +157,7 @@ export default function FridgeDetail() {
         <header className="bg-card border-b border-border sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 py-4">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => setLocation('/fridges')}>
+              <Button variant="ghost" size="sm" onClick={() => setLocation("/fridges")}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Fridges
               </Button>
@@ -123,7 +165,7 @@ export default function FridgeDetail() {
             </div>
           </div>
         </header>
-        
+
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="animate-pulse space-y-6">
             <Card>
@@ -151,17 +193,19 @@ export default function FridgeDetail() {
         <header className="bg-card border-b border-border sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 py-4">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => setLocation('/fridges')}>
+              <Button variant="ghost" size="sm" onClick={() => setLocation("/fridges")}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Fridges
               </Button>
             </div>
           </div>
         </header>
-        
+
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="text-center">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Fridge not found</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              Fridge not found
+            </h2>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
               The requested fridge could not be found or you don&apos;t have access to it.
             </p>
@@ -174,7 +218,7 @@ export default function FridgeDetail() {
   const sortedLogs = [...fridge.logs].sort((a, b) => {
     const dateA = new Date(a.createdAt!).getTime();
     const dateB = new Date(b.createdAt!).getTime();
-    return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+    return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
   });
 
   return (
@@ -184,14 +228,19 @@ export default function FridgeDetail() {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => setLocation('/fridges')} data-testid="button-back">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocation("/fridges")}
+                data-testid="button-back"
+              >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Fridges
               </Button>
               <div className="flex items-center gap-3">
-                <div 
-                  className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" 
-                  style={{ backgroundColor: fridge.color || '#3b82f6' }}
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm"
+                  style={{ backgroundColor: fridge.color || "#3b82f6" }}
                 >
                   <Refrigerator className="w-4 h-4 text-white" />
                 </div>
@@ -204,7 +253,7 @@ export default function FridgeDetail() {
                 )}
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <Button variant="outline" onClick={exportLogs} data-testid="button-export">
                 <Download className="h-4 w-4 mr-2" />
@@ -223,10 +272,10 @@ export default function FridgeDetail() {
 
       <div className="max-w-7xl mx-auto px-4 py-8" data-testid="fridge-detail-container">
         {/* Fridge Overview */}
-        <Card 
-          className="mb-8" 
-          style={{ 
-            borderLeft: `4px solid ${fridge.color || '#3b82f6'}`
+        <Card
+          className="mb-8"
+          style={{
+            borderLeft: `4px solid ${fridge.color || "#3b82f6"}`,
           }}
         >
           <CardHeader>
@@ -251,46 +300,54 @@ export default function FridgeDetail() {
                 <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Location</h4>
                 <p className="text-lg font-semibold flex items-center gap-1">
                   <MapPin className="h-4 w-4" />
-                  {fridge.location || 'Not specified'}
+                  {fridge.location || "Not specified"}
                 </p>
               </div>
-              
+
               <div>
-                <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Temperature Range</h4>
+                <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Temperature Range
+                </h4>
                 <p className="text-lg font-semibold">
                   {fridge.minTemp}°C to {fridge.maxTemp}°C
                 </p>
               </div>
-              
+
               <div>
-                <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Last Reading</h4>
+                <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Last Reading
+                </h4>
                 <p className="text-lg font-semibold">
-                  {fridge.lastTemperature ? `${fridge.lastTemperature}°C` : 'No readings'}
+                  {fridge.lastTemperature ? `${fridge.lastTemperature}°C` : "No readings"}
                 </p>
               </div>
-              
+
               <div>
                 <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Logs</h4>
                 <p className="text-lg font-semibold">{fridge.logs.length}</p>
               </div>
-              
+
               <div>
-                <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Check Schedule</h4>
+                <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Check Schedule
+                </h4>
                 <p className="text-lg font-semibold flex items-center gap-1">
                   <Clock className="h-4 w-4" />
-                  {timeWindows.length === 0 ? 'No schedule' : 
-                   timeWindows.length === 1 ? (
-                     timeWindows[0]!.checkType === 'daily' ? 'Daily checks' : 
-                     timeWindows[0]!.startTime && timeWindows[0]!.endTime ? 
-                       `Daily ${timeWindows[0]!.startTime}-${timeWindows[0]!.endTime}` : 
-                       'Single check window'
-                   ) :
-                   timeWindows.length === 2 ? 'Twice daily' :
-                   `${timeWindows.length} times daily`}
+                  {timeWindows.length === 0
+                    ? "No schedule"
+                    : timeWindows.length === 1
+                      ? timeWindows[0]!.checkType === "daily"
+                        ? "Daily checks"
+                        : timeWindows[0]!.startTime && timeWindows[0]!.endTime
+                          ? `Daily ${timeWindows[0]!.startTime}-${timeWindows[0]!.endTime}`
+                          : "Single check window"
+                      : timeWindows.length === 2
+                        ? "Twice daily"
+                        : `${timeWindows.length} times daily`}
                 </p>
               </div>
             </div>
-            
+
             {fridge.notes && (
               <div className="mt-6 pt-6 border-t">
                 <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Notes</h4>
@@ -315,16 +372,18 @@ export default function FridgeDetail() {
               </div>
               <Button variant="outline" size="sm" onClick={handleSort} data-testid="button-sort">
                 <Clock className="h-4 w-4 mr-2" />
-                {sortOrder === 'desc' ? 'Newest First' : 'Oldest First'}
+                {sortOrder === "desc" ? "Newest First" : "Oldest First"}
               </Button>
             </div>
           </CardHeader>
-          
+
           <CardContent>
             {fridge.logs.length === 0 ? (
               <div className="text-center py-8">
                 <Thermometer className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No temperature logs</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  No temperature logs
+                </h3>
                 <p className="text-gray-600 dark:text-gray-400">
                   No temperature readings have been recorded for this fridge yet.
                 </p>
@@ -355,34 +414,32 @@ export default function FridgeDetail() {
                             </span>
                           </div>
                         </TableCell>
-                        
+
                         <TableCell>
-                          <span className={`font-medium ${
-                            log.isAlert ? 'text-red-600' : 'text-green-600'
-                          }`}>
+                          <span
+                            className={`font-medium ${
+                              log.isAlert ? "text-red-600" : "text-green-600"
+                            }`}
+                          >
                             {log.currentTempReading}°C
                           </span>
                         </TableCell>
-                        
+
                         <TableCell>
                           <span className="font-medium">{log.personName}</span>
                         </TableCell>
-                        
-                        <TableCell>
-                          {getTemperatureStatus(log, fridge)}
-                        </TableCell>
-                        
+
+                        <TableCell>{getTemperatureStatus(log, fridge)}</TableCell>
+
                         <TableCell>
                           <div className="space-y-1">
                             {getTimingStatus(log)}
                             {log.lateReason && (
-                              <div className="text-xs text-gray-500">
-                                {log.lateReason}
-                              </div>
+                              <div className="text-xs text-gray-500">{log.lateReason}</div>
                             )}
                           </div>
                         </TableCell>
-                        
+
                         <TableCell>
                           <div className="space-y-1">
                             {log.correctiveAction && (
@@ -391,9 +448,7 @@ export default function FridgeDetail() {
                               </div>
                             )}
                             {log.correctiveNotes && (
-                              <div className="text-xs text-gray-500">
-                                {log.correctiveNotes}
-                              </div>
+                              <div className="text-xs text-gray-500">{log.correctiveNotes}</div>
                             )}
                           </div>
                         </TableCell>

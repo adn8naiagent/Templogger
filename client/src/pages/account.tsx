@@ -6,24 +6,31 @@ import { Input } from "@/components/ui/input";
 // import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger 
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { 
-  User, 
-  Download, 
-  Trash2, 
+import {
+  User,
+  Download,
+  Trash2,
   Shield,
   // Crown,
   Star,
@@ -31,11 +38,16 @@ import {
   Lock,
   CreditCard,
   Clock,
-  CheckCircle
+  CheckCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { updateProfileSchema, type UpdateProfileData, resetPasswordSchema, type ResetPasswordData } from "@shared/schema";
+import {
+  updateProfileSchema,
+  type UpdateProfileData,
+  resetPasswordSchema,
+  type ResetPasswordData,
+} from "@shared/schema";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -44,13 +56,16 @@ export default function Account() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   // const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  
+
   // Calculate trial days remaining
-  const trialDaysRemaining = user?.trialEndDate ? 
-    Math.max(0, Math.ceil(
-      (new Date(user.trialEndDate).getTime() - new Date().getTime()) / 
-      (1000 * 60 * 60 * 24)
-    )) : 0;
+  const trialDaysRemaining = user?.trialEndDate
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(user.trialEndDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+        )
+      )
+    : 0;
 
   // Profile form
   const profileForm = useForm<UpdateProfileData>({
@@ -139,17 +154,17 @@ export default function Account() {
     try {
       const response = await fetch("/api/user/export");
       if (!response.ok) throw new Error("Failed to export data");
-      
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = 'my-data.csv';
+      a.download = "my-data.csv";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-      
+
       toast({
         title: "Export successful!",
         description: "Your data has been downloaded.",
@@ -166,9 +181,19 @@ export default function Account() {
   const getSubscriptionBadge = (_status: string) => {
     switch (_status) {
       case "trial":
-        return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Trial</Badge>;
+        return (
+          <Badge variant="secondary">
+            <Clock className="h-3 w-3 mr-1" />
+            Trial
+          </Badge>
+        );
       case "paid":
-        return <Badge className="bg-green-600"><CheckCircle className="h-3 w-3 mr-1" />Paid</Badge>;
+        return (
+          <Badge className="bg-green-600">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Paid
+          </Badge>
+        );
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
@@ -177,7 +202,12 @@ export default function Account() {
   const getRoleBadge = (role: string) => {
     switch (role) {
       case "admin":
-        return <Badge variant="destructive"><Shield className="h-3 w-3 mr-1" />Admin</Badge>;
+        return (
+          <Badge variant="destructive">
+            <Shield className="h-3 w-3 mr-1" />
+            Admin
+          </Badge>
+        );
       case "user":
         return <Badge variant="outline">User</Badge>;
       default:
@@ -212,16 +242,14 @@ export default function Account() {
               <CreditCard className="h-5 w-5" />
               Account Status
             </CardTitle>
-            <CardDescription>
-              Your subscription and billing information
-            </CardDescription>
+            <CardDescription>Your subscription and billing information</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-full">
-                    {user?.subscriptionStatus === 'paid' ? (
+                    {user?.subscriptionStatus === "paid" ? (
                       <CheckCircle className="h-5 w-5 text-green-600" />
                     ) : (
                       <Clock className="h-5 w-5 text-blue-600" />
@@ -229,28 +257,26 @@ export default function Account() {
                   </div>
                   <div>
                     <h3 className="font-medium">
-                      {user?.subscriptionStatus === 'paid' ? 'Paid Subscription' : 'Free Trial'}
+                      {user?.subscriptionStatus === "paid" ? "Paid Subscription" : "Free Trial"}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      {user?.subscriptionStatus === 'paid' ? (
-                        'You have access to all features'
-                      ) : (
-                        `${trialDaysRemaining} days remaining`
-                      )}
+                      {user?.subscriptionStatus === "paid"
+                        ? "You have access to all features"
+                        : `${trialDaysRemaining} days remaining`}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="font-semibold">
-                    {user?.subscriptionStatus === 'paid' ? '$10/month' : 'Free'}
+                    {user?.subscriptionStatus === "paid" ? "$10/month" : "Free"}
                   </p>
-                  {user?.subscriptionStatus === 'trial' && (
+                  {user?.subscriptionStatus === "trial" && (
                     <p className="text-xs text-muted-foreground">Then $10/month</p>
                   )}
                 </div>
               </div>
-              
-              {user?.subscriptionStatus === 'trial' && (
+
+              {user?.subscriptionStatus === "trial" && (
                 <div className="text-center pt-2">
                   <Link to="/subscribe">
                     <Button className="w-full" data-testid="button-upgrade-now">
@@ -269,95 +295,100 @@ export default function Account() {
           <Card data-testid="profile-card">
             <CardHeader>
               <CardTitle>Profile Information</CardTitle>
-              <CardDescription>
-                Update your personal information
-              </CardDescription>
+              <CardDescription>Update your personal information</CardDescription>
             </CardHeader>
-          <CardContent>
-            <div className="space-y-4 mb-6">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                  {user?.profileImageUrl ? (
-                    <img 
-                      src={user.profileImageUrl} 
-                      alt="Profile" 
-                      className="w-16 h-16 rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-2xl font-bold text-blue-600">
-                      {user?.firstName?.charAt(0) || 'U'}
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <p className="font-semibold">{user?.firstName} {user?.lastName}</p>
-                  <p className="text-sm text-muted-foreground">{user?.email}</p>
-                  <div className="flex gap-2 mt-1">
-                    {user?.subscriptionStatus && getSubscriptionBadge(user.subscriptionStatus)}
-                    {user?.role && getRoleBadge(user.role)}
+            <CardContent>
+              <div className="space-y-4 mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                    {user?.profileImageUrl ? (
+                      <img
+                        src={user.profileImageUrl}
+                        alt="Profile"
+                        className="w-16 h-16 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-2xl font-bold text-blue-600">
+                        {user?.firstName?.charAt(0) || "U"}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-semibold">
+                      {user?.firstName} {user?.lastName}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{user?.email}</p>
+                    <div className="flex gap-2 mt-1">
+                      {user?.subscriptionStatus && getSubscriptionBadge(user.subscriptionStatus)}
+                      {user?.role && getRoleBadge(user.role)}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <Form {...profileForm}>
-              <form onSubmit={profileForm.handleSubmit((_data) => updateProfileMutation.mutate(_data))} className="space-y-4">
-                <FormField
-                  control={profileForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email Address</FormLabel>
-                      <FormControl>
-                        <Input type="email" {...field} data-testid="input-email" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+              <Form {...profileForm}>
+                <form
+                  onSubmit={profileForm.handleSubmit((_data) =>
+                    updateProfileMutation.mutate(_data)
                   )}
-                />
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <FormField
-                    control={profileForm.control}
-                    name="firstName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>First Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} data-testid="input-first-name" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={profileForm.control}
-                    name="lastName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Last Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} data-testid="input-last-name" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <Button 
-                  type="submit" 
-                  className="w-full" 
-                  disabled={updateProfileMutation.isPending}
-                  data-testid="button-update-profile"
+                  className="space-y-4"
                 >
-                  {updateProfileMutation.isPending ? "Updating..." : "Update Profile"}
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+                  <FormField
+                    control={profileForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email Address</FormLabel>
+                        <FormControl>
+                          <Input type="email" {...field} data-testid="input-email" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField
+                      control={profileForm.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>First Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} data-testid="input-first-name" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={profileForm.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Last Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} data-testid="input-last-name" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={updateProfileMutation.isPending}
+                    data-testid="button-update-profile"
+                  >
+                    {updateProfileMutation.isPending ? "Updating..." : "Update Profile"}
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
 
           {/* Change Password */}
           <Card data-testid="password-card">
@@ -366,13 +397,16 @@ export default function Account() {
                 <Lock className="h-5 w-5" />
                 Change Password
               </CardTitle>
-              <CardDescription>
-                Update your account password
-              </CardDescription>
+              <CardDescription>Update your account password</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...passwordForm}>
-                <form onSubmit={passwordForm.handleSubmit((_data) => resetPasswordMutation.mutate(_data))} className="space-y-4">
+                <form
+                  onSubmit={passwordForm.handleSubmit((_data) =>
+                    resetPasswordMutation.mutate(_data)
+                  )}
+                  className="space-y-4"
+                >
                   <FormField
                     control={passwordForm.control}
                     name="newPassword"
@@ -380,11 +414,11 @@ export default function Account() {
                       <FormItem>
                         <FormLabel>New Password</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="password" 
+                          <Input
+                            type="password"
                             placeholder="Enter new password"
-                            {...field} 
-                            data-testid="input-new-password" 
+                            {...field}
+                            data-testid="input-new-password"
                           />
                         </FormControl>
                         <FormMessage />
@@ -399,11 +433,11 @@ export default function Account() {
                       <FormItem>
                         <FormLabel>Confirm Password</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="password" 
+                          <Input
+                            type="password"
                             placeholder="Confirm new password"
-                            {...field} 
-                            data-testid="input-confirm-password" 
+                            {...field}
+                            data-testid="input-confirm-password"
                           />
                         </FormControl>
                         <FormMessage />
@@ -411,9 +445,9 @@ export default function Account() {
                     )}
                   />
 
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
+                  <Button
+                    type="submit"
+                    className="w-full"
                     disabled={resetPasswordMutation.isPending}
                     data-testid="button-change-password"
                   >
@@ -429,9 +463,7 @@ export default function Account() {
         <Card data-testid="actions-card">
           <CardHeader>
             <CardTitle>Account Actions</CardTitle>
-            <CardDescription>
-              Download your data or manage your account
-            </CardDescription>
+            <CardDescription>Download your data or manage your account</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Export Data */}
@@ -455,9 +487,17 @@ export default function Account() {
             <div className="p-4 border rounded-lg">
               <h3 className="font-medium mb-2">Account Details</h3>
               <div className="text-sm space-y-1">
-                <p><span className="text-muted-foreground">Member since:</span> {user?.createdAt && new Date(user.createdAt).toLocaleDateString()}</p>
-                <p><span className="text-muted-foreground">Last updated:</span> {user?.updatedAt && new Date(user.updatedAt).toLocaleDateString()}</p>
-                <p><span className="text-muted-foreground">User ID:</span> {user?._id}</p>
+                <p>
+                  <span className="text-muted-foreground">Member since:</span>{" "}
+                  {user?.createdAt && new Date(user.createdAt).toLocaleDateString()}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">Last updated:</span>{" "}
+                  {user?.updatedAt && new Date(user.updatedAt).toLocaleDateString()}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">User ID:</span> {user?._id}
+                </p>
               </div>
             </div>
 
@@ -480,14 +520,14 @@ export default function Account() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete your
-                          account and remove all your data from our servers including:
-                          <br/><br/>
+                          This action cannot be undone. This will permanently delete your account
+                          and remove all your data from our servers including:
+                          <br />
+                          <br />
                           • All your fridges and temperature logs
-                          <br/>
+                          <br />
                           • Your profile information
-                          <br/>
-                          • Your subscription and billing history
+                          <br />• Your subscription and billing history
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -497,7 +537,9 @@ export default function Account() {
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           data-testid="button-confirm-delete"
                         >
-                          {deleteAccountMutation.isPending ? "Deleting..." : "Yes, delete my account"}
+                          {deleteAccountMutation.isPending
+                            ? "Deleting..."
+                            : "Yes, delete my account"}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>

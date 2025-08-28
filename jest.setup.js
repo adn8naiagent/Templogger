@@ -1,9 +1,9 @@
-require('@testing-library/jest-dom');
+require("@testing-library/jest-dom");
 
 // Mock window.matchMedia for responsive hooks
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(window, "matchMedia", {
   writable: true,
-  value: jest.fn().mockImplementation(query => ({
+  value: jest.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -36,7 +36,7 @@ Element.prototype.scrollIntoView = jest.fn();
 Object.assign(navigator, {
   clipboard: {
     writeText: jest.fn().mockImplementation(() => Promise.resolve()),
-    readText: jest.fn().mockImplementation(() => Promise.resolve('')),
+    readText: jest.fn().mockImplementation(() => Promise.resolve("")),
   },
 });
 
@@ -49,9 +49,9 @@ const originalError = console.error;
 beforeAll(() => {
   console.error = (...args) => {
     if (
-      typeof args[0] === 'string' &&
-      (args[0].includes('Warning: ReactDOM.render is deprecated') ||
-       args[0].includes('Warning: React.createFactory is deprecated'))
+      typeof args[0] === "string" &&
+      (args[0].includes("Warning: ReactDOM.render is deprecated") ||
+        args[0].includes("Warning: React.createFactory is deprecated"))
     ) {
       return;
     }

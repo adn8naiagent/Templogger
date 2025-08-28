@@ -16,21 +16,21 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 // Authentication middleware - updated for token-based auth
 export function requireAuth(req: Request, res: Response, next: NextFunction): Response | void {
   const authHeader = req.headers.authorization;
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
   const token = authHeader.substring(7);
   let userId: string;
-  
+
   try {
     // Decode the token (simple base64 decode for now)
-    userId = Buffer.from(token, 'base64').toString();
+    userId = Buffer.from(token, "base64").toString();
   } catch {
     return res.status(401).json({ message: "Invalid token" });
   }
-  
+
   // Add userId to request object for downstream use
   req.userId = userId;
   next();
@@ -38,23 +38,27 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): Re
 
 // Admin middleware - updated for token-based auth
 // eslint-disable-next-line max-len
-export async function requireAdmin(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+export async function requireAdmin(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> {
   const authHeader = req.headers.authorization;
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Authentication required" });
   }
 
   const token = authHeader.substring(7);
   let userId: string;
-  
+
   try {
     // Decode the token
-    userId = Buffer.from(token, 'base64').toString();
+    userId = Buffer.from(token, "base64").toString();
   } catch {
     return res.status(401).json({ error: "Invalid token" });
   }
-  
+
   try {
     const user = await storage.getUser(userId);
     if (!user || user.role !== "admin") {
@@ -73,9 +77,9 @@ export async function signUp(req: Request, res: Response): Promise<Response | vo
   try {
     const result = signUpSchema.safeParse(req.body);
     if (!result.success) {
-      return res.status(400).json({ 
-        error: "Validation failed", 
-        details: result.error.errors 
+      return res.status(400).json({
+        error: "Validation failed",
+        details: result.error.errors,
       });
     }
 
@@ -109,15 +113,15 @@ export async function signUp(req: Request, res: Response): Promise<Response | vo
     }
 
     // Create auth token for new user
-    const authToken = Buffer.from(user._id).toString('base64');
-    
+    const authToken = Buffer.from(user._id).toString("base64");
+
     console.log("signUp - new user created:", user.email);
-    
+
     // Return user without password and include the auth token
     const { password: _, ...userWithoutPassword } = user;
-    res.status(201).json({ 
-      ...userWithoutPassword, 
-      authToken 
+    res.status(201).json({
+      ...userWithoutPassword,
+      authToken,
     });
   } catch (error: Error | unknown) {
     console.error("Sign up error:", error);
@@ -130,9 +134,9 @@ export async function signIn(req: Request, res: Response): Promise<Response | vo
   try {
     const result = signInSchema.safeParse(req.body);
     if (!result.success) {
-      return res.status(400).json({ 
-        error: "Validation failed", 
-        details: result.error.errors 
+      return res.status(400).json({
+        error: "Validation failed",
+        details: result.error.errors,
       });
     }
 
@@ -151,15 +155,15 @@ export async function signIn(req: Request, res: Response): Promise<Response | vo
     }
 
     // Create a simple token for the user (using userId as token for simplicity)
-    const authToken = Buffer.from(user._id).toString('base64');
-    
+    const authToken = Buffer.from(user._id).toString("base64");
+
     console.log("signIn - user authenticated:", user.email);
-    
+
     // Return user without password and include the auth token
     const { password: _, ...userWithoutPassword } = user;
-    res.json({ 
-      ...userWithoutPassword, 
-      authToken 
+    res.json({
+      ...userWithoutPassword,
+      authToken,
     });
   } catch (error: Error | unknown) {
     console.error("Sign in error:", error);
@@ -180,17 +184,17 @@ export async function getCurrentUser(req: Request, res: Response): Promise<Respo
   try {
     // Check for auth token in Authorization header
     const authHeader = req.headers.authorization;
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
     let userId: string;
-    
+
     try {
       // Decode the token (simple base64 decode for now)
-      userId = Buffer.from(token, 'base64').toString();
+      userId = Buffer.from(token, "base64").toString();
     } catch {
       return res.status(401).json({ message: "Invalid token" });
     }

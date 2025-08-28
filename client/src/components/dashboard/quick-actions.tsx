@@ -21,7 +21,9 @@ function ActionButton({ icon, title, description, onClick, actionKey }: ActionBu
     >
       <div className="flex items-center space-x-3 mb-2">
         {icon}
-        <span className="font-medium" data-testid={`title-${actionKey}`}>{title}</span>
+        <span className="font-medium" data-testid={`title-${actionKey}`}>
+          {title}
+        </span>
       </div>
       <p className="text-sm text-muted-foreground" data-testid={`description-${actionKey}`}>
         {description}

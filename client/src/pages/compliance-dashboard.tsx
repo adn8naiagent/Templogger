@@ -7,14 +7,14 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { ChecklistWithScheduleAndItems } from "@shared/checklist-types";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { 
+import {
   // Calendar,
   Clock,
   AlertTriangle,
@@ -33,7 +33,7 @@ import {
   Target,
   Users,
   Building2,
-  ClipboardCheck
+  ClipboardCheck,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -57,12 +57,12 @@ interface ComplianceOverview {
     fridgeName: string;
     complianceScore: number;
     lastReading: string;
-    status: 'compliant' | 'warning' | 'critical';
+    status: "compliant" | "warning" | "critical";
     missedReadings: number;
   }[];
   trends: {
-    week: { date: string; compliance: number; }[];
-    month: { date: string; compliance: number; }[];
+    week: { date: string; compliance: number }[];
+    month: { date: string; compliance: number }[];
   };
 }
 
@@ -78,11 +78,15 @@ interface DueChecklist {
 export default function ComplianceDashboard() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [_selectedTimeframe, _setSelectedTimeframe] = useState<'today' | 'week' | 'month'>('today');
+  const [_selectedTimeframe, _setSelectedTimeframe] = useState<"today" | "week" | "month">("today");
   const [autoRefresh, setAutoRefresh] = useState(true);
 
   // Fetch compliance overview
-  const { data: overview, isLoading: overviewLoading, refetch: refetchOverview } = useQuery({
+  const {
+    data: overview,
+    isLoading: overviewLoading,
+    refetch: refetchOverview,
+  } = useQuery({
     queryKey: ["/api/compliance/overview"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/compliance/overview");
@@ -136,20 +140,55 @@ export default function ComplianceDashboard() {
 
   const getStatusBadge = (_status: string) => {
     switch (_status) {
-      case 'compliant':
-        return <Badge className="bg-green-600"><CheckCircle2 className="h-3 w-3 mr-1" />Compliant</Badge>;
-      case 'warning':
-        return <Badge variant="secondary"><AlertTriangle className="h-3 w-3 mr-1" />Warning</Badge>;
-      case 'critical':
-        return <Badge variant="destructive"><AlertCircle className="h-3 w-3 mr-1" />Critical</Badge>;
-      case 'alert':
-        return <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />Alert</Badge>;
-      case 'late':
-        return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Late</Badge>;
-      case 'missing':
-        return <Badge variant="outline"><AlertCircle className="h-3 w-3 mr-1" />Missing</Badge>;
-      case 'inactive':
-        return <Badge variant="secondary" className="bg-gray-500"><Building2 className="h-3 w-3 mr-1" />Inactive</Badge>;
+      case "compliant":
+        return (
+          <Badge className="bg-green-600">
+            <CheckCircle2 className="h-3 w-3 mr-1" />
+            Compliant
+          </Badge>
+        );
+      case "warning":
+        return (
+          <Badge variant="secondary">
+            <AlertTriangle className="h-3 w-3 mr-1" />
+            Warning
+          </Badge>
+        );
+      case "critical":
+        return (
+          <Badge variant="destructive">
+            <AlertCircle className="h-3 w-3 mr-1" />
+            Critical
+          </Badge>
+        );
+      case "alert":
+        return (
+          <Badge variant="destructive">
+            <AlertTriangle className="h-3 w-3 mr-1" />
+            Alert
+          </Badge>
+        );
+      case "late":
+        return (
+          <Badge variant="secondary">
+            <Clock className="h-3 w-3 mr-1" />
+            Late
+          </Badge>
+        );
+      case "missing":
+        return (
+          <Badge variant="outline">
+            <AlertCircle className="h-3 w-3 mr-1" />
+            Missing
+          </Badge>
+        );
+      case "inactive":
+        return (
+          <Badge variant="secondary" className="bg-gray-500">
+            <Building2 className="h-3 w-3 mr-1" />
+            Inactive
+          </Badge>
+        );
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
@@ -160,14 +199,14 @@ export default function ComplianceDashboard() {
       const response = await apiRequest("GET", "/api/export/compliance-report");
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `compliance-report-${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `compliance-report-${new Date().toISOString().split("T")[0]}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-      
+
       toast({
         title: "Export successful!",
         description: "Compliance report has been downloaded.",
@@ -193,9 +232,7 @@ export default function ComplianceDashboard() {
     );
   }
 
-  const overdueChecklists = dueChecklists.filter(
-    (checklist: ChecklistWithScheduleAndItems & { overdue?: boolean }) => checklist.overdue
-  );
+  const overdueChecklists = dueChecklists.filter((checklist) => checklist.overdue);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
@@ -210,15 +247,17 @@ export default function ComplianceDashboard() {
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-slate-900 dark:text-white">FridgeSafe</h1>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 hidden sm:block">Compliance Dashboard</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 hidden sm:block">
+                    Compliance Dashboard
+                  </p>
                 </div>
               </Link>
             </div>
-            
+
             <div className="flex flex-wrap items-center gap-3">
-              <Button 
-                variant="default" 
-                size="default" 
+              <Button
+                variant="default"
+                size="default"
                 asChild
                 className="bg-blue-600 hover:bg-blue-700 text-white border-0"
                 data-testid="button-view-fridges"
@@ -236,14 +275,14 @@ export default function ComplianceDashboard() {
                 className="border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
                 data-testid="button-auto-refresh"
               >
-                <RefreshCw className={`h-4 w-4 mr-2 ${autoRefresh ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">Auto Refresh</span> {autoRefresh ? 'On' : 'Off'}
+                <RefreshCw className={`h-4 w-4 mr-2 ${autoRefresh ? "animate-spin" : ""}`} />
+                <span className="hidden sm:inline">Auto Refresh</span> {autoRefresh ? "On" : "Off"}
               </Button>
 
-              <Button 
-                variant="outline" 
-                size="default" 
-                onClick={exportComplianceReport} 
+              <Button
+                variant="outline"
+                size="default"
+                onClick={exportComplianceReport}
                 className="border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
                 data-testid="button-export"
               >
@@ -253,18 +292,24 @@ export default function ComplianceDashboard() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="default" className="border border-slate-300 dark:border-slate-600">
+                  <Button
+                    variant="ghost"
+                    size="default"
+                    className="border border-slate-300 dark:border-slate-600"
+                  >
                     <Users className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">{user?.firstName || user?.email || 'User'}</span>
+                    <span className="hidden sm:inline">
+                      {user?.firstName || user?.email || "User"}
+                    </span>
                     <span className="sm:hidden">Menu</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <div className="px-2 py-1.5 text-sm font-medium">
                     <div className="flex items-center gap-2">
-                      {user?.role === 'admin' && <Shield className="h-3 w-3 text-yellow-500" />}
-                      {user?.role === 'manager' && <Shield className="h-3 w-3 text-blue-500" />}
-                      {user?.role === 'staff' && <Users className="h-3 w-3 text-green-500" />}
+                      {user?.role === "admin" && <Shield className="h-3 w-3 text-yellow-500" />}
+                      {user?.role === "manager" && <Shield className="h-3 w-3 text-blue-500" />}
+                      {user?.role === "staff" && <Users className="h-3 w-3 text-green-500" />}
                       <span className="capitalize">{(user as { role?: string })?.role}</span>
                     </div>
                   </div>
@@ -282,7 +327,7 @@ export default function ComplianceDashboard() {
                     </DropdownMenuItem>
                   </Link>
                   <DropdownMenuSeparator />
-                  {user?.role === 'admin' && (
+                  {user?.role === "admin" && (
                     <Link to="/admin">
                       <DropdownMenuItem>
                         <Shield className="h-4 w-4 mr-2" />
@@ -290,7 +335,7 @@ export default function ComplianceDashboard() {
                       </DropdownMenuItem>
                     </Link>
                   )}
-                  <DropdownMenuItem onClick={() => window.location.href = "/api/logout"}>
+                  <DropdownMenuItem onClick={() => (window.location.href = "/api/logout")}>
                     <Download className="h-4 w-4 mr-2" />
                     Sign Out
                   </DropdownMenuItem>
@@ -301,26 +346,43 @@ export default function ComplianceDashboard() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8" data-testid="compliance-dashboard">
+      <div
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8"
+        data-testid="compliance-dashboard"
+      >
         {/* Critical Alerts */}
         {(unresolvedCount.count > 0 || overdueChecklists.length > 0) && (
           <div className="space-y-4">
             {unresolvedCount.count > 0 && (
-              <Alert variant="destructive" className="border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800 shadow-sm" data-testid="unresolved-events-alert">
+              <Alert
+                variant="destructive"
+                className="border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800 shadow-sm"
+                data-testid="unresolved-events-alert"
+              >
                 <AlertTriangle className="h-5 w-5" />
                 <AlertDescription className="text-red-800 dark:text-red-200">
                   <div className="font-semibold">⚠️ Critical Temperature Events</div>
-                  <p className="mt-1"><span className="font-medium">{unresolvedCount.count}</span> unresolved temperature events require immediate attention.</p>
+                  <p className="mt-1">
+                    <span className="font-medium">{unresolvedCount.count}</span> unresolved
+                    temperature events require immediate attention.
+                  </p>
                 </AlertDescription>
               </Alert>
             )}
-            
+
             {overdueChecklists.length > 0 && (
-              <Alert variant="destructive" className="border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800 shadow-sm" data-testid="overdue-checklists-alert">
+              <Alert
+                variant="destructive"
+                className="border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800 shadow-sm"
+                data-testid="overdue-checklists-alert"
+              >
                 <ClipboardCheck className="h-5 w-5" />
                 <AlertDescription className="text-red-800 dark:text-red-200">
                   <div className="font-semibold">📋 Overdue Checklists</div>
-                  <p className="mt-1"><span className="font-medium">{overdueChecklists.length}</span> checklist{overdueChecklists.length > 1 ? 's' : ''} need to be completed.</p>
+                  <p className="mt-1">
+                    <span className="font-medium">{overdueChecklists.length}</span> checklist
+                    {overdueChecklists.length > 1 ? "s" : ""} need to be completed.
+                  </p>
                 </AlertDescription>
               </Alert>
             )}
@@ -329,9 +391,14 @@ export default function ComplianceDashboard() {
 
         {/* Key Metrics Overview */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm" data-testid="metric-overall-compliance">
+          <Card
+            className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm"
+            data-testid="metric-overall-compliance"
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-200">Overall Compliance</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                Overall Compliance
+              </CardTitle>
               <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
                 <Target className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               </div>
@@ -350,45 +417,72 @@ export default function ComplianceDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm" data-testid="metric-active-fridges">
+          <Card
+            className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm"
+            data-testid="metric-active-fridges"
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-200">Monitored Fridges</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                Monitored Fridges
+              </CardTitle>
               <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
                 <Building2 className="h-4 w-4 text-green-600 dark:text-green-400" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{overview?.totalFridges || 0}</div>
+              <div className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+                {overview?.totalFridges || 0}
+              </div>
               <p className="text-sm text-slate-600 dark:text-slate-300">
-                <span className="font-medium text-green-600 dark:text-green-400">{overview?.compliantFridges || 0}</span> compliant
+                <span className="font-medium text-green-600 dark:text-green-400">
+                  {overview?.compliantFridges || 0}
+                </span>{" "}
+                compliant
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm" data-testid="metric-temperature-alerts">
+          <Card
+            className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm"
+            data-testid="metric-temperature-alerts"
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-200">Temperature Alerts</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                Temperature Alerts
+              </CardTitle>
               <div className="p-2 bg-red-100 dark:bg-red-900/20 rounded-lg">
                 <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-red-600 dark:text-red-400 mb-2">{overview?.outOfRangeEvents || 0}</div>
+              <div className="text-3xl font-bold text-red-600 dark:text-red-400 mb-2">
+                {overview?.outOfRangeEvents || 0}
+              </div>
               <p className="text-sm text-slate-600 dark:text-slate-300">
-                <span className="font-medium text-red-600 dark:text-red-400">{unresolvedCount.count}</span> unresolved
+                <span className="font-medium text-red-600 dark:text-red-400">
+                  {unresolvedCount.count}
+                </span>{" "}
+                unresolved
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm" data-testid="metric-daily-activity">
+          <Card
+            className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm"
+            data-testid="metric-daily-activity"
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-200">Today&apos;s Activity</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                Today&apos;s Activity
+              </CardTitle>
               <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
                 <Activity className="h-4 w-4 text-purple-600 dark:text-purple-400" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{overview?.recentActivity?.temperatureLogsToday || 0}</div>
+              <div className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+                {overview?.recentActivity?.temperatureLogsToday || 0}
+              </div>
               <p className="text-sm text-slate-600 dark:text-slate-300">
                 temperature readings today
               </p>
@@ -418,14 +512,15 @@ export default function ComplianceDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {overview?.complianceByFridge?.map((
-                    fridge: { name: string; compliance: number; _id: string }
-                  ) => (
-                    <div key={fridge.fridgeId} className="flex items-center justify-between p-4 border rounded-lg">
+                  {overview?.complianceByFridge?.map((fridge) => (
+                    <div
+                      key={fridge._fridgeId}
+                      className="flex items-center justify-between p-4 border rounded-lg"
+                    >
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <h4 className="font-medium">{fridge.fridgeName}</h4>
-                          {getStatusBadge(fridge._status)}
+                          {getStatusBadge(fridge.status)}
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <span>Compliance: {fridge.complianceScore}%</span>
@@ -440,7 +535,7 @@ export default function ComplianceDashboard() {
                       <div className="flex items-center gap-2">
                         <Progress value={fridge.complianceScore} className="w-24" />
                         <Button variant="outline" size="sm" asChild>
-                          <Link to={`/fridge/${fridge.fridgeId}`}>
+                          <Link to={`/fridge/${fridge._fridgeId}`}>
                             <Eye className="h-4 w-4" />
                           </Link>
                         </Button>
@@ -464,25 +559,19 @@ export default function ComplianceDashboard() {
                   <ClipboardCheck className="h-5 w-5" />
                   Due Checklists
                 </CardTitle>
-                <CardDescription>
-                  Scheduled maintenance and inspection checklists
-                </CardDescription>
+                <CardDescription>Scheduled maintenance and inspection checklists</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {dueChecklists.map((
-                    checklist: ChecklistWithScheduleAndItems & {
-                      overdue?: boolean;
-                      dueDate?: string;
-                    }
-                  ) => (
-                    <div key={checklist.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  {dueChecklists.map((checklist) => (
+                    <div
+                      key={checklist._id}
+                      className="flex items-center justify-between p-4 border rounded-lg"
+                    >
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <h4 className="font-medium">{checklist.title}</h4>
-                          {checklist.overdue && (
-                            <Badge variant="destructive">Overdue</Badge>
-                          )}
+                          {checklist.overdue && <Badge variant="destructive">Overdue</Badge>}
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <span>Frequency: {checklist.frequency}</span>
@@ -491,9 +580,7 @@ export default function ComplianceDashboard() {
                         </div>
                       </div>
                       <Button variant="outline" size="sm" asChild>
-                        <Link to={`/checklist/${checklist.id}`}>
-                          Complete
-                        </Link>
+                        <Link to={`/checklist/${checklist._id}`}>Complete</Link>
                       </Button>
                     </div>
                   )) || (
@@ -527,7 +614,7 @@ export default function ComplianceDashboard() {
                     </div>
                     <p className="text-sm text-muted-foreground">This week</p>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <h4 className="font-medium">Late Entries</h4>
                     <div className="text-2xl font-bold text-yellow-600">
@@ -535,7 +622,7 @@ export default function ComplianceDashboard() {
                     </div>
                     <p className="text-sm text-muted-foreground">Today</p>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <h4 className="font-medium">Checklists Completed</h4>
                     <div className="text-2xl font-bold text-green-600">

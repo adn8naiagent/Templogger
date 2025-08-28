@@ -30,7 +30,10 @@ export default function SubscribeSuccess() {
   }, [countdown]);
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4" data-testid="subscribe-success-page">
+    <div
+      className="min-h-screen bg-background flex items-center justify-center p-4"
+      data-testid="subscribe-success-page"
+    >
       <Card className="w-full max-w-md text-center">
         <CardHeader>
           <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mb-4">
@@ -43,9 +46,7 @@ export default function SubscribeSuccess() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <p className="text-lg font-semibold text-green-600 mb-2">
-              Payment Successful!
-            </p>
+            <p className="text-lg font-semibold text-green-600 mb-2">Payment Successful!</p>
             <p className="text-muted-foreground">
               Your subscription has been activated. You now have access to all Pro features.
             </p>
@@ -68,7 +69,7 @@ export default function SubscribeSuccess() {
                 Go to Dashboard
               </Button>
             </Link>
-            
+
             <Link to="/account">
               <Button variant="outline" className="w-full" data-testid="button-view-account">
                 View Account Details
@@ -76,7 +77,7 @@ export default function SubscribeSuccess() {
             </Link>
           </div>
 
-          {user?.subscriptionStatus !== 'paid' && (
+          {user?.subscriptionStatus !== "paid" && (
             <p className="text-xs text-muted-foreground">
               Updating your account... {countdown > 0 && `(${countdown}s)`}
             </p>

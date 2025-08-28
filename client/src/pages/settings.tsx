@@ -3,13 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { 
-  Settings as SettingsIcon, 
-  Moon, 
-  Sun,
-  ArrowLeft,
-  LogOut
-} from "lucide-react";
+import { Settings as SettingsIcon, Moon, Sun, ArrowLeft, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "wouter";
@@ -43,12 +37,12 @@ export default function Settings() {
 
   const handleDarkModeToggle = (enabled: boolean) => {
     updateSettingsMutation.mutate({ darkMode: enabled });
-    
+
     // Immediately apply the theme change
     if (enabled) {
-      document.documentElement.classList.add('dark');
+      document.documentElement.classList.add("dark");
     } else {
-      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.remove("dark");
     }
   };
 
@@ -80,9 +74,7 @@ export default function Settings() {
         <Card data-testid="appearance-card">
           <CardHeader>
             <CardTitle>Appearance</CardTitle>
-            <CardDescription>
-              Customize how the application looks and feels
-            </CardDescription>
+            <CardDescription>Customize how the application looks and feels</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Dark Mode Toggle */}
@@ -111,9 +103,7 @@ export default function Settings() {
         <Card data-testid="account-card">
           <CardHeader>
             <CardTitle>Account</CardTitle>
-            <CardDescription>
-              Manage your account and preferences
-            </CardDescription>
+            <CardDescription>Manage your account and preferences</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Current Plan */}
@@ -122,7 +112,7 @@ export default function Settings() {
                 <div>
                   <h3 className="font-medium">Current Plan</h3>
                   <p className="text-sm text-muted-foreground capitalize">
-                    {user?.subscriptionStatus || 'free'} tier
+                    {user?.subscriptionStatus || "free"} tier
                   </p>
                 </div>
                 <Button variant="outline" size="sm">
@@ -134,14 +124,22 @@ export default function Settings() {
             {/* Quick Actions */}
             <div className="space-y-3">
               <Link to="/account">
-                <Button variant="outline" className="w-full justify-start" data-testid="button-account-info">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  data-testid="button-account-info"
+                >
                   Account Information
                 </Button>
               </Link>
-              
-              {user?.role === 'admin' && (
+
+              {user?.role === "admin" && (
                 <Link to="/admin">
-                  <Button variant="outline" className="w-full justify-start" data-testid="button-admin-dashboard">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    data-testid="button-admin-dashboard"
+                  >
                     Admin Dashboard
                   </Button>
                 </Link>
@@ -154,13 +152,11 @@ export default function Settings() {
         <Card>
           <CardHeader>
             <CardTitle>Session</CardTitle>
-            <CardDescription>
-              Manage your current session
-            </CardDescription>
+            <CardDescription>Manage your current session</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleLogout}
               className="w-full"
               data-testid="button-logout"

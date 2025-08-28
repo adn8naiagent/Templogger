@@ -10,13 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Form, 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import {
   ArrowLeft,
@@ -26,7 +26,7 @@ import {
   FileText,
   // CheckSquare,
   Save,
-  X
+  X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -73,14 +73,18 @@ export default function CreateAuditTemplate() {
               text: "",
               isRequired: true,
               note: "",
-            }
+            },
           ],
-        }
+        },
       ],
     },
   });
 
-  const { fields: sectionFields, append: appendSection, remove: removeSection } = useFieldArray({
+  const {
+    fields: sectionFields,
+    append: appendSection,
+    remove: removeSection,
+  } = useFieldArray({
     control: form.control,
     name: "sections",
   });
@@ -105,7 +109,7 @@ export default function CreateAuditTemplate() {
         })),
       };
 
-      const response = await apiRequest('POST', '/api/audit-templates', _templateData);
+      const response = await apiRequest("POST", "/api/audit-templates", _templateData);
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to create template: ${response.status} - ${errorText}`);
@@ -113,7 +117,7 @@ export default function CreateAuditTemplate() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['audit-templates'] });
+      queryClient.invalidateQueries({ queryKey: ["audit-templates"] });
       toast({
         title: "Success",
         description: "Template created successfully",
@@ -145,7 +149,7 @@ export default function CreateAuditTemplate() {
     const currentItems = form.getValues(`sections.${sectionIndex}.items`);
     form.setValue(`sections.${sectionIndex}.items`, [
       ...currentItems,
-      { text: "", isRequired: true, note: "" }
+      { text: "", isRequired: true, note: "" },
     ]);
   };
 
@@ -160,7 +164,7 @@ export default function CreateAuditTemplate() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       {/* Header */}
       <div className="border-b">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -176,7 +180,9 @@ export default function CreateAuditTemplate() {
                 <FileText className="w-8 h-8 text-primary" />
                 <div>
                   <h1 className="text-2xl font-bold text-foreground">Create Audit Template</h1>
-                  <p className="text-muted-foreground">Create a custom self-audit checklist template</p>
+                  <p className="text-muted-foreground">
+                    Create a custom self-audit checklist template
+                  </p>
                 </div>
               </div>
             </div>
@@ -191,9 +197,7 @@ export default function CreateAuditTemplate() {
             <Card>
               <CardHeader>
                 <CardTitle>Template Details</CardTitle>
-                <CardDescription>
-                  Basic information about your audit template
-                </CardDescription>
+                <CardDescription>Basic information about your audit template</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
@@ -209,7 +213,7 @@ export default function CreateAuditTemplate() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="description"
@@ -217,11 +221,7 @@ export default function CreateAuditTemplate() {
                     <FormItem>
                       <FormLabel>Description (Optional)</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="Enter template description..." 
-                          rows={3} 
-                          {...field} 
-                        />
+                        <Textarea placeholder="Enter template description..." rows={3} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -244,9 +244,7 @@ export default function CreateAuditTemplate() {
                 <Card key={section.id}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">
-                        Section {sectionIndex + 1}
-                      </CardTitle>
+                      <CardTitle className="text-lg">Section {sectionIndex + 1}</CardTitle>
                       {sectionFields.length > 1 && (
                         <Button
                           type="button"
@@ -283,10 +281,10 @@ export default function CreateAuditTemplate() {
                         <FormItem>
                           <FormLabel>Section Description (Optional)</FormLabel>
                           <FormControl>
-                            <Textarea 
-                              placeholder="Enter section description..." 
-                              rows={2} 
-                              {...field} 
+                            <Textarea
+                              placeholder="Enter section description..."
+                              rows={2}
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
@@ -335,10 +333,10 @@ export default function CreateAuditTemplate() {
                                 <FormItem>
                                   <FormLabel>Item Text</FormLabel>
                                   <FormControl>
-                                    <Textarea 
-                                      placeholder="Enter audit point..." 
-                                      rows={2} 
-                                      {...field} 
+                                    <Textarea
+                                      placeholder="Enter audit point..."
+                                      rows={2}
+                                      {...field}
                                     />
                                   </FormControl>
                                   <FormMessage />
@@ -373,9 +371,9 @@ export default function CreateAuditTemplate() {
                                 <FormItem>
                                   <FormLabel>Note (Optional)</FormLabel>
                                   <FormControl>
-                                    <Input 
-                                      placeholder="Add any notes or clarifications..." 
-                                      {...field} 
+                                    <Input
+                                      placeholder="Add any notes or clarifications..."
+                                      {...field}
                                     />
                                   </FormControl>
                                   <FormMessage />
@@ -396,8 +394,8 @@ export default function CreateAuditTemplate() {
               <Button type="button" variant="outline" asChild>
                 <Link to="/self-audit-checklists">Cancel</Link>
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={createTemplateMutation.isPending}
                 className="min-w-[120px]"
               >

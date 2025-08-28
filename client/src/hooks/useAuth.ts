@@ -4,8 +4,12 @@ import type { User } from "@shared/schema";
 
 export function useAuth() {
   const queryClient = useQueryClient();
-  
-  const { data: user, isLoading, refetch } = useQuery<User>({
+
+  const {
+    data: user,
+    isLoading,
+    refetch,
+  } = useQuery<User>({
     queryKey: ["/api/auth/user"],
     retry: false,
   });
@@ -13,11 +17,11 @@ export function useAuth() {
   const logout = async () => {
     try {
       // Clear the token from localStorage
-      localStorage.removeItem('authToken');
-      
+      localStorage.removeItem("authToken");
+
       // Call the server logout endpoint
       await apiRequest("POST", "/api/auth/signout");
-      
+
       // Invalidate all queries to clear cached data
       queryClient.clear();
     } catch (error) {
