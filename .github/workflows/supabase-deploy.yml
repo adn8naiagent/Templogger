@@ -1,0 +1,154 @@
+name: Supabase Production Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+  # Only run when PRs are merged to main, not on direct push
+  # This triggers when a PR is merged (which creates a push to main)
+
+jobs:
+  check-pr-merge:
+    name: Verify PR Merge
+    runs-on: ubuntu-latest
+    outputs:
+      is-pr-merge: ${{ steps.check.outputs.is-pr-merge }}
+    steps:
+      - name: Check if push is from PR merge
+        id: check
+        run: |
+          # Check if this push is from a merged PR
+          if [[ "${{ github.event.head_commit.message }}" =~ ^Merge\ pull\ request ]]; then
+            echo "is-pr-merge=true" >> $GITHUB_OUTPUT
+            echo "✅ This is a PR merge, proceeding with deployment"
+          else
+            echo "is-pr-merge=false" >> $GITHUB_OUTPUT
+            echo "⏭️ Direct push detected, skipping production deployment"
+          fi
+
+  deploy-migrations:
+    name: Deploy Supabase Migrations
+    runs-on: ubuntu-latest
+    needs: check-pr-merge
+    if: needs.check-pr-merge.outputs.is-pr-merge == 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Supabase CLI
+        run: |
+          npm install -g @supabase/cli
+          supabase --version
+
+      - name: Verify migration files exist
+        run: |
+          if [ ! -d "supabase/migrations" ]; then
+            echo "❌ No migrations directory found"
+            exit 1
+          fi
+
+          if [ -z "$(ls -A supabase/migrations)" ]; then
+            echo "⏭️ No migration files found, skipping deployment"
+            exit 0
+          fi
+
+          echo "✅ Migration files found:"
+          ls -la supabase/migrations/
+
+      - name: Apply migrations to production
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          echo "🚀 Linking to Supabase production project..."
+          supabase link --project-ref $SUPABASE_PROJECT_REF
+
+          echo "📊 Checking migration status..."
+          supabase migration list
+
+          echo "⬆️ Applying pending migrations..."
+          supabase db push --password $SUPABASE_DB_PASSWORD
+
+          echo "✅ Production migrations completed successfully!"
+
+      - name: Verify deployment
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          echo "🔍 Verifying migration deployment..."
+          supabase migration list
+
+          echo "📈 Checking database health..."
+          # Basic connection test
+          supabase db ping --password $SUPABASE_DB_PASSWORD || {
+            echo "❌ Database health check failed"
+            exit 1
+          }
+
+          echo "✅ Deployment verification completed!"
+
+      - name: Deployment Summary
+        if: always()
+        run: |
+          echo "## 📋 Supabase Production Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger**: PR merged to main branch" >> $GITHUB_STEP_SUMMARY
+          echo "- **Project**: ${{ secrets.SUPABASE_PROJECT_REF }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status == 'success' && '✅ Successful' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Migration Files Applied:" >> $GITHUB_STEP_SUMMARY
+          for file in supabase/migrations/*.sql; do
+            if [ -f "$file" ]; then
+              echo "- $(basename "$file")" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+  notify-failure:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: [check-pr-merge, deploy-migrations]
+    if: failure() && needs.check-pr-merge.outputs.is-pr-merge == 'true'
+
+    steps:
+      - name: Create Issue on Failure
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Production Migration Deployment Failed',
+              body: `
+                ## Migration Deployment Failure
+                
+                **Run ID**: ${context.runId}
+                **Workflow**: ${context.workflow}
+                **Commit**: ${context.sha}
+                **Branch**: ${context.ref}
+                
+                The production migration deployment failed. Please check the workflow logs and resolve the issue.
+                
+                ### Next Steps:
+                1. Check the [workflow logs](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+                2. Verify Supabase credentials are correctly configured
+                3. Ensure migration files are valid
+                4. Re-run the workflow once issues are resolved
+                
+                **Auto-generated by GitHub Actions**
+              `,
+              labels: ['bug', 'deployment', 'urgent']
+            })

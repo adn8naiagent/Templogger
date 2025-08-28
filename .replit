@@ -20,6 +20,12 @@ externalPort = 3000
 
 [env]
 PORT = "5000"
+PROJECT_RULES_ACTIVE = "true"
+DB_SAFETY_MODE = "enforced"
+MIGRATIONS_ONLY = "true"
+
+# Startup reminder
+onBoot = "echo '⚠️  PROJECT RULES ACTIVE - See PROJECT_RULES.md and .claude/instructions.md'"
 
 [workflows]
 runButton = "Project"

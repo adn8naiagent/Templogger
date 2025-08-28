@@ -33,7 +33,9 @@
       "Bash(npm uninstall:*)",
       "Bash(chmod:*)",
       "Bash(supabase:*)",
-      "Bash(~/bin/supabase:*)"
+      "Bash(~/bin/supabase:*)",
+      "Bash(git remote get-url:*)",
+      "Bash(npx husky:*)"
     ],
     "deny": [],
     "ask": []

@@ -25,7 +25,5 @@ module.exports = {
     "^wouter$": "<rootDir>/__mocks__/wouter.js",
   },
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
-  transformIgnorePatterns: [
-    "node_modules/(?!(wouter|regexparam)/)"
-  ],
+  transformIgnorePatterns: ["node_modules/(?!(wouter|regexparam)/)"],
 };
