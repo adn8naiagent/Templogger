@@ -34,7 +34,7 @@ jobs:
         run: npm ci
 
       - name: 🔒 Run Snyk security scan
-        run: npm run security:test || echo "Security issues found - review required"
+        run: npm run security:test
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 

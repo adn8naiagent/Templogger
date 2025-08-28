@@ -28,7 +28,9 @@
       "Bash(npx prettier:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(npm update:*)",
+      "Bash(npm uninstall:*)"
     ],
     "deny": [],
     "ask": []
