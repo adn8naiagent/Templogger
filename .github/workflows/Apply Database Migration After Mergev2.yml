@@ -1,0 +1,61 @@
+name: Apply Database Migration After Merge
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  migrate:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest  # Ensure latest version
+      
+      - name: Generate Migration
+        id: migration
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROD_DB_URL: ${{ secrets.SUPABASE_PROD_DB_URL }}
+        run: |
+          # Link to dev project
+          supabase link --project-ref ${{ secrets.SUPABASE_DEV_PROJECT_REF }} --password "$SUPABASE_DB_PASSWORD"
+          
+          # Generate diff - DON'T use --linked with --db-url
+          supabase db diff \
+            --db-url "$SUPABASE_PROD_DB_URL" \
+            --file migration.sql
+          
+          # Show what will be applied
+          if [ -s migration.sql ]; then
+            echo "📋 Migration preview:"
+            cat migration.sql
+            
+            # Safety check
+            if grep -iE "(DROP TABLE|DROP COLUMN|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE)" migration.sql; then
+              echo "::error::❌ DESTRUCTIVE OPERATIONS DETECTED!"
+              exit 1
+            fi
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "No changes needed"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Apply Migration
+        if: steps.migration.outputs.has_changes == 'true'
+        run: |
+          psql "${{ secrets.SUPABASE_PROD_DB_URL }}" -f migration.sql
+          echo "✅ Migration completed successfully"
+      
+      - name: Save Migration Artifact
+        if: always() && steps.migration.outputs.has_changes == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: migration-${{ github.sha }}
+          path: migration.sql
