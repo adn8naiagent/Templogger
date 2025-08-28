@@ -3,6 +3,7 @@ import session from "express-session";
 import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
+import compression from "compression";
 import path from "path";
 import { registerRoutes } from "./routes";
 import { setupVite, log } from "./vite";
@@ -42,6 +43,19 @@ const limiter = rateLimit({
   message: { error: "Too many requests from this IP, please try again later." },
 });
 app.use(limiter);
+
+// Compression middleware for better performance
+app.use(compression({
+  // Only compress responses larger than 1KB
+  threshold: 1024,
+  // Compress all text-based responses
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    return compression.filter(req, res);
+  }
+}));
 
 // Auth-specific rate limiting
 const authLimiter = rateLimit({
@@ -147,6 +161,16 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   next(err);
 });
 
+  // Health check endpoint for production monitoring
+  app.get('/health', (req, res) => {
+    res.status(200).json({ 
+      status: 'healthy', 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+  });
+
 (async () => {
   const server = await registerRoutes(app);
 
@@ -169,12 +193,43 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
-    // Serve static files from React build
-    app.use(express.static(path.join(__dirname, "../client/dist")));
+    // Production: Serve static files from React build
+    const buildPath = path.join(import.meta.dirname, "../dist/public");
+    
+    // Serve static files with proper caching
+    app.use(express.static(buildPath, {
+      maxAge: '1y', // Cache static assets for 1 year
+      etag: true,
+      lastModified: true,
+      setHeaders: (res, path) => {
+        // Don't cache index.html to ensure updates are served
+        if (path.endsWith('index.html')) {
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+          res.setHeader('Pragma', 'no-cache');
+          res.setHeader('Expires', '0');
+        }
+      }
+    }));
 
-    // Handle React routing, return index.html for all non-API routes
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+    // Handle React routing - catch-all route for non-API requests
+    app.get("*", (req, res, next) => {
+      // Skip API routes
+      if (req.path.startsWith('/api/')) {
+        return next();
+      }
+      
+      const indexPath = path.join(buildPath, 'index.html');
+      
+      // Send index.html with proper headers for SPA routing
+      res.sendFile(indexPath, (err) => {
+        if (err) {
+          console.error('Error serving index.html:', err);
+          res.status(500).json({ 
+            error: 'Unable to serve application', 
+            message: 'The frontend application could not be loaded.' 
+          });
+        }
+      });
     });
   }
 

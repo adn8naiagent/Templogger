@@ -30,7 +30,8 @@
       "Bash(git commit:*)",
       "WebSearch",
       "Bash(npm update:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []
