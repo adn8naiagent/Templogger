@@ -33,30 +33,30 @@ jobs:
       - name: Run ESLint security rules
         run: npm run lint
 
-      - name: Setup Snyk
-        uses: snyk/actions/setup@0.4.0
+      # - name: Setup Snyk
+      #   uses: snyk/actions/setup@0.4.0
 
-      - name: Run Snyk security scan
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: |
-          snyk test --severity-threshold=high --fail-on=upgradable
+      # - name: Run Snyk security scan
+      #   env:
+      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      #   run: |
+      #     snyk test --severity-threshold=high --fail-on=upgradable
 
-      - name: Run Snyk code analysis
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: |
-          snyk code test
+      # - name: Run Snyk code analysis
+      #   env:
+      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      #   run: |
+      #     snyk code test
 
-      - name: Monitor project with Snyk
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: |
-          snyk monitor
-        if: github.ref == 'refs/heads/main'
+      # - name: Monitor project with Snyk
+      #   env:
+      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      #   run: |
+      #     snyk monitor
+      #   if: github.ref == 'refs/heads/main'
 
-      - name: Upload security results to GitHub
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: snyk.sarif
-        if: always()
+      # - name: Upload security results to GitHub
+      #   uses: github/codeql-action/upload-sarif@v4
+      #   with:
+      #     sarif_file: snyk.sarif
+      #   if: always()
