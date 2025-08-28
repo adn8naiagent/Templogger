@@ -3,10 +3,16 @@ name: Supabase Production Deploy
 on:
   push:
     branches: [main]
-    paths:
-      - "supabase/migrations/**"
-  # Only run when PRs are merged to main, not on direct push
-  # This triggers when a PR is merged (which creates a push to main)
+  # Manual trigger for testing
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment (skip PR merge check)'
+        required: false
+        default: false
+        type: boolean
+  # Run on all pushes to main, then check if it's a PR merge
+  # This ensures we don't miss any migration deployments
 
 jobs:
   check-pr-merge:
@@ -18,10 +24,17 @@ jobs:
       - name: Check if push is from PR merge
         id: check
         run: |
-          # Check if this push is from a merged PR
-          if [[ "${{ github.event.head_commit.message }}" =~ ^Merge\ pull\ request ]]; then
+          # Check if this push is from a merged PR (multiple ways to detect)
+          commit_message="${{ github.event.head_commit.message }}"
+          echo "Commit message: $commit_message"
+          
+          if [[ "$commit_message" =~ ^Merge\ pull\ request ]] || \
+             [[ "$commit_message" =~ \(#[0-9]+\)$ ]] || \
+             [[ "${{ github.event.forced }}" == "false" && "${{ github.event.head_commit.author.name }}" != "${{ github.event.head_commit.committer.name }}" ]]; then
             echo "is-pr-merge=true" >> $GITHUB_OUTPUT
             echo "✅ This is a PR merge, proceeding with deployment"
+            echo "Author: ${{ github.event.head_commit.author.name }}"
+            echo "Committer: ${{ github.event.head_commit.committer.name }}"
           else
             echo "is-pr-merge=false" >> $GITHUB_OUTPUT
             echo "⏭️ Direct push detected, skipping production deployment"
@@ -31,7 +44,7 @@ jobs:
     name: Deploy Supabase Migrations
     runs-on: ubuntu-latest
     needs: check-pr-merge
-    if: needs.check-pr-merge.outputs.is-pr-merge == 'true'
+    if: needs.check-pr-merge.outputs.is-pr-merge == 'true' || github.event.inputs.force_deploy == 'true'
 
     steps:
       - name: Checkout code
