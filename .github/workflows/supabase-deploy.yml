@@ -96,10 +96,7 @@ jobs:
           supabase migration list
 
           echo "⬆️ Applying pending migrations..."
-          supabase db push --debug || {
-            echo "❌ Migration push failed, trying alternative method..."
-            supabase migration up --debug
-          }
+          supabase migration up --debug
 
           echo "✅ Production migrations completed successfully!"
 
