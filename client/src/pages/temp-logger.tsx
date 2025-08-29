@@ -488,15 +488,6 @@ export default function TempLogger() {
             </div>
             <div className="flex gap-3">
               <Button
-                onClick={() => refetch()}
-                variant="outline"
-                size="default"
-                className="border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Refresh Fridges
-              </Button>
-              <Button
                 onClick={handleExport}
                 variant="outline"
                 size="default"
