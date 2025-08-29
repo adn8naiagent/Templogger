@@ -34,7 +34,10 @@
       "Bash(chmod:*)",
       "Bash(supabase:*)",
       "Bash(~/bin/supabase:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(psql:*)",
+      "Bash(npx prisma:*)",
+      "Bash(unset DATABASE_URL)"
     ],
     "deny": [],
     "ask": []

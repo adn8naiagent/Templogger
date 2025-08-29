@@ -70,3 +70,5 @@ drizzle/
 # Replit specific
 .replit_id
 .upm/
+
+/generated/prisma

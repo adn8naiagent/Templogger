@@ -1,0 +1,21 @@
+name: Deploy Migrations to Production
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'prisma/migrations/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - run: npm ci
+      - name: Deploy to Production
+        env:
+          DATABASE_URL: ${{ secrets.RAILWAY_PROD_DB_URL }}
+        run: npx prisma migrate deploy
