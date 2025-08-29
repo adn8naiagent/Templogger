@@ -13,170 +13,51 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      
       - name: Generate and Apply Migration
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           echo "🔄 Generating migration between dev and production..."
           
-          # Initialize tracking files
-          > migration.sql
-          > destructive_ops.txt
+          # Extract password from prod DB URL
+          PROD_PASSWORD=$(echo "${{ secrets.SUPABASE_PROD_DB_URL }}" | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p')
           
-          # 1. Extract full schema from both databases (no containers, direct psql)
-          echo "Extracting schemas..."
-          pg_dump "${{ secrets.SUPABASE_DEV_DB_URL }}" \
-            --schema-only --no-owner --no-privileges \
-            --schema=public --schema=auth \
-            -f dev_full.sql
+          # Link to production (this was working)
+          supabase link --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_REF }} --password "$PROD_PASSWORD"
           
-          pg_dump "${{ secrets.SUPABASE_PROD_DB_URL }}" \
-            --schema-only --no-owner --no-privileges \
-            --schema=public --schema=auth \
-            -f prod_full.sql
+          # Pull the production schema to local migrations
+          supabase db pull --schema public
           
-          # 2. Get table lists for comparison
-          psql "${{ secrets.SUPABASE_DEV_DB_URL }}" -t -A -c "
-            SELECT table_name FROM information_schema.tables 
-            WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
-            ORDER BY table_name
-          " > dev_tables.txt
+          # Now try to diff without using migra container
+          # Use the --local flag to compare against local migrations instead
+          supabase db diff \
+            --db-url "${{ secrets.SUPABASE_DEV_DB_URL }}" \
+            --schema public \
+            --local \
+            -f supabase/migrations/$(date +%Y%m%d%H%M%S)_sync.sql
           
-          psql "${{ secrets.SUPABASE_PROD_DB_URL }}" -t -A -c "
-            SELECT table_name FROM information_schema.tables 
-            WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
-            ORDER BY table_name
-          " > prod_tables.txt
+          # Rest of the logic from before that was working
+          MIGRATION_FILE=$(ls -t supabase/migrations/*.sql 2>/dev/null | head -1)
           
-          # 3. Find NEW TABLES (SMRM Req #2)
-          NEW_TABLES=$(comm -13 prod_tables.txt dev_tables.txt)
-          if [ -n "$NEW_TABLES" ]; then
-            echo "New tables found: $NEW_TABLES"
-            for table in $NEW_TABLES; do
-              echo "-- New table: $table" >> migration.sql
-              grep -A 1000 "CREATE TABLE public.$table" dev_full.sql | sed '/^CREATE TABLE/,$!d; /;$/q' >> migration.sql
-              echo "" >> migration.sql
-            done
-          fi
-          
-          # 4. Find DROPPED TABLES for rename detection (SMRM Req #5)
-          DROPPED_TABLES=$(comm -23 prod_tables.txt dev_tables.txt)
-          if [ -n "$DROPPED_TABLES" ]; then
-            echo "Tables in prod but not dev: $DROPPED_TABLES" >> destructive_ops.txt
-            for table in $DROPPED_TABLES; do
-              echo "DROP TABLE public.$table;" >> destructive_ops.txt
-            done
-          fi
-          
-          # 5. Check NEW COLUMNS in existing tables (SMRM Req #3)
-          for table in $(comm -12 prod_tables.txt dev_tables.txt); do
-            psql "${{ secrets.SUPABASE_DEV_DB_URL }}" -t -A -c "
-              SELECT column_name || ':' || data_type || ':' || 
-                COALESCE(character_maximum_length::text, '') || ':' ||
-                is_nullable || ':' ||
-                COALESCE(column_default, '')
-              FROM information_schema.columns 
-              WHERE table_schema = 'public' AND table_name = '$table'
-              ORDER BY ordinal_position
-            " > dev_cols_$table.txt
-            
-            psql "${{ secrets.SUPABASE_PROD_DB_URL }}" -t -A -c "
-              SELECT column_name || ':' || data_type || ':' || 
-                COALESCE(character_maximum_length::text, '') || ':' ||
-                is_nullable || ':' ||
-                COALESCE(column_default, '')
-              FROM information_schema.columns 
-              WHERE table_schema = 'public' AND table_name = '$table'
-              ORDER BY ordinal_position
-            " > prod_cols_$table.txt
-            
-            # Find new columns
-            NEW_COLS=$(comm -13 prod_cols_$table.txt dev_cols_$table.txt | cut -d: -f1)
-            if [ -n "$NEW_COLS" ]; then
-              echo "New columns in $table: $NEW_COLS"
-              for col_line in $(comm -13 prod_cols_$table.txt dev_cols_$table.txt); do
-                col=$(echo $col_line | cut -d: -f1)
-                dtype=$(echo $col_line | cut -d: -f2)
-                maxlen=$(echo $col_line | cut -d: -f3)
-                nullable=$(echo $col_line | cut -d: -f4)
-                default=$(echo $col_line | cut -d: -f5)
-                
-                SQL="ALTER TABLE public.$table ADD COLUMN $col $dtype"
-                [ -n "$maxlen" ] && SQL="$SQL($maxlen)"
-                [ "$nullable" = "NO" ] && SQL="$SQL NOT NULL"
-                [ -n "$default" ] && SQL="$SQL DEFAULT $default"
-                echo "$SQL;" >> migration.sql
-              done
-            fi
-            
-            # Find dropped columns for rename detection
-            DROPPED_COLS=$(comm -23 prod_cols_$table.txt dev_cols_$table.txt | cut -d: -f1)
-            if [ -n "$DROPPED_COLS" ]; then
-              for col in $DROPPED_COLS; do
-                echo "ALTER TABLE public.$table DROP COLUMN $col;" >> destructive_ops.txt
-              done
-            fi
-          done
-          
-          # 6. Check if migration has content
-          if [ ! -s migration.sql ]; then
+          if [ -z "$MIGRATION_FILE" ] || [ ! -s "$MIGRATION_FILE" ]; then
             echo "✅ No database changes detected"
             exit 0
           fi
           
-          echo "📋 Migration to apply:"
-          cat migration.sql
+          echo "📋 Migration changes detected:"
+          cat "$MIGRATION_FILE"
           
-          # 7. Check for destructive operations (SMRM Req #4)
-          if [ -s destructive_ops.txt ]; then
-            echo ""
-            echo "❌ POTENTIAL DESTRUCTIVE OPERATIONS OR RENAMES DETECTED!"
-            echo "================================================"
-            cat destructive_ops.txt
-            echo "================================================"
-            echo ""
-            
-            # Check for rename patterns (SMRM Req #5)
-            if [ -n "$DROPPED_TABLES" ] && [ -n "$NEW_TABLES" ]; then
-              echo "⚠️  POSSIBLE TABLE RENAMES:"
-              echo "Dropped: $DROPPED_TABLES"
-              echo "Created: $NEW_TABLES"
-            fi
-            
-            echo ""
-            echo "To handle safely:"
-            echo "1. If rename: Create new, migrate data, update code, drop old later"
-            echo "2. If deletion: Verify no dependencies exist"
-            echo ""
-            echo "Migration blocked for safety. See artifacts for details."
-            
-            mkdir -p artifacts
-            cp migration.sql artifacts/blocked_migration_$(date +%Y%m%d_%H%M%S).sql
-            cp destructive_ops.txt artifacts/destructive_ops_$(date +%Y%m%d_%H%M%S).txt
+          # Safety check (this was working)
+          if grep -iE "(DROP TABLE|DROP COLUMN|DROP INDEX|DELETE FROM|TRUNCATE)" "$MIGRATION_FILE"; then
+            echo "❌ DESTRUCTIVE OPERATIONS DETECTED!"
             exit 1
           fi
           
-          # 8. Apply migration (SMRM Req #10)
-          echo "✅ Safety check passed - only additive changes"
-          echo "🚀 Applying migration to production..."
+          echo "🚀 Applying migration..."
+          supabase db push
           
-          psql "${{ secrets.SUPABASE_PROD_DB_URL }}" < migration.sql
-          
-          if [ $? -eq 0 ]; then
-            echo "✅ Migration successfully applied!"
-            mkdir -p artifacts
-            cp migration.sql artifacts/applied_migration_$(date +%Y%m%d_%H%M%S).sql
-          else
-            echo "❌ Migration failed to apply"
-            exit 1
-          fi
-      
-      - name: Upload Migration Artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: migration-${{ github.run_number }}
-          path: |
-            *.sql
-            *.txt
-            artifacts/*
-          retention-days: 30
-          if-no-files-found: ignore
+          echo "✅ Migration complete!"
