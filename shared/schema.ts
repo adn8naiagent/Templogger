@@ -314,6 +314,10 @@ export const insertUserSchema = createInsertSchema(users).pick({
   subscriptionStatus: true,
   trialStartDate: true,
   trialEndDate: true,
+  city: true,
+  state_province: true,
+  country: true,
+  timezone: true,
 });
 
 export const upsertUserSchema = createInsertSchema(users).pick({
@@ -486,6 +490,10 @@ export const updateProfileSchema = z.object({
   lastName: z.string().min(1, "Last name is required"),
   subscriptionStatus: z.enum(["trial", "paid"]).optional(),
   darkMode: z.boolean().optional(),
+  city: z.string().optional(),
+  stateProvince: z.string().optional(),
+  country: z.string().optional(),
+  timezone: z.string().optional(),
 });
 
 // Change password schema
