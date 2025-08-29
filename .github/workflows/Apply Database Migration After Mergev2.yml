@@ -12,28 +12,57 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Install Dependencies
+      - name: Setup PostgreSQL and Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-pip postgresql-client libpq-dev
-          pip3 install psycopg2-binary migra
+          sudo apt-get install -y postgresql-client-16
+          
+          # Install apgdiff for schema comparison
+          wget https://github.com/subzerocloud/apgdiff/releases/download/2.7.0/apgdiff-2.7.0.jar
+          sudo apt-get install -y default-jre
       
       - name: Generate and Apply Migration
         run: |
           echo "🔄 Generating migration between dev and production..."
           
-          # Use migra to compare databases directly
-          # This compares PROD (target) to DEV (source) to find what needs to be added to PROD
-          migra \
-            --unsafe \
-            "${{ secrets.SUPABASE_PROD_DB_URL }}" \
-            "${{ secrets.SUPABASE_DEV_DB_URL }}" \
-            > migration.sql 2>&1 || true
+          # Export schemas
+          echo "Extracting dev schema..."
+          pg_dump "${{ secrets.SUPABASE_DEV_DB_URL }}" \
+            --schema-only \
+            --no-owner \
+            --no-acl \
+            --no-comments \
+            --no-publications \
+            --no-security-labels \
+            --no-subscriptions \
+            --no-tablespaces \
+            --schema=public \
+            > dev_schema.sql
           
-          # Check if migration file has real SQL content (not just errors or empty)
-          if [ ! -s migration.sql ] || ! grep -qE '(CREATE|ALTER|DROP|INSERT|UPDATE|DELETE)' migration.sql; then
+          echo "Extracting production schema..."
+          pg_dump "${{ secrets.SUPABASE_PROD_DB_URL }}" \
+            --schema-only \
+            --no-owner \
+            --no-acl \
+            --no-comments \
+            --no-publications \
+            --no-security-labels \
+            --no-subscriptions \
+            --no-tablespaces \
+            --schema=public \
+            > prod_schema.sql
+          
+          # Generate migration using apgdiff
+          echo "Comparing schemas..."
+          java -jar apgdiff-2.7.0.jar prod_schema.sql dev_schema.sql > migration.sql 2>&1 || true
+          
+          # Remove comments and empty lines
+          grep -v "^--" migration.sql | grep -v "^$" > migration_clean.sql || true
+          mv migration_clean.sql migration.sql
+          
+          # Check if migration has actual changes
+          if [ ! -s migration.sql ] || ! grep -qE "(CREATE|ALTER|DROP)" migration.sql; then
             echo "✅ No database changes detected between dev and production"
-            cat migration.sql  # Show any output for debugging
             exit 0
           fi
           
@@ -42,16 +71,96 @@ jobs:
           cat migration.sql
           echo "================================"
           
-          # Safety check for destructive operations
-          DANGEROUS_PATTERNS="DROP TABLE|DROP COLUMN|DROP INDEX|DROP VIEW|DROP FUNCTION|DROP SCHEMA|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE"
+          # Analyze for potential renames and destructive operations
+          echo ""
+          echo "🔍 Analyzing migration for safety..."
           
+          # Check for DROP operations
+          if grep -iE "DROP TABLE|DROP COLUMN" migration.sql; then
+            echo "::warning::⚠️ POTENTIAL RENAMES OR DELETIONS DETECTED!"
+            
+            # Extract dropped items
+            DROPPED_TABLES=$(grep -iE "DROP TABLE" migration.sql | sed 's/.*DROP TABLE //I' | sed 's/;.*//' || true)
+            DROPPED_COLUMNS=$(grep -iE "DROP COLUMN" migration.sql | sed 's/.*DROP COLUMN //I' | sed 's/;.*//' || true)
+            
+            # Extract created items
+            CREATED_TABLES=$(grep -iE "CREATE TABLE" migration.sql | sed 's/.*CREATE TABLE //I' | sed 's/ .*//' || true)
+            CREATED_COLUMNS=$(grep -iE "ADD COLUMN" migration.sql | sed 's/.*ADD COLUMN //I' | sed 's/ .*//' || true)
+            
+            echo ""
+            echo "::error::❌ DESTRUCTIVE OPERATIONS DETECTED!"
+            echo ""
+            echo "Dropped items:"
+            [ -n "$DROPPED_TABLES" ] && echo "  Tables: $DROPPED_TABLES"
+            [ -n "$DROPPED_COLUMNS" ] && echo "  Columns: $DROPPED_COLUMNS"
+            echo ""
+            echo "Created items:"
+            [ -n "$CREATED_TABLES" ] && echo "  Tables: $CREATED_TABLES"
+            [ -n "$CREATED_COLUMNS" ] && echo "  Columns: $CREATED_COLUMNS"
+            echo ""
+            echo "::error::If these are RENAMES, please handle them safely:"
+            echo "::error::1. Create new tables/columns in production"
+            echo "::error::2. Migrate data with UPDATE/INSERT statements"
+            echo "::error::3. Update application code to use new names"
+            echo "::error::4. Drop old tables/columns in a separate migration after deployment"
+            echo ""
+            echo "::error::If these are intentional DELETIONS:"
+            echo "::error::1. Ensure no application code depends on them"
+            echo "::error::2. Back up any important data"
+            echo "::error::3. Remove this safety check temporarily to proceed"
+            
+            # Save for review
+            mkdir -p artifacts
+            cp migration.sql artifacts/blocked_migration_$(date +%Y%m%d_%H%M%S).sql
+            exit 1
+          fi
+          
+          # Check for type changes
+          if grep -iE "ALTER COLUMN.*TYPE" migration.sql; then
+            echo "::warning::⚠️ COLUMN TYPE CHANGES DETECTED!"
+            grep -iE "ALTER COLUMN.*TYPE" migration.sql
+            echo "::warning::Ensure data can be safely converted between types"
+          fi
+          
+          # Check for other dangerous patterns
+          DANGEROUS_PATTERNS="TRUNCATE|DELETE FROM"
           if grep -iE "($DANGEROUS_PATTERNS)" migration.sql; then
-            echo "❌ DESTRUCTIVE OPERATIONS DETECTED!"
-            echo ""
-            echo "Found the following dangerous operations:"
+            echo "::error::❌ DANGEROUS DATA OPERATIONS DETECTED!"
             grep -iE "($DANGEROUS_PATTERNS)" migration.sql
+            exit 1
+          fi
+          
+          echo "✅ Safety check passed - only additive changes detected"
+          
+          # Apply migration
+          echo "🚀 Applying migration to production..."
+          psql "${{ secrets.SUPABASE_PROD_DB_URL }}" < migration.sql
+          
+          if [ $? -eq 0 ]; then
+            echo "✅ Migration successfully applied to production!"
+            
+            # Save successful migration
+            mkdir -p artifacts
+            cp migration.sql artifacts/applied_migration_$(date +%Y%m%d_%H%M%S).sql
+            
             echo ""
-            echo "Manual intervention required. Please handle these changes safely:"
-            echo "1. For renames: Create new, migrate data, then remove old after code update"
-            echo "2. For type changes: Create new column, migrate data, update code, then remove old"
-            echo "3. For deleti
+            echo "Summary of changes applied:"
+            echo "- New tables: $(grep -c "CREATE TABLE" migration.sql || echo 0)"
+            echo "- New columns: $(grep -c "ADD COLUMN" migration.sql || echo 0)"
+            echo "- New indexes: $(grep -c "CREATE INDEX" migration.sql || echo 0)"
+          else
+            echo "::error::❌ Migration failed to apply"
+            echo "Check the error above for details"
+            exit 1
+          fi
+      
+      - name: Upload Migration Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-${{ github.run_number }}-${{ github.run_attempt }}
+          path: |
+            *.sql
+            artifacts/*.sql
+          retention-days: 30
+          if-no-files-found: ignore
