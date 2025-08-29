@@ -120,7 +120,7 @@ export default function TempLogger() {
     data: fridges = [],
     isLoading: fridgesLoading,
     error: _error,
-    refetch,
+    refetch: _refetch,
   } = useQuery<Fridge[]>({
     queryKey: ["/api/fridges/recent-temps"],
     retry: (failureCount, error) => {

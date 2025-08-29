@@ -28,6 +28,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
+import Navigation from "@/components/layout/navigation";
 
 interface AuditTemplate {
   _id: string;
@@ -270,58 +271,51 @@ export default function CompleteSelfAudit() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b sticky top-0 z-10 bg-background">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLocation("/self-audit-checklists")}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Templates
-              </Button>
-              <div>
-                <h1 className="text-xl font-bold text-foreground">{template.name}</h1>
-                {template.description && (
-                  <p className="text-sm text-muted-foreground">{template.description}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <div className="text-sm text-muted-foreground">Progress</div>
-                <div className="font-medium">{progress}% Complete</div>
-              </div>
-              <div className="w-24">
-                <Progress value={progress} />
-              </div>
-              <Button
-                onClick={handleSubmit}
-                disabled={!canSubmit() || completeMutation.isPending}
-                className="min-w-[120px]"
-              >
-                {completeMutation.isPending ? (
-                  <>
-                    <div className="animate-spin w-4 h-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
-                    Submitting...
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-2" />
-                    Submit Audit
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <Navigation />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Page Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-4">
+            <Button variant="ghost" size="sm" onClick={() => setLocation("/self-audit-checklists")}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">{template.name}</h1>
+              {template.description && (
+                <p className="text-sm text-muted-foreground">{template.description}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            <div className="text-right">
+              <div className="text-sm text-muted-foreground">Progress</div>
+              <div className="font-medium">{progress}% Complete</div>
+            </div>
+            <div className="w-24">
+              <Progress value={progress} />
+            </div>
+            <Button
+              onClick={handleSubmit}
+              disabled={!canSubmit() || completeMutation.isPending}
+              className="min-w-[120px]"
+            >
+              {completeMutation.isPending ? (
+                <>
+                  <div className="animate-spin w-4 h-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Submit Audit
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
         {/* Progress Summary */}
         <Card className="mb-6">
           <CardHeader>
