@@ -1,116 +1,116 @@
 name: Apply Database Migration After Merge
 on:
-  pull_request:
-    types: [closed]
-    branches: [main]
+ pull_request:
+   types: [closed]
+   branches: [main]
 
 jobs:
-  migrate:
-    if: github.event.pull_request.merged == true
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - uses: supabase/setup-cli@v1
-        with:
-          version: latest
-      
-      - name: Install Dependencies
-        run: |
-          sudo apt-get update && sudo apt-get install -y postgresql-client
-          pip install migra
-      
-      - name: Generate Migration
-        id: migration
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: |
-          echo "?? Generating migration diff..."
-          
-          # Use migra to generate diff between dev and prod
-          migra \
-            "${{ secrets.SUPABASE_PROD_DB_URL }}" \
-            "${{ secrets.SUPABASE_DEV_DB_URL }}" \
-            --unsafe \
-            > migration.sql || true
-          
-          # Check if there are changes
-          if [ -s migration.sql ]; then
-            echo "?? Migration preview:"
-            cat migration.sql
-            
-            # Safety check for destructive operations
-            if grep -iE "(DROP TABLE|DROP COLUMN|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE)" migration.sql; then
-              echo "::error::? DESTRUCTIVE OPERATIONS DETECTED!"
-              echo "::error::Found dangerous operations:"
-              grep -iE "(DROP TABLE|DROP COLUMN|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE)" migration.sql
-              
-              # Check for potential renames (ADD + DROP pattern)
-              add_count=$(grep -c "ADD COLUMN" migration.sql || echo 0)
-              drop_count=$(grep -c "DROP COLUMN" migration.sql || echo 0)
-              
-              if [ "$add_count" -gt 0 ] && [ "$drop_count" -gt 0 ]; then
-                echo "::warning::This might be a rename operation!"
-                echo "::warning::Manual review required - consider data migration"
-              fi
-              
-              exit 1
-            fi
-            
-            # Check for RLS policies
-            if grep -E "(CREATE POLICY|ALTER POLICY|DROP POLICY)" migration.sql; then
-              echo "?? RLS policy changes detected"
-            fi
-            
-            echo "? Migration appears safe"
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-          else
-            echo "No changes detected between dev and production"
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-          fi
-      
-      - name: Apply Migration to Production
-        if: steps.migration.outputs.has_changes == 'true'
-        run: |
-          echo "?? Applying migration to production..."
-          psql "${{ secrets.SUPABASE_PROD_DB_URL }}" -f migration.sql
-          echo "? Migration completed successfully"
-      
-      - name: No Changes Needed
-        if: steps.migration.outputs.has_changes == 'false'
-        run: echo "? No database changes to migrate"
-      
-      - name: Save Migration Artifact
-        if: always() && steps.migration.outputs.has_changes == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: migration-PR-${{ github.event.pull_request.number }}-${{ github.sha }}
-          path: migration.sql
-          retention-days: 30
-      
-      - name: Comment on PR
-        if: always() && steps.migration.outputs.has_changes == 'true'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const migration = fs.readFileSync('migration.sql', 'utf8');
-            const comment = `## ??? Database Migration Applied
-            
-            <details>
-            <summary>Migration Details</summary>
-            
-            \`\`\`sql
-            ${migration}
-            \`\`\`
-            </details>
-            
-            ? Migration has been successfully applied to production.`;
-            
-            github.rest.issues.createComment({
-              issue_number: context.payload.pull_request.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
+ migrate:
+   if: github.event.pull_request.merged == true
+   runs-on: ubuntu-latest
+   
+   steps:
+     - uses: actions/checkout@v4
+     
+     - uses: supabase/setup-cli@v1
+       with:
+         version: latest
+     
+     - name: Install Dependencies
+       run: |
+         sudo apt-get update && sudo apt-get install -y postgresql-client
+         pip install migra psycopg2-binary
+     
+     - name: Generate Migration
+       id: migration
+       env:
+         SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+       run: |
+         echo "🔍 Generating migration diff..."
+         
+         # Use migra to generate diff between dev and prod
+         migra \
+           "${{ secrets.SUPABASE_PROD_DB_URL }}" \
+           "${{ secrets.SUPABASE_DEV_DB_URL }}" \
+           --unsafe \
+           > migration.sql || true
+         
+         # Check if there are changes
+         if [ -s migration.sql ]; then
+           echo "📋 Migration preview:"
+           cat migration.sql
+           
+           # Safety check for destructive operations
+           if grep -iE "(DROP TABLE|DROP COLUMN|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE)" migration.sql; then
+             echo "::error::❌ DESTRUCTIVE OPERATIONS DETECTED!"
+             echo "::error::Found dangerous operations:"
+             grep -iE "(DROP TABLE|DROP COLUMN|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE)" migration.sql
+             
+             # Check for potential renames (ADD + DROP pattern)
+             add_count=$(grep -c "ADD COLUMN" migration.sql || echo 0)
+             drop_count=$(grep -c "DROP COLUMN" migration.sql || echo 0)
+             
+             if [ "$add_count" -gt 0 ] && [ "$drop_count" -gt 0 ]; then
+               echo "::warning::This might be a rename operation!"
+               echo "::warning::Manual review required - consider data migration"
+             fi
+             
+             exit 1
+           fi
+           
+           # Check for RLS policies
+           if grep -E "(CREATE POLICY|ALTER POLICY|DROP POLICY)" migration.sql; then
+             echo "📔 RLS policy changes detected"
+           fi
+           
+           echo "✅ Migration appears safe"
+           echo "has_changes=true" >> $GITHUB_OUTPUT
+         else
+           echo "No changes detected between dev and production"
+           echo "has_changes=false" >> $GITHUB_OUTPUT
+         fi
+     
+     - name: Apply Migration to Production
+       if: steps.migration.outputs.has_changes == 'true'
+       run: |
+         echo "🚀 Applying migration to production..."
+         psql "${{ secrets.SUPABASE_PROD_DB_URL }}" -f migration.sql
+         echo "✅ Migration completed successfully"
+     
+     - name: No Changes Needed
+       if: steps.migration.outputs.has_changes == 'false'
+       run: echo "✅ No database changes to migrate"
+     
+     - name: Save Migration Artifact
+       if: always() && steps.migration.outputs.has_changes == 'true'
+       uses: actions/upload-artifact@v4
+       with:
+         name: migration-PR-${{ github.event.pull_request.number }}-${{ github.sha }}
+         path: migration.sql
+         retention-days: 30
+     
+     - name: Comment on PR
+       if: always() && steps.migration.outputs.has_changes == 'true'
+       uses: actions/github-script@v7
+       with:
+         script: |
+           const fs = require('fs');
+           const migration = fs.readFileSync('migration.sql', 'utf8');
+           const comment = `## 🗄️ Database Migration Applied
+           
+           <details>
+           <summary>Migration Details</summary>
+           
+           \`\`\`sql
+           ${migration}
+           \`\`\`
+           </details>
+           
+           ✅ Migration has been successfully applied to production.`;
+           
+           github.rest.issues.createComment({
+             issue_number: context.payload.pull_request.number,
+             owner: context.repo.owner,
+             repo: context.repo.repo,
+             body: comment
+           });
