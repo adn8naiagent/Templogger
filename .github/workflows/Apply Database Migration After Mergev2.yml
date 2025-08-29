@@ -3,10 +3,11 @@ on:
   pull_request:
     types: [closed]
     branches: [main]
+  workflow_dispatch:  # This enables manual testing
 
 jobs:
   migrate:
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     
     steps:
@@ -22,21 +23,14 @@ jobs:
         run: |
           echo "🔄 Generating migration between dev and production..."
           
-          # Initialize Supabase project
-          supabase init
-          
-          # Link to production project
           supabase link --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_REF }}
           
-          # Generate diff between prod (linked) and dev (via db-url)
-          # This compares what's in prod vs what's in dev
           supabase db diff \
             --linked \
             --db-url "${{ secrets.SUPABASE_DEV_DB_URL }}" \
             --schema public \
             -f supabase/migrations/$(date +%Y%m%d%H%M%S)_sync.sql
           
-          # Check if migration file was created and has content
           MIGRATION_FILE=$(ls -t supabase/migrations/*.sql 2>/dev/null | head -1)
           
           if [ -z "$MIGRATION_FILE" ] || [ ! -s "$MIGRATION_FILE" ]; then
@@ -45,32 +39,14 @@ jobs:
           fi
           
           echo "📋 Migration changes detected:"
-          echo "================================"
           cat "$MIGRATION_FILE"
-          echo "================================"
           
-          # Safety check for destructive operations
           if grep -iE "(DROP TABLE|DROP COLUMN|DROP INDEX|DELETE FROM|TRUNCATE)" "$MIGRATION_FILE"; then
-            echo "::error::❌ DESTRUCTIVE OPERATIONS DETECTED!"
-            echo "::error::Review the migration file for:"
-            grep -iE "(DROP TABLE|DROP COLUMN|DROP INDEX|DELETE FROM|TRUNCATE)" "$MIGRATION_FILE"
-            echo "::error::Handle renames safely by creating new, migrating data, then dropping old"
+            echo "❌ DESTRUCTIVE OPERATIONS DETECTED!"
             exit 1
           fi
           
-          echo "✅ Safety check passed"
-          
-          # Push migrations to production
           echo "🚀 Applying migration to production..."
           supabase db push --linked
           
           echo "✅ Migration successfully applied!"
-      
-      - name: Upload Migration Artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: migration-${{ github.run_number }}
-          path: supabase/migrations/*.sql
-          retention-days: 30
-          if-no-files-found: ignore
