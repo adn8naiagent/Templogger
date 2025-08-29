@@ -3,7 +3,7 @@ on:
   pull_request:
     types: [closed]
     branches: [main]
-  workflow_dispatch:  # This enables manual testing
+  workflow_dispatch:
 
 jobs:
   migrate:
@@ -23,8 +23,13 @@ jobs:
         run: |
           echo "🔄 Generating migration between dev and production..."
           
-          supabase link --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_REF }}
+          # Extract password from prod DB URL
+          PROD_PASSWORD=$(echo "${{ secrets.SUPABASE_PROD_DB_URL }}" | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p')
           
+          # Link with password provided
+          supabase link --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_REF }} --password "$PROD_PASSWORD"
+          
+          # Generate diff
           supabase db diff \
             --linked \
             --db-url "${{ secrets.SUPABASE_DEV_DB_URL }}" \
