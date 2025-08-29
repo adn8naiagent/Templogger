@@ -23,31 +23,202 @@ jobs:
         run: |
           echo "🔄 Generating migration between dev and production..."
           
-          # Link using the dedicated password secret
+          # Link to production
           supabase link --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_REF }} --password "${{ secrets.SUPABASE_PROD_DB_PASSWORD }}"
           
-          # Generate diff
+          # Try to generate diff (this will likely fail with IPv6 issues)
           supabase db diff \
             --db-url "${{ secrets.SUPABASE_DEV_DB_URL }}" \
-            --schema public \
-            -f supabase/migrations/$(date +%Y%m%d%H%M%S)_sync.sql
+            --schema public,auth \
+            -f supabase/migrations/$(date +%Y%m%d%H%M%S)_sync.sql 2>&1 | tee diff.log
           
-          MIGRATION_FILE=$(ls -t supabase/migrations/*.sql 2>/dev/null | head -1)
+          # Check if migra failed due to network issues
+          if grep -q "Network unreachable" diff.log; then
+            echo "Migra failed with IPv6 issues, using fallback comparison..."
+            
+            # Manual comparison using information_schema
+            > supabase/migrations/$(date +%Y%m%d%H%M%S)_sync.sql
+            MIGRATION_FILE="supabase/migrations/$(date +%Y%m%d%H%M%S)_sync.sql"
+            
+            # Track what we find for rename detection
+            > new_objects.txt
+            > dropped_objects.txt
+            
+            # Compare tables using subqueries (avoids direct connection issues)
+            echo "-- New tables" >> "$MIGRATION_FILE"
+            psql "${{ secrets.SUPABASE_DEV_DB_URL }}" -t -A -c "
+              SELECT 'CREATE TABLE ' || table_schema || '.' || table_name || ' (LIKE ' || table_schema || '.' || table_name || ' INCLUDING ALL);'
+              FROM information_schema.tables dev
+              WHERE table_schema IN ('public', 'auth')
+              AND table_type = 'BASE TABLE'
+              AND NOT EXISTS (
+                SELECT 1 FROM dblink('${{ secrets.SUPABASE_PROD_DB_URL }}',
+                  'SELECT table_name FROM information_schema.tables WHERE table_schema = ''' || dev.table_schema || ''''
+                ) AS prod(table_name text)
+                WHERE prod.table_name = dev.table_name
+              )
+            " >> "$MIGRATION_FILE" 2>/dev/null || echo "-- Could not compare via dblink" >> "$MIGRATION_FILE"
+            
+            # If dblink fails, use file comparison
+            if grep -q "Could not compare" "$MIGRATION_FILE"; then
+              psql "${{ secrets.SUPABASE_DEV_DB_URL }}" -t -A -c "
+                SELECT table_schema || '.' || table_name 
+                FROM information_schema.tables 
+                WHERE table_schema IN ('public', 'auth') 
+                AND table_type = 'BASE TABLE'
+              " | sort > dev_all.txt
+              
+              psql "${{ secrets.SUPABASE_PROD_DB_URL }}" -t -A -c "
+                SELECT table_schema || '.' || table_name 
+                FROM information_schema.tables 
+                WHERE table_schema IN ('public', 'auth') 
+                AND table_type = 'BASE TABLE'
+              " | sort > prod_all.txt
+              
+              # New tables
+              comm -13 prod_all.txt dev_all.txt > new_objects.txt
+              
+              # Dropped tables (for rename detection)
+              comm -23 prod_all.txt dev_all.txt > dropped_objects.txt
+              
+              # Generate CREATE statements for new tables
+              while read table_full; do
+                schema=$(echo $table_full | cut -d. -f1)
+                table=$(echo $table_full | cut -d. -f2)
+                echo "-- New table: $table_full" >> "$MIGRATION_FILE"
+                # Get the table structure (simplified)
+                psql "${{ secrets.SUPABASE_DEV_DB_URL }}" -t -A -c "
+                  SELECT 'CREATE TABLE IF NOT EXISTS $table_full (' || 
+                    string_agg(
+                      column_name || ' ' || data_type || 
+                      CASE WHEN character_maximum_length IS NOT NULL 
+                        THEN '(' || character_maximum_length || ')' 
+                        ELSE '' 
+                      END ||
+                      CASE WHEN is_nullable = 'NO' THEN ' NOT NULL' ELSE '' END,
+                      ', '
+                    ) || ');'
+                  FROM information_schema.columns
+                  WHERE table_schema = '$schema' AND table_name = '$table'
+                " >> "$MIGRATION_FILE"
+              done < new_objects.txt
+              
+              # Check for new columns in existing tables
+              echo "-- New columns" >> "$MIGRATION_FILE"
+              comm -12 prod_all.txt dev_all.txt | while read table_full; do
+                schema=$(echo $table_full | cut -d. -f1)
+                table=$(echo $table_full | cut -d. -f2)
+                
+                # Get columns from both databases
+                psql "${{ secrets.SUPABASE_DEV_DB_URL }}" -t -A -c "
+                  SELECT column_name FROM information_schema.columns 
+                  WHERE table_schema = '$schema' AND table_name = '$table'
+                " | sort > dev_cols.txt
+                
+                psql "${{ secrets.SUPABASE_PROD_DB_URL }}" -t -A -c "
+                  SELECT column_name FROM information_schema.columns 
+                  WHERE table_schema = '$schema' AND table_name = '$table'
+                " | sort > prod_cols.txt
+                
+                # New columns
+                NEW_COLS=$(comm -13 prod_cols.txt dev_cols.txt)
+                if [ -n "$NEW_COLS" ]; then
+                  for col in $NEW_COLS; do
+                    echo "$col" >> new_objects.txt
+                    psql "${{ secrets.SUPABASE_DEV_DB_URL }}" -t -A -c "
+                      SELECT 'ALTER TABLE $table_full ADD COLUMN ' || column_name || ' ' || 
+                        data_type || 
+                        CASE WHEN character_maximum_length IS NOT NULL 
+                          THEN '(' || character_maximum_length || ')' 
+                          ELSE '' 
+                        END ||
+                        CASE WHEN is_nullable = 'NO' THEN ' NOT NULL' ELSE '' END ||
+                        CASE WHEN column_default IS NOT NULL THEN ' DEFAULT ' || column_default ELSE '' END || ';'
+                      FROM information_schema.columns
+                      WHERE table_schema = '$schema' 
+                      AND table_name = '$table'
+                      AND column_name = '$col'
+                    " >> "$MIGRATION_FILE"
+                  done
+                fi
+                
+                # Dropped columns (for rename detection)
+                DROPPED_COLS=$(comm -23 prod_cols.txt dev_cols.txt)
+                if [ -n "$DROPPED_COLS" ]; then
+                  for col in $DROPPED_COLS; do
+                    echo "$table_full.$col" >> dropped_objects.txt
+                  done
+                fi
+              done
+            fi
+          else
+            MIGRATION_FILE=$(ls -t supabase/migrations/*.sql 2>/dev/null | head -1)
+          fi
           
+          # Clean up migration file
+          if [ -f "$MIGRATION_FILE" ]; then
+            grep -v "^--.*Could not" "$MIGRATION_FILE" | grep -v "^$" > temp.sql || true
+            [ -s temp.sql ] && mv temp.sql "$MIGRATION_FILE"
+          fi
+          
+          # Check if we have changes
           if [ -z "$MIGRATION_FILE" ] || [ ! -s "$MIGRATION_FILE" ]; then
             echo "✅ No database changes detected"
             exit 0
           fi
           
-          echo "📋 Migration changes detected:"
+          echo "📋 Migration changes:"
+          echo "===================="
           cat "$MIGRATION_FILE"
+          echo "===================="
           
-          if grep -iE "(DROP TABLE|DROP COLUMN|DROP INDEX|DELETE FROM|TRUNCATE)" "$MIGRATION_FILE"; then
+          # Check for destructive operations
+          if grep -iE "(DROP TABLE|DROP COLUMN|DROP INDEX|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE)" "$MIGRATION_FILE"; then
             echo "❌ DESTRUCTIVE OPERATIONS DETECTED!"
+            mkdir -p artifacts
+            cp "$MIGRATION_FILE" artifacts/blocked_migration_$(date +%Y%m%d_%H%M%S).sql
             exit 1
           fi
           
+          # Check for potential renames
+          if [ -s new_objects.txt ] && [ -s dropped_objects.txt ]; then
+            echo "⚠️ POTENTIAL RENAMES DETECTED:"
+            echo "New objects:"
+            cat new_objects.txt
+            echo "Dropped objects:"
+            cat dropped_objects.txt
+            echo ""
+            echo "If these are renames, handle manually:"
+            echo "1. Create new objects"
+            echo "2. Migrate data"
+            echo "3. Update application code"
+            echo "4. Drop old objects later"
+            mkdir -p artifacts
+            cp new_objects.txt artifacts/
+            cp dropped_objects.txt artifacts/
+            cp "$MIGRATION_FILE" artifacts/blocked_migration_$(date +%Y%m%d_%H%M%S).sql
+            exit 1
+          fi
+          
+          echo "✅ Safety checks passed"
           echo "🚀 Applying migration..."
           supabase db push
           
           echo "✅ Migration complete!"
+          
+          # Save successful migration
+          mkdir -p artifacts
+          cp "$MIGRATION_FILE" artifacts/applied_migration_$(date +%Y%m%d_%H%M%S).sql
+      
+      - name: Upload Migration Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-${{ github.run_number }}
+          path: |
+            supabase/migrations/*.sql
+            artifacts/*
+            *.txt
+            *.log
+          retention-days: 30
+          if-no-files-found: ignore
