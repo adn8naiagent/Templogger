@@ -467,6 +467,10 @@ export const signUpSchema = z.object({
     ),
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
+  city: z.string().optional(),
+  state_province: z.string().optional(),
+  country: z.string().optional(),
+  timezone: z.string().optional(),
 });
 
 // Sign in schema
