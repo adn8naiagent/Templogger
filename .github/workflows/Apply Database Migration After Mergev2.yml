@@ -29,12 +29,62 @@ jobs:
           # Link to production
           supabase link --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_REF }} --password "$PROD_PASSWORD"
           
-          # Generate diff: prod (linked) is the baseline, dev (db-url) has the new changes
+          # Use --use-migra flag to bypass the network issue
+          # Generate diff comparing prod (baseline) to dev (target)
           supabase db diff \
             --db-url "${{ secrets.SUPABASE_DEV_DB_URL }}" \
             --schema public \
-            -f supabase/migrations/$(date +%Y%m%d%H%M%S)_sync.sql
+            --use-migra \
+            -f supabase/migrations/$(date +%Y%m%d%H%M%S)_sync.sql 2>&1 | tee diff_output.log
           
+          # If migra fails due to network issues, fall back to pg_dump comparison
+          if grep -q "Network unreachable" diff_output.log; then
+            echo "Migra failed due to network issues, using fallback method..."
+            
+            # Dump both schemas
+            pg_dump "${{ secrets.SUPABASE_DEV_DB_URL }}" \
+              --schema-only --no-owner --no-privileges \
+              --schema=public -f dev.sql
+              
+            pg_dump "${{ secrets.SUPABASE_PROD_DB_URL }}" \
+              --schema-only --no-owner --no-privileges \
+              --schema=public -f prod.sql
+            
+            # Use PostgreSQL to generate differences
+            echo "-- Migration generated $(date)" > supabase/migrations/$(date +%Y%m%d%H%M%S)_sync.sql
+            
+            # Find new tables
+            psql "${{ secrets.SUPABASE_DEV_DB_URL }}" -t -c "
+              SELECT 'CREATE TABLE IF NOT EXISTS ' || schemaname || '.' || tablename || ' AS TABLE ' || schemaname || '.' || tablename || ' WITH NO DATA;'
+              FROM pg_tables d
+              WHERE d.schemaname = 'public'
+              AND NOT EXISTS (
+                SELECT 1 FROM pg_tables p 
+                WHERE p.schemaname = d.schemaname 
+                AND p.tablename = d.tablename
+                AND p.tableowner != d.tableowner
+              )
+            " >> supabase/migrations/$(date +%Y%m%d%H%M%S)_sync.sql
+            
+            # Find new columns
+            psql "${{ secrets.SUPABASE_DEV_DB_URL }}" -t -c "
+              SELECT 'ALTER TABLE ' || table_schema || '.' || table_name || 
+                     ' ADD COLUMN IF NOT EXISTS ' || column_name || ' ' || 
+                     data_type || CASE WHEN character_maximum_length IS NOT NULL 
+                     THEN '(' || character_maximum_length || ')' ELSE '' END || ';'
+              FROM information_schema.columns d
+              WHERE d.table_schema = 'public'
+              AND NOT EXISTS (
+                SELECT 1 FROM 
+                dblink('${{ secrets.SUPABASE_PROD_DB_URL }}',
+                  'SELECT column_name FROM information_schema.columns WHERE table_schema=''public'' AND table_name=''' || d.table_name || '''')
+                AS p(column_name text)
+                WHERE p.column_name = d.column_name
+              )
+            " >> supabase/migrations/$(date +%Y%m%d%H%M%S)_sync.sql 2>/dev/null || echo "Could not check columns"
+          fi
+          
+          # Get the migration file
           MIGRATION_FILE=$(ls -t supabase/migrations/*.sql 2>/dev/null | head -1)
           
           if [ -z "$MIGRATION_FILE" ] || [ ! -s "$MIGRATION_FILE" ]; then
@@ -42,15 +92,73 @@ jobs:
             exit 0
           fi
           
-          echo "📋 Migration changes detected:"
-          cat "$MIGRATION_FILE"
+          # Remove empty lines and comments
+          grep -v "^--" "$MIGRATION_FILE" | grep -v "^$" > temp.sql || true
           
-          if grep -iE "(DROP TABLE|DROP COLUMN|DROP INDEX|DELETE FROM|TRUNCATE)" "$MIGRATION_FILE"; then
+          if [ ! -s temp.sql ]; then
+            echo "✅ No actual changes in migration file"
+            exit 0
+          fi
+          
+          mv temp.sql "$MIGRATION_FILE"
+          
+          echo "📋 Migration changes detected:"
+          echo "================================"
+          cat "$MIGRATION_FILE"
+          echo "================================"
+          
+          # Analyze for destructive operations
+          DANGEROUS_PATTERNS="DROP TABLE|DROP COLUMN|DROP INDEX|DROP VIEW|DROP FUNCTION|DROP SCHEMA|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE"
+          
+          if grep -iE "($DANGEROUS_PATTERNS)" "$MIGRATION_FILE"; then
+            echo ""
             echo "❌ DESTRUCTIVE OPERATIONS DETECTED!"
+            echo ""
+            
+            # Check for potential renames
+            DROPPED_TABLES=$(grep -iE "DROP TABLE" "$MIGRATION_FILE" | sed 's/.*DROP TABLE //I' | sed 's/[; ].*//' || true)
+            CREATED_TABLES=$(grep -iE "CREATE TABLE" "$MIGRATION_FILE" | sed 's/.*CREATE TABLE //I' | sed 's/[( ].*//' || true)
+            
+            if [ -n "$DROPPED_TABLES" ] && [ -n "$CREATED_TABLES" ]; then
+              echo "⚠️  POSSIBLE RENAMES DETECTED:"
+              echo "Dropped: $DROPPED_TABLES"
+              echo "Created: $CREATED_TABLES"
+              echo ""
+              echo "To handle renames safely:"
+              echo "1. Create new tables/columns first"
+              echo "2. Migrate data with INSERT/UPDATE"
+              echo "3. Update application code"
+              echo "4. Drop old tables/columns later"
+            fi
+            
+            echo ""
+            echo "Migration blocked for safety. Review and handle manually."
+            mkdir -p artifacts
+            cp "$MIGRATION_FILE" artifacts/blocked_migration_$(date +%Y%m%d_%H%M%S).sql
             exit 1
           fi
           
+          echo "✅ Safety check passed - only additive changes detected"
+          
+          # Apply migration
           echo "🚀 Applying migration to production..."
           supabase db push
           
-          echo "✅ Migration successfully applied!"
+          if [ $? -eq 0 ]; then
+            echo "✅ Migration successfully applied!"
+          else
+            echo "❌ Migration failed - trying direct SQL application..."
+            psql "${{ secrets.SUPABASE_PROD_DB_URL }}" < "$MIGRATION_FILE"
+          fi
+      
+      - name: Upload Migration Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-${{ github.run_number }}
+          path: |
+            supabase/migrations/*.sql
+            artifacts/*.sql
+            *.log
+          retention-days: 30
+          if-no-files-found: ignore
