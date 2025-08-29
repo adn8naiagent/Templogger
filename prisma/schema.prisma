@@ -309,6 +309,9 @@ model users {
   stripe_subscription_id                                  String?
   created_at                                              DateTime?               @default(now()) @db.Timestamp(6)
   updated_at                                              DateTime?               @default(now()) @db.Timestamp(6)
+  paid_member_since                                       DateTime?               @db.Timestamp(6)
+  current_paid_period_start                               DateTime?               @db.Timestamp(6)
+  total_paid_days                                         Int?                    @default(0)
   audit_completions_audit_completions_completed_byTousers audit_completions[]     @relation("audit_completions_completed_byTousers")
   audit_completions_audit_completions_user_idTousers      audit_completions[]     @relation("audit_completions_user_idTousers")
   audit_templates                                         audit_templates[]
