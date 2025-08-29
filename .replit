@@ -2,4 +2,4 @@ modules = ["nodejs-20"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["postgresql", "git"]
+packages = ["postgresql", "git", "python3", "gcc", "gnumake"]
