@@ -12,61 +12,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - uses: supabase/setup-cli@v1
-        with:
-          version: latest
+      - name: Install migra
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip postgresql-client
+          pip3 install migra
       
       - name: Generate and Apply Migration
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DEV_DB_PASSWORD }}
         run: |
           echo "🔄 Generating migration between dev and production..."
           
-          # Clean workspace
-          rm -rf supabase
-          mkdir -p supabase
-          
-          # Initialize Supabase without prompts
-          supabase init --workdir supabase
-          cd supabase
-          
-          # Create config to avoid prompts
-          cat > config.toml << EOF
-          [api]
-          enabled = true
-          port = 54321
-          
-          [db]
-          port = 54322
-          
-          [studio]
-          enabled = false
-          EOF
-          
-          # Link to dev project with explicit password
-          supabase link \
-            --project-ref ${{ secrets.SUPABASE_DEV_PROJECT_REF }} \
-            --password "${{ secrets.SUPABASE_DEV_DB_PASSWORD }}"
-          
-          # Pull remote schema from dev
-          supabase db remote commit
-          
-          # Generate diff between dev and prod
-          supabase db diff \
-            --schema public,auth \
-            --db-url "${{ secrets.SUPABASE_PROD_DB_URL }}" \
+          # Use migra to compare databases directly
+          # This compares PROD (target) to DEV (source) to find what needs to be added to PROD
+          migra \
+            --unsafe \
+            "${{ secrets.SUPABASE_PROD_DB_URL }}" \
+            "${{ secrets.SUPABASE_DEV_DB_URL }}" \
             > migration.sql
           
-          # Check if migration file has actual content
+          # Check if migration file has content
           if [ ! -s migration.sql ]; then
             echo "✅ No database changes detected between dev and production"
-            exit 0
-          fi
-          
-          # Check if it's just comments
-          if ! grep -qvE '^\s*(--|$)' migration.sql; then
-            echo "✅ No actual changes detected (only comments)"
             exit 0
           fi
           
@@ -79,19 +45,19 @@ jobs:
           DANGEROUS_PATTERNS="DROP TABLE|DROP COLUMN|DROP INDEX|DROP VIEW|DROP FUNCTION|DROP SCHEMA|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE"
           
           if grep -iE "($DANGEROUS_PATTERNS)" migration.sql; then
-            echo "::error::❌ DESTRUCTIVE OPERATIONS DETECTED!"
+            echo "❌ DESTRUCTIVE OPERATIONS DETECTED!"
             echo ""
             echo "Found the following dangerous operations:"
             grep -iE "($DANGEROUS_PATTERNS)" migration.sql
             echo ""
-            echo "::error::Manual intervention required. Please handle these changes safely:"
-            echo "::error::1. For renames: Create new, migrate data, then remove old after code update"
-            echo "::error::2. For type changes: Create new column, migrate data, update code, then remove old"
-            echo "::error::3. For deletions: Ensure no dependencies exist and data is backed up"
+            echo "Manual intervention required. Please handle these changes safely:"
+            echo "1. For renames: Create new, migrate data, then remove old after code update"
+            echo "2. For type changes: Create new column, migrate data, update code, then remove old"
+            echo "3. For deletions: Ensure no dependencies exist and data is backed up"
             
             # Save migration for manual review
-            mkdir -p ../artifacts
-            cp migration.sql ../artifacts/blocked_migration_$(date +%Y%m%d_%H%M%S).sql
+            mkdir -p artifacts
+            cp migration.sql artifacts/blocked_migration_$(date +%Y%m%d_%H%M%S).sql
             exit 1
           fi
           
@@ -100,17 +66,16 @@ jobs:
           # Apply migration to production
           echo "🚀 Applying migration to production..."
           
-          cd ..
-          psql "${{ secrets.SUPABASE_PROD_DB_URL }}" < supabase/migration.sql
+          psql "${{ secrets.SUPABASE_PROD_DB_URL }}" < migration.sql
           
           if [ $? -eq 0 ]; then
             echo "✅ Migration successfully applied to production!"
             
             # Save successful migration
             mkdir -p artifacts
-            cp supabase/migration.sql artifacts/applied_migration_$(date +%Y%m%d_%H%M%S).sql
+            cp migration.sql artifacts/applied_migration_$(date +%Y%m%d_%H%M%S).sql
           else
-            echo "::error::❌ Migration failed to apply"
+            echo "❌ Migration failed to apply"
             exit 1
           fi
       
@@ -120,7 +85,7 @@ jobs:
         with:
           name: migration-${{ github.run_number }}-${{ github.run_attempt }}
           path: |
-            supabase/migration.sql
+            migration.sql
             artifacts/*.sql
           retention-days: 30
           if-no-files-found: ignore
