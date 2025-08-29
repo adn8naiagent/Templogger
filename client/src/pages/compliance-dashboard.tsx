@@ -24,7 +24,7 @@ import {
   Shield,
   Activity,
   BarChart3,
-  RefreshCw,
+  // RefreshCw,
   Download,
   // Filter,
   Eye,
@@ -78,7 +78,7 @@ export default function ComplianceDashboard() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [_selectedTimeframe, _setSelectedTimeframe] = useState<"today" | "week" | "month">("today");
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [autoRefresh, _setAutoRefresh] = useState(true);
 
   // Fetch compliance overview
   const {
@@ -266,8 +266,6 @@ export default function ComplianceDashboard() {
                   View Fridges
                 </Link>
               </Button>
-
-              
 
               <Button
                 variant="outline"
