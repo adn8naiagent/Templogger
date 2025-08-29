@@ -35,7 +35,9 @@
       "Bash(supabase:*)",
       "Bash(~/bin/supabase:*)",
       "Bash(git remote get-url:*)",
-      "Bash(npx husky:*)"
+      "Bash(npx husky:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm audit:*)"
     ],
     "deny": [],
     "ask": []
