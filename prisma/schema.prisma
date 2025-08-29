@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
@@ -14,12 +8,316 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model audit_completions {
+  completed_at                                DateTime?         @default(now()) @db.Timestamp(6)
+  notes                                       String?
+  completed_by                                String            @db.VarChar
+  template_name                               String
+  template_id                                 String            @db.VarChar
+  user_id                                     String            @db.VarChar
+  id                                          String            @id @default(dbgenerated("gen_random_uuid()")) @db.VarChar
+  created_at                                  DateTime?         @default(now()) @db.Timestamp(6)
+  compliance_rate                             Decimal           @default(0) @db.Decimal
+  users_audit_completions_completed_byTousers users             @relation("audit_completions_completed_byTousers", fields: [completed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  audit_templates                             audit_templates   @relation(fields: [template_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users_audit_completions_user_idTousers      users             @relation("audit_completions_user_idTousers", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  audit_responses                             audit_responses[]
+}
 
-  @@map("users")
+model audit_items {
+  is_required     Boolean           @default(true)
+  section_id      String            @db.VarChar
+  note            String?
+  text            String
+  order_index     Decimal           @default(0) @db.Decimal
+  created_at      DateTime?         @default(now()) @db.Timestamp(6)
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.VarChar
+  audit_sections  audit_sections    @relation(fields: [section_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  audit_responses audit_responses[]
+}
+
+model audit_responses {
+  section_title     String
+  completion_id     String            @db.VarChar
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.VarChar
+  action_required   String?
+  created_at        DateTime?         @default(now()) @db.Timestamp(6)
+  notes             String?
+  is_compliant      Boolean           @default(false)
+  item_text         String
+  item_id           String            @db.VarChar
+  section_id        String            @db.VarChar
+  audit_completions audit_completions @relation(fields: [completion_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  audit_items       audit_items       @relation(fields: [item_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  audit_sections    audit_sections    @relation(fields: [section_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model audit_sections {
+  order_index     Decimal           @default(0) @db.Decimal
+  title           String
+  template_id     String            @db.VarChar
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.VarChar
+  description     String?
+  created_at      DateTime?         @default(now()) @db.Timestamp(6)
+  audit_items     audit_items[]
+  audit_responses audit_responses[]
+  audit_templates audit_templates   @relation(fields: [template_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model audit_templates {
+  is_default        Boolean             @default(false)
+  updated_at        DateTime?           @default(now()) @db.Timestamp(6)
+  created_at        DateTime?           @default(now()) @db.Timestamp(6)
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.VarChar
+  user_id           String              @db.VarChar
+  name              String
+  description       String?
+  audit_completions audit_completions[]
+  audit_sections    audit_sections[]
+  users             users               @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model calibration_records {
+  calibration_date           DateTime  @db.Timestamp(6)
+  next_calibration_due       DateTime  @db.Timestamp(6)
+  before_calibration_reading Decimal?  @db.Decimal
+  after_calibration_reading  Decimal?  @db.Decimal
+  accuracy                   Decimal?  @db.Decimal
+  certificate_file_size      Decimal?  @db.Decimal
+  created_at                 DateTime? @default(now()) @db.Timestamp(6)
+  id                         String    @id @default(dbgenerated("gen_random_uuid()")) @db.VarChar
+  user_id                    String    @db.VarChar
+  fridge_id                  String    @db.VarChar
+  performed_by               String
+  calibration_standard       String?
+  certificate_file_name      String?
+  certificate_file_path      String?
+  notes                      String?
+  status                     String
+  fridges                    fridges   @relation(fields: [fridge_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                      users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model checklist_completions {
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.VarChar
+  checklist_id    String     @db.VarChar
+  fridge_id       String?    @db.VarChar
+  completed_by    String     @db.VarChar
+  completed_items String[]
+  notes           String?
+  completed_at    DateTime?  @default(now()) @db.Timestamp(6)
+  checklists      checklists @relation(fields: [checklist_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "checklist_completions_checklist_id_checklists_id_fk")
+  users           users      @relation(fields: [completed_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "checklist_completions_completed_by_users_id_fk")
+  fridges         fridges?   @relation(fields: [fridge_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "checklist_completions_fridge_id_fridges_id_fk")
+}
+
+model checklist_items {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.VarChar
+  checklist_id String     @db.VarChar
+  title        String
+  description  String?
+  is_required  Boolean    @default(true)
+  sort_order   Decimal    @default(0) @db.Decimal(3, 0)
+  created_at   DateTime?  @default(now()) @db.Timestamp(6)
+  checklists   checklists @relation(fields: [checklist_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "checklist_items_checklist_id_checklists_id_fk")
+}
+
+model checklists {
+  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.VarChar
+  title                 String
+  description           String?
+  frequency             String
+  is_active             Boolean                 @default(true)
+  fridge_id             String?                 @db.VarChar
+  created_by            String                  @db.VarChar
+  created_at            DateTime?               @default(now()) @db.Timestamp(6)
+  checklist_completions checklist_completions[]
+  checklist_items       checklist_items[]
+  users                 users                   @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "checklists_created_by_users_id_fk")
+  fridges               fridges?                @relation(fields: [fridge_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "checklists_fridge_id_fridges_id_fk")
+}
+
+model compliance_records {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.VarChar
+  fridge_id              String    @db.VarChar
+  date                   DateTime  @db.Timestamp(6)
+  level                  String
+  status                 String
+  temperature_compliance Decimal?  @default(100.00) @db.Decimal(5, 2)
+  checking_compliance    Decimal?  @default(100.00) @db.Decimal(5, 2)
+  required_checks        Decimal   @default(0) @db.Decimal(3, 0)
+  completed_checks       Decimal   @default(0) @db.Decimal(3, 0)
+  on_time_checks         Decimal   @default(0) @db.Decimal(3, 0)
+  created_at             DateTime? @default(now()) @db.Timestamp(6)
+  updated_at             DateTime? @default(now()) @db.Timestamp(6)
+  fridges                fridges   @relation(fields: [fridge_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "compliance_records_fridge_id_fridges_id_fk")
+}
+
+model fridges {
+  id                      String                  @id @default(dbgenerated("gen_random_uuid()")) @db.VarChar
+  user_id                 String                  @db.VarChar
+  name                    String
+  location                String?
+  notes                   String?
+  color                   String?                 @default("#3b82f6")
+  labels                  String[]
+  min_temp                Decimal                 @db.Decimal(4, 1)
+  max_temp                Decimal                 @db.Decimal(4, 1)
+  is_active               Boolean                 @default(true)
+  enable_scheduled_checks Boolean                 @default(false)
+  check_frequency         String?
+  excluded_days           String[]                @default([])
+  created_at              DateTime?               @default(now()) @db.Timestamp(6)
+  updated_at              DateTime?               @default(now()) @db.Timestamp(6)
+  calibration_records     calibration_records[]
+  checklist_completions   checklist_completions[]
+  checklists              checklists[]
+  compliance_records      compliance_records[]
+  users                   users                   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fridges_user_id_users_id_fk")
+  maintenance_records     maintenance_records[]
+  missed_checks           missed_checks[]
+  out_of_range_events     out_of_range_events[]
+  temperature_logs        temperature_logs[]
+  time_windows            time_windows[]
+}
+
+model labels {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.VarChar
+  user_id    String    @db.VarChar
+  name       String
+  color      String?   @default("#6b7280")
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "labels_user_id_users_id_fk")
+}
+
+model maintenance_records {
+  created_at           DateTime? @default(now()) @db.Timestamp(6)
+  attachment_file_size Decimal?  @db.Decimal
+  next_maintenance_due DateTime? @db.Timestamp(6)
+  cost                 Decimal?  @db.Decimal
+  status               String
+  maintenance_date     DateTime  @db.Timestamp(6)
+  fridge_id            String    @db.VarChar
+  performed_by         String
+  maintenance_type     String
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.VarChar
+  description          String
+  user_id              String    @db.VarChar
+  attachment_file_path String?
+  parts_replaced       String[]
+  attachment_file_name String?
+  fridges              fridges   @relation(fields: [fridge_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model missed_checks {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.VarChar
+  fridge_id       String        @db.VarChar
+  time_window_id  String?       @db.VarChar
+  missed_date     DateTime      @db.Timestamp(6)
+  check_type      String
+  reason          String?
+  is_overridden   Boolean       @default(false)
+  override_reason String?
+  overridden_by   String?       @db.VarChar
+  overridden_at   DateTime?     @db.Timestamp(6)
+  created_at      DateTime?     @default(now()) @db.Timestamp(6)
+  fridges         fridges       @relation(fields: [fridge_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "missed_checks_fridge_id_fridges_id_fk")
+  users           users?        @relation(fields: [overridden_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "missed_checks_overridden_by_users_id_fk")
+  time_windows    time_windows? @relation(fields: [time_window_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "missed_checks_time_window_id_time_windows_id_fk")
+}
+
+model out_of_range_events {
+  id                 String           @id @default(dbgenerated("gen_random_uuid()")) @db.VarChar
+  temperature_log_id String           @db.VarChar
+  fridge_id          String           @db.VarChar
+  temperature        Decimal          @db.Decimal(4, 1)
+  expected_min       Decimal          @db.Decimal(4, 1)
+  expected_max       Decimal          @db.Decimal(4, 1)
+  severity           String
+  corrective_action  String?
+  notes              String?
+  resolved_at        DateTime?        @db.Timestamp(6)
+  created_at         DateTime?        @default(now()) @db.Timestamp(6)
+  fridges            fridges          @relation(fields: [fridge_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "out_of_range_events_fridge_id_fridges_id_fk")
+  temperature_logs   temperature_logs @relation(fields: [temperature_log_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "out_of_range_events_temperature_log_id_temperature_logs_id_fk")
+}
+
+model sessions {
+  sid    String   @id @db.VarChar
+  sess   String
+  expire DateTime @db.Timestamp(6)
+}
+
+model subscriptions {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.VarChar
+  user_id                String    @db.VarChar
+  tier                   String
+  status                 String
+  stripe_subscription_id String?
+  current_period_end     DateTime? @db.Timestamp(6)
+  created_at             DateTime? @default(now()) @db.Timestamp(6)
+  updated_at             DateTime? @default(now()) @db.Timestamp(6)
+  users                  users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "subscriptions_user_id_users_id_fk")
+}
+
+model temperature_logs {
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.VarChar
+  fridge_id           String                @db.VarChar
+  time_window_id      String?               @db.VarChar
+  temperature         Decimal               @db.Decimal(4, 1)
+  person_name         String
+  is_alert            Boolean               @default(false)
+  is_on_time          Boolean               @default(true)
+  late_reason         String?
+  corrective_action   String?
+  corrective_notes    String?
+  created_at          DateTime?             @default(now()) @db.Timestamp(6)
+  out_of_range_events out_of_range_events[]
+  fridges             fridges               @relation(fields: [fridge_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "temperature_logs_fridge_id_fridges_id_fk")
+  time_windows        time_windows?         @relation(fields: [time_window_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "temperature_logs_time_window_id_time_windows_id_fk")
+}
+
+model time_windows {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.VarChar
+  fridge_id        String             @db.VarChar
+  label            String
+  check_type       String             @default("specific")
+  start_time       String?
+  end_time         String?
+  excluded_days    String[]           @default([])
+  is_active        Boolean            @default(true)
+  created_at       DateTime?          @default(now()) @db.Timestamp(6)
+  missed_checks    missed_checks[]
+  temperature_logs temperature_logs[]
+  fridges          fridges            @relation(fields: [fridge_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "time_windows_fridge_id_fridges_id_fk")
+}
+
+model users {
+  id                                                      String                  @id @default(dbgenerated("gen_random_uuid()")) @db.VarChar
+  email                                                   String                  @unique(map: "users_email_unique")
+  password                                                String
+  first_name                                              String
+  last_name                                               String
+  profile_image_url                                       String?
+  role                                                    String                  @default("user")
+  subscription_status                                     String                  @default("trial")
+  trial_start_date                                        DateTime?               @default(now()) @db.Timestamp(6)
+  trial_end_date                                          DateTime?               @db.Timestamp(6)
+  dark_mode                                               Boolean?                @default(false)
+  stripe_customer_id                                      String?
+  stripe_subscription_id                                  String?
+  created_at                                              DateTime?               @default(now()) @db.Timestamp(6)
+  updated_at                                              DateTime?               @default(now()) @db.Timestamp(6)
+  audit_completions_audit_completions_completed_byTousers audit_completions[]     @relation("audit_completions_completed_byTousers")
+  audit_completions_audit_completions_user_idTousers      audit_completions[]     @relation("audit_completions_user_idTousers")
+  audit_templates                                         audit_templates[]
+  calibration_records                                     calibration_records[]
+  checklist_completions                                   checklist_completions[]
+  checklists                                              checklists[]
+  fridges                                                 fridges[]
+  labels                                                  labels[]
+  maintenance_records                                     maintenance_records[]
+  missed_checks                                           missed_checks[]
+  subscriptions                                           subscriptions[]
 }
