@@ -63,7 +63,6 @@ import {
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 
-
 interface Fridge {
   _id: string;
   name: string;
@@ -422,8 +421,8 @@ export default function TempLogger() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-2 border-slate-300 hover:border-blue-500 hover:bg-blue-50
-                    dark:border-slate-600 dark:hover:border-blue-400
+                  className="border-2 border-slate-300 hover:border-blue-500 hover:bg-blue-50 
+                    dark:border-slate-600 dark:hover:border-blue-400 
                     dark:hover:bg-blue-950/20 shadow-sm hover:shadow-md transition-all duration-200"
                   data-testid="user-menu"
                 >

@@ -1,6 +1,0 @@
-CRITICAL DATABASE RULES:
-
-Never use DROP, DELETE, TRUNCATE on schema
-Only add tables/columns, never remove
-Read .database-safety-rules.md first
-Run code quality checks after changes
