@@ -38,7 +38,10 @@
       "Bash(psql:*)",
       "Bash(npx prisma:*)",
       "Bash(unset DATABASE_URL)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(git checkout:*)",
+      "Bash(./scripts/agent-db-change.sh:*)",
+      "Bash(./scripts/agent-schema-update.sh:*)"
     ],
     "deny": [],
     "ask": []
