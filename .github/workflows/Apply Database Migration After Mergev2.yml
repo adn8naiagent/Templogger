@@ -16,94 +16,68 @@ jobs:
         with:
           version: latest
       
-      - name: Install PostgreSQL Client
-        run: |
-          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-          wget -qO- https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo tee /etc/apt/trusted.gpg.d/pgdg.asc &>/dev/null
-          sudo apt update
-          sudo apt install postgresql-client-16 -y
-      
       - name: Generate and Apply Migration
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
-          # Extract project reference from prod URL
-          PROD_PROJECT_REF=$(echo "${{ secrets.SUPABASE_PROD_DB_URL }}" | sed -n 's/.*db\.\([a-z]*\)\.supabase\.co.*/\1/p')
+          echo "Generating migration between dev and production..."
           
-          # Create workspace directory
-          mkdir -p workspace
-          cd workspace
+          # Create clean workspace
+          rm -rf supabase
+          mkdir -p temp_workspace
+          cd temp_workspace
           
-          # Initialize for dev project
+          # Initialize and link to dev project
           supabase init
-          supabase link --project-ref ${{ secrets.SUPABASE_DEV_PROJECT_REF }}
+          supabase link --project-ref ${{ secrets.SUPABASE_DEV_PROJECT_REF }} --password "$SUPABASE_DB_PASSWORD"
           
-          # Dump dev schema
-          pg_dump "${{ secrets.SUPABASE_DEV_DB_URL }}" \
-            --schema=public \
-            --no-owner \
-            --no-privileges \
-            --no-tablespaces \
-            --no-security-labels \
-            --no-comments \
-            --schema-only \
-            -f dev_schema.sql
-          
-          # Dump prod schema  
-          pg_dump "${{ secrets.SUPABASE_PROD_DB_URL }}" \
-            --schema=public \
-            --no-owner \
-            --no-privileges \
-            --no-tablespaces \
-            --no-security-labels \
-            --no-comments \
-            --schema-only \
-            -f prod_schema.sql
-          
-          # Use Supabase's built-in diff
-          supabase db diff --use-pg-dump \
+          # Use Supabase CLI to generate diff against production
+          supabase db diff \
+            --db-url "${{ secrets.SUPABASE_PROD_DB_URL }}" \
             --file migration.sql \
-            dev_schema.sql \
-            prod_schema.sql || {
-              # Fallback: simple diff
-              diff -u prod_schema.sql dev_schema.sql > migration.sql || true
-            }
+            --schema public
           
-          # Process the diff to create executable SQL
+          # Check if migration file has content
           if [ -s migration.sql ]; then
-            echo "Raw diff found, processing..."
+            echo "📋 Migration preview:"
+            cat migration.sql
             
-            # Extract only the SQL commands we want
-            grep -E "^(CREATE|ALTER|INSERT|UPDATE)" migration.sql > clean_migration.sql || true
-            
-            if [ -s clean_migration.sql ]; then
-              mv clean_migration.sql migration.sql
+            # Safety check for destructive operations
+            if grep -iE "(DROP TABLE|DROP COLUMN|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE)" migration.sql; then
+              echo "::error::❌ DESTRUCTIVE OPERATIONS DETECTED!"
+              echo "::error::The following destructive operations were found:"
+              grep -iE "(DROP TABLE|DROP COLUMN|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE)" migration.sql
               
-              echo "Migration to apply:"
-              cat migration.sql
-              
-              # Safety check
-              if grep -iE "(DROP TABLE|DROP COLUMN|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE)" migration.sql; then
-                echo "DESTRUCTIVE OPERATIONS DETECTED!"
-                exit 1
+              # Check for potential rename pattern
+              if grep -E "CREATE TABLE" migration.sql && grep -E "DROP TABLE" migration.sql; then
+                echo "::warning::This might be a table rename - manual data migration required"
+              fi
+              if grep -E "ADD COLUMN" migration.sql && grep -E "DROP COLUMN" migration.sql; then
+                echo "::warning::This might be a column rename - manual data migration required"
               fi
               
-              # Apply migration
-              echo "Applying migration to production..."
-              psql "${{ secrets.SUPABASE_PROD_DB_URL }}" -f migration.sql
-              echo "Migration completed successfully"
-            else
-              echo "No valid SQL changes found"
+              exit 1
             fi
+            
+            # Check for RLS policies
+            if grep -E "(CREATE POLICY|ALTER POLICY|DROP POLICY|ENABLE ROW LEVEL SECURITY)" migration.sql; then
+              echo "📔 RLS policy changes detected"
+            fi
+            
+            # Apply the migration
+            echo "🚀 Applying migration to production..."
+            psql "${{ secrets.SUPABASE_PROD_DB_URL }}" -f migration.sql
+            echo "✅ Migration completed successfully"
+            
           else
-            echo "No schema changes detected"
+            echo "✅ No database changes detected between dev and production"
           fi
       
       - name: Save Migration Artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: migration-attempt-${{ github.sha }}
-          path: |
-            workspace/*.sql
+          name: migration-${{ github.sha }}
+          path: temp_workspace/migration.sql
           if-no-files-found: ignore
