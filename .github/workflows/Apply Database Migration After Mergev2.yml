@@ -19,23 +19,9 @@ jobs:
       - name: Generate and Apply Migration
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DEV_DB_PASSWORD }}
         run: |
           echo "🔄 Generating migration between dev and production..."
-          
-          # Extract passwords from the database URLs
-          DEV_PASSWORD=$(echo "${{ secrets.SUPABASE_DEV_DB_URL }}" | grep -oP '(?<=postgres:)[^@]+')
-          PROD_PASSWORD=$(echo "${{ secrets.SUPABASE_PROD_DB_URL }}" | grep -oP '(?<=postgres:)[^@]+')
-          
-          # Extract project refs from URLs
-          DEV_REF=$(echo "${{ secrets.SUPABASE_DEV_DB_URL }}" | grep -oP '(?<=db\.)[^.]+')
-          PROD_REF=$(echo "${{ secrets.SUPABASE_PROD_DB_URL }}" | grep -oP '(?<=db\.)[^.]+')
-          
-          # Debug: Check if extraction worked
-          if [ -z "$DEV_PASSWORD" ]; then
-            echo "::error::Failed to extract DEV password from SUPABASE_DEV_DB_URL"
-            echo "URL format should be: postgresql://postgres:PASSWORD@db.PROJECT_REF.supabase.co:5432/postgres"
-            exit 1
-          fi
           
           # Clean workspace
           rm -rf supabase
@@ -58,10 +44,10 @@ jobs:
           enabled = false
           EOF
           
-          # Link to dev project with password (use the dev project ref from secrets)
-          echo "$DEV_PASSWORD" | supabase link \
+          # Link to dev project with explicit password
+          supabase link \
             --project-ref ${{ secrets.SUPABASE_DEV_PROJECT_REF }} \
-            --password "$DEV_PASSWORD"
+            --password "${{ secrets.SUPABASE_DEV_DB_PASSWORD }}"
           
           # Pull remote schema from dev
           supabase db remote commit
@@ -69,7 +55,6 @@ jobs:
           # Generate diff between dev and prod
           supabase db diff \
             --schema public,auth \
-            --use-migra \
             --db-url "${{ secrets.SUPABASE_PROD_DB_URL }}" \
             > migration.sql
           
