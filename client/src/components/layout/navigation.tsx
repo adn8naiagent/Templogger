@@ -20,9 +20,9 @@ export default function Navigation({ onRefresh }: NavigationProps) {
   const { user, logout } = useAuth();
 
   return (
-    <nav className="bg-card border-b border-border sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <div className="border-b">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <Zap className="w-6 h-6 text-primary" data-testid="logo-icon" />
@@ -106,6 +106,6 @@ export default function Navigation({ onRefresh }: NavigationProps) {
           </div>
         </div>
       </div>
-    </nav>
+    </div>
   );
 }
