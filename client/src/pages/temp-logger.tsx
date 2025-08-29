@@ -62,7 +62,6 @@ import {
 } from "@shared/schema";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
-import { Toaster } from "@/components/ui/toaster";
 
 
 interface Fridge {
