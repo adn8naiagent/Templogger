@@ -87,6 +87,14 @@ export default function SelfAuditChecklists() {
   const { user: _user, isAuthenticated, isLoading, logout: _logout } = useAuth();
   const queryClient = useQueryClient();
 
+  const handleRefresh = () => {
+    queryClient.invalidateQueries();
+    toast({
+      title: "Self-Audit Refreshed",
+      description: "All template and completion data has been updated.",
+    });
+  };
+
   const [searchQuery, setSearchQuery] = useState("");
   const [_selectedTemplate, _setSelectedTemplate] = useState<AuditTemplate | null>(null);
   const [_isTemplateEditorOpen, _setIsTemplateEditorOpen] = useState(false);
@@ -242,8 +250,8 @@ export default function SelfAuditChecklists() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
+    <div className="min-h-screen bg-background text-foreground font-sans">
+      <Navigation onRefresh={handleRefresh} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Tabs defaultValue="templates" className="w-full">
