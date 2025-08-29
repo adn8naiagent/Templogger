@@ -3,23 +3,27 @@
 ## Core Rules - ALWAYS FOLLOW
 
 ### Database Safety - CRITICAL
+
 - NEVER use destructive operations: DROP TABLE, DROP COLUMN, DELETE FROM (schema), TRUNCATE, ALTER COLUMN TYPE, RENAME
 - ONLY use additive operations: CREATE TABLE, ADD COLUMN, CREATE INDEX, INSERT/UPDATE/SELECT data
 - For "renames": Create new table/column, copy data, keep old marked as deprecated
 - Check .database-safety-rules.md before ANY database operation
 
 ### Code Quality - Continuous Checks
+
 - Run TypeScript checking after every change: `npm run type-check`
 - Run ESLint after file modifications: `npm run lint`
 - Run Prettier before committing: `npm run format`
 - Fix all errors immediately, don't accumulate technical debt
 
 ### Security Scanning
+
 - Run Snyk check weekly: `npm run security-check`
 - Update dependencies when security issues found
 - Never ignore security warnings
 
 ### Development Workflow
+
 1. Before implementing features:
    - Check types compile
    - Ensure linting passes
@@ -38,7 +42,9 @@
    - Code properly formatted
 
 ## Automated Validation
+
 When user asks for any feature, after implementation:
+
 1. Auto-run: `npm run type-check`
 2. Auto-run: `npm run lint:fix`
 3. Auto-run: `npm run format`
