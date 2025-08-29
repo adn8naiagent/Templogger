@@ -19,65 +19,78 @@ jobs:
       - name: Generate and Apply Migration
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
-          echo "Generating migration between dev and production..."
+          echo "🔄 Generating migration between dev and production..."
           
-          # Create clean workspace
+          # Clean workspace
           rm -rf supabase
-          mkdir -p temp_workspace
-          cd temp_workspace
+          mkdir -p supabase
           
-          # Initialize and link to dev project
+          # Initialize Supabase
           supabase init
-          supabase link --project-ref ${{ secrets.SUPABASE_DEV_PROJECT_REF }} --password "$SUPABASE_DB_PASSWORD"
           
-          # Use Supabase CLI to generate diff against production
+          # Link to dev project using access token (no password needed with token)
+          supabase link --project-ref ${{ secrets.SUPABASE_DEV_PROJECT_REF }}
+          
+          # Generate diff between dev and prod
+          # Using the correct secret names from your GitHub
           supabase db diff \
+            --schema public,auth,storage \
             --db-url "${{ secrets.SUPABASE_PROD_DB_URL }}" \
-            --file migration.sql \
-            --schema public
+            --file supabase/migration.sql
           
           # Check if migration file has content
-          if [ -s migration.sql ]; then
-            echo "📋 Migration preview:"
-            cat migration.sql
-            
-            # Safety check for destructive operations
-            if grep -iE "(DROP TABLE|DROP COLUMN|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE)" migration.sql; then
-              echo "::error::❌ DESTRUCTIVE OPERATIONS DETECTED!"
-              echo "::error::The following destructive operations were found:"
-              grep -iE "(DROP TABLE|DROP COLUMN|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE)" migration.sql
-              
-              # Check for potential rename pattern
-              if grep -E "CREATE TABLE" migration.sql && grep -E "DROP TABLE" migration.sql; then
-                echo "::warning::This might be a table rename - manual data migration required"
-              fi
-              if grep -E "ADD COLUMN" migration.sql && grep -E "DROP COLUMN" migration.sql; then
-                echo "::warning::This might be a column rename - manual data migration required"
-              fi
-              
-              exit 1
-            fi
-            
-            # Check for RLS policies
-            if grep -E "(CREATE POLICY|ALTER POLICY|DROP POLICY|ENABLE ROW LEVEL SECURITY)" migration.sql; then
-              echo "📔 RLS policy changes detected"
-            fi
-            
-            # Apply the migration
-            echo "🚀 Applying migration to production..."
-            psql "${{ secrets.SUPABASE_PROD_DB_URL }}" -f migration.sql
-            echo "✅ Migration completed successfully"
-            
-          else
+          if [ ! -s supabase/migration.sql ]; then
             echo "✅ No database changes detected between dev and production"
+            exit 0
+          fi
+          
+          echo "📋 Migration changes detected:"
+          echo "================================"
+          cat supabase/migration.sql
+          echo "================================"
+          
+          # Safety check for destructive operations
+          DANGEROUS_PATTERNS="DROP TABLE|DROP COLUMN|DROP INDEX|DROP VIEW|DROP FUNCTION|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE"
+          
+          if grep -iE "($DANGEROUS_PATTERNS)" supabase/migration.sql; then
+            echo "::error::❌ DESTRUCTIVE OPERATIONS DETECTED!"
+            echo ""
+            echo "Found the following dangerous operations:"
+            grep -iE "($DANGEROUS_PATTERNS)" supabase/migration.sql
+            echo ""
+            echo "::error::Manual intervention required. Please handle these changes safely:"
+            echo "1. For renames: Create new, migrate data, then remove old after code update"
+            echo "2. For type changes: Create new column, migrate data, update code, then remove old"
+            echo "3. For deletions: Ensure no dependencies exist and data is backed up"
+            
+            # Save migration as artifact for review
+            mkdir -p artifacts
+            cp supabase/migration.sql artifacts/blocked_migration_$(date +%Y%m%d_%H%M%S).sql
+            exit 1
+          fi
+          
+          echo "✅ Safety check passed - no destructive operations found"
+          
+          # Apply migration to production
+          echo "🚀 Applying migration to production..."
+          
+          # Apply using the production database URL
+          psql "${{ secrets.SUPABASE_PROD_DB_URL }}" -f supabase/migration.sql
+          
+          if [ $? -eq 0 ]; then
+            echo "✅ Migration successfully applied to production!"
+          else
+            echo "::error::❌ Migration failed to apply"
+            exit 1
           fi
       
-      - name: Save Migration Artifact
+      - name: Upload Migration Artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
-          name: migration-${{ github.sha }}
-          path: temp_workspace/migration.sql
-          if-no-files-found: ignore
+          name: migration-files
+          path: |
+            supabase/migration.sql
+            artifacts/*.sql
+          retention-days: 30
