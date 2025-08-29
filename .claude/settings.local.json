@@ -37,7 +37,8 @@
       "Bash(mkdir:*)",
       "Bash(psql:*)",
       "Bash(npx prisma:*)",
-      "Bash(unset DATABASE_URL)"
+      "Bash(unset DATABASE_URL)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
