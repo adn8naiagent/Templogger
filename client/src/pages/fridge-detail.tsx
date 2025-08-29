@@ -21,13 +21,12 @@ import {
   AlertTriangle,
   CheckCircle,
   FileText,
-  // Power,
+  Plus,
   PowerOff,
   Download,
   Refrigerator,
   // Wrench,
   // Award,
-  // Plus,
   // Upload
 } from "lucide-react";
 import type {
@@ -38,6 +37,8 @@ import type {
   TimeWindow,
 } from "@shared/schema";
 import CalibrationManager from "@/components/calibration/calibration-manager";
+import Navigation from "@/components/layout/navigation";
+import { apiRequest } from "@/lib/queryClient";
 
 interface FridgeWithLogs extends Fridge {
   logs: (TemperatureLog & { fridgeName: string })[];
@@ -53,21 +54,49 @@ export default function FridgeDetail() {
 
   const { data: fridge, isLoading } = useQuery<FridgeWithLogs>({
     queryKey: [`/api/fridge/${id}`],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/fridge/${id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch fridge");
+      }
+      return response.json();
+    },
     enabled: !!id,
   });
 
   const { data: timeWindows = [] } = useQuery<TimeWindow[]>({
     queryKey: [`/api/fridges/${id}/time-windows`],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/fridges/${id}/time-windows`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch time windows");
+      }
+      return response.json();
+    },
     enabled: !!id,
   });
 
   const { data: _calibrationRecords = [] } = useQuery<CalibrationRecord[]>({
     queryKey: [`/api/fridges/${id}/calibrations`],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/fridges/${id}/calibrations`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch calibrations");
+      }
+      return response.json();
+    },
     enabled: !!id,
   });
 
   const { data: _maintenanceRecords = [] } = useQuery<MaintenanceRecord[]>({
     queryKey: [`/api/fridges/${id}/maintenance`],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/fridges/${id}/maintenance`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch maintenance records");
+      }
+      return response.json();
+    },
     enabled: !!id,
   });
 
@@ -154,17 +183,7 @@ export default function FridgeDetail() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="bg-card border-b border-border sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 py-4">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => setLocation("/fridges")}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Fridges
-              </Button>
-              <div className="h-6 w-48 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-          </div>
-        </header>
+        <Navigation />
 
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="animate-pulse space-y-6">
@@ -190,16 +209,7 @@ export default function FridgeDetail() {
   if (!fridge) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="bg-card border-b border-border sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 py-4">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => setLocation("/fridges")}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Fridges
-              </Button>
-            </div>
-          </div>
-        </header>
+        <Navigation />
 
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="text-center">
@@ -223,54 +233,60 @@ export default function FridgeDetail() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLocation("/fridges")}
-                data-testid="button-back"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Fridges
-              </Button>
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm"
-                  style={{ backgroundColor: fridge.color || "#3b82f6" }}
-                >
-                  <Refrigerator className="w-4 h-4 text-white" />
-                </div>
-                <h1 className="text-xl font-bold text-foreground">{fridge.name}</h1>
-                {!fridge.isActive && (
-                  <Badge variant="secondary" className="gap-1">
-                    <PowerOff className="h-3 w-3" />
-                    Inactive
-                  </Badge>
-                )}
-              </div>
-            </div>
+      <Navigation />
 
-            <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={exportLogs} data-testid="button-export">
-                <Download className="h-4 w-4 mr-2" />
-                Export Logs
-              </Button>
-              <Button variant="outline" asChild data-testid="button-settings">
-                <Link to={`/fridge/${fridge._id}/edit`}>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Settings
-                </Link>
-              </Button>
+      <div
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
+        data-testid="fridge-detail-container"
+      >
+        {/* Page Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLocation("/fridges")}
+              data-testid="button-back"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <div className="flex items-center gap-3">
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm"
+                style={{ backgroundColor: fridge.color || "#3b82f6" }}
+              >
+                <Refrigerator className="w-4 h-4 text-white" />
+              </div>
+              <h1 className="text-2xl font-bold text-foreground">{fridge.name}</h1>
+              {!fridge.isActive && (
+                <Badge variant="secondary" className="gap-1">
+                  <PowerOff className="h-3 w-3" />
+                  Inactive
+                </Badge>
+              )}
             </div>
           </div>
-        </div>
-      </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-8" data-testid="fridge-detail-container">
+          <div className="flex items-center gap-2">
+            <Button variant="default" asChild data-testid="button-log-temp">
+              <Link to={`/?fridge=${fridge._id}`}>
+                <Plus className="h-4 w-4 mr-2" />
+                Log Temperature
+              </Link>
+            </Button>
+            <Button variant="outline" onClick={exportLogs} data-testid="button-export">
+              <Download className="h-4 w-4 mr-2" />
+              Export Logs
+            </Button>
+            <Button variant="outline" asChild data-testid="button-settings">
+              <Link to={`/fridge/${fridge._id}/edit`}>
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+              </Link>
+            </Button>
+          </div>
+        </div>
         {/* Fridge Overview */}
         <Card
           className="mb-8"
