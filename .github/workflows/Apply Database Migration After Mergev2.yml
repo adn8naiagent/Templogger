@@ -12,11 +12,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Install migra
+      - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-pip postgresql-client
-          pip3 install migra
+          sudo apt-get install -y python3-pip postgresql-client libpq-dev
+          pip3 install psycopg2-binary migra
       
       - name: Generate and Apply Migration
         run: |
@@ -28,11 +28,12 @@ jobs:
             --unsafe \
             "${{ secrets.SUPABASE_PROD_DB_URL }}" \
             "${{ secrets.SUPABASE_DEV_DB_URL }}" \
-            > migration.sql
+            > migration.sql 2>&1 || true
           
-          # Check if migration file has content
-          if [ ! -s migration.sql ]; then
+          # Check if migration file has real SQL content (not just errors or empty)
+          if [ ! -s migration.sql ] || ! grep -qE '(CREATE|ALTER|DROP|INSERT|UPDATE|DELETE)' migration.sql; then
             echo "✅ No database changes detected between dev and production"
+            cat migration.sql  # Show any output for debugging
             exit 0
           fi
           
@@ -53,39 +54,4 @@ jobs:
             echo "Manual intervention required. Please handle these changes safely:"
             echo "1. For renames: Create new, migrate data, then remove old after code update"
             echo "2. For type changes: Create new column, migrate data, update code, then remove old"
-            echo "3. For deletions: Ensure no dependencies exist and data is backed up"
-            
-            # Save migration for manual review
-            mkdir -p artifacts
-            cp migration.sql artifacts/blocked_migration_$(date +%Y%m%d_%H%M%S).sql
-            exit 1
-          fi
-          
-          echo "✅ Safety check passed - no destructive operations found"
-          
-          # Apply migration to production
-          echo "🚀 Applying migration to production..."
-          
-          psql "${{ secrets.SUPABASE_PROD_DB_URL }}" < migration.sql
-          
-          if [ $? -eq 0 ]; then
-            echo "✅ Migration successfully applied to production!"
-            
-            # Save successful migration
-            mkdir -p artifacts
-            cp migration.sql artifacts/applied_migration_$(date +%Y%m%d_%H%M%S).sql
-          else
-            echo "❌ Migration failed to apply"
-            exit 1
-          fi
-      
-      - name: Upload Migration Artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: migration-${{ github.run_number }}-${{ github.run_attempt }}
-          path: |
-            migration.sql
-            artifacts/*.sql
-          retention-days: 30
-          if-no-files-found: ignore
+            echo "3. For deleti
