@@ -22,45 +22,82 @@ jobs:
         run: |
           echo "🔄 Generating migration between dev and production..."
           
-          # Extract password from the DEV database URL for linking
-          # Format: postgresql://postgres:PASSWORD@db.ref.supabase.co:5432/postgres
-          DEV_PASSWORD=$(echo "${{ secrets.SUPABASE_DEV_DB_URL }}" | sed -n 's/.*postgres:\([^@]*\)@.*/\1/p')
+          # Extract passwords from the database URLs
+          DEV_PASSWORD=$(echo "${{ secrets.SUPABASE_DEV_DB_URL }}" | grep -oP '(?<=postgres:)[^@]+')
+          PROD_PASSWORD=$(echo "${{ secrets.SUPABASE_PROD_DB_URL }}" | grep -oP '(?<=postgres:)[^@]+')
+          
+          # Extract project refs from URLs
+          DEV_REF=$(echo "${{ secrets.SUPABASE_DEV_DB_URL }}" | grep -oP '(?<=db\.)[^.]+')
+          PROD_REF=$(echo "${{ secrets.SUPABASE_PROD_DB_URL }}" | grep -oP '(?<=db\.)[^.]+')
+          
+          # Debug: Check if extraction worked
+          if [ -z "$DEV_PASSWORD" ]; then
+            echo "::error::Failed to extract DEV password from SUPABASE_DEV_DB_URL"
+            echo "URL format should be: postgresql://postgres:PASSWORD@db.PROJECT_REF.supabase.co:5432/postgres"
+            exit 1
+          fi
           
           # Clean workspace
           rm -rf supabase
           mkdir -p supabase
           
-          # Initialize Supabase (answering N to both prompts)
-          echo -e "N\nN" | supabase init
+          # Initialize Supabase without prompts
+          supabase init --workdir supabase
+          cd supabase
           
-          # Link to dev project with password
-          echo "$DEV_PASSWORD" | supabase link --project-ref ${{ secrets.SUPABASE_DEV_PROJECT_REF }}
+          # Create config to avoid prompts
+          cat > config.toml << EOF
+          [api]
+          enabled = true
+          port = 54321
           
-          # Generate diff between dev (linked) and prod (via URL)
+          [db]
+          port = 54322
+          
+          [studio]
+          enabled = false
+          EOF
+          
+          # Link to dev project with password (use the dev project ref from secrets)
+          echo "$DEV_PASSWORD" | supabase link \
+            --project-ref ${{ secrets.SUPABASE_DEV_PROJECT_REF }} \
+            --password "$DEV_PASSWORD"
+          
+          # Pull remote schema from dev
+          supabase db remote commit
+          
+          # Generate diff between dev and prod
           supabase db diff \
-            --linked \
+            --schema public,auth \
+            --use-migra \
             --db-url "${{ secrets.SUPABASE_PROD_DB_URL }}" \
-            > supabase/migration.sql
+            > migration.sql
           
-          # Check if migration file has actual SQL commands
-          if [ ! -s supabase/migration.sql ] || ! grep -qE '(CREATE|ALTER|DROP|INSERT|UPDATE|DELETE)' supabase/migration.sql; then
+          # Check if migration file has actual content
+          if [ ! -s migration.sql ]; then
             echo "✅ No database changes detected between dev and production"
+            exit 0
+          fi
+          
+          # Check if it's just comments
+          if ! grep -qvE '^\s*(--|$)' migration.sql; then
+            echo "✅ No actual changes detected (only comments)"
             exit 0
           fi
           
           echo "📋 Migration changes detected:"
           echo "================================"
-          cat supabase/migration.sql
+          cat migration.sql
           echo "================================"
           
           # Safety check for destructive operations
           DANGEROUS_PATTERNS="DROP TABLE|DROP COLUMN|DROP INDEX|DROP VIEW|DROP FUNCTION|DROP SCHEMA|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE"
           
-          if grep -iE "($DANGEROUS_PATTERNS)" supabase/migration.sql; then
+          if grep -iE "($DANGEROUS_PATTERNS)" migration.sql; then
             echo "::error::❌ DESTRUCTIVE OPERATIONS DETECTED!"
             echo ""
             echo "Found the following dangerous operations:"
-            grep -iE "($DANGEROUS_PATTERNS)" supabase/migration.sql
+            grep -iE "($DANGEROUS_PATTERNS)" migration.sql
             echo ""
             echo "::error::Manual intervention required. Please handle these changes safely:"
             echo "::error::1. For renames: Create new, migrate data, then remove old after code update"
@@ -68,8 +105,8 @@ jobs:
             echo "::error::3. For deletions: Ensure no dependencies exist and data is backed up"
             
             # Save migration for manual review
-            mkdir -p artifacts
-            cp supabase/migration.sql artifacts/blocked_migration_$(date +%Y%m%d_%H%M%S).sql
+            mkdir -p ../artifacts
+            cp migration.sql ../artifacts/blocked_migration_$(date +%Y%m%d_%H%M%S).sql
             exit 1
           fi
           
@@ -78,7 +115,7 @@ jobs:
           # Apply migration to production
           echo "🚀 Applying migration to production..."
           
-          # Apply using psql directly
+          cd ..
           psql "${{ secrets.SUPABASE_PROD_DB_URL }}" < supabase/migration.sql
           
           if [ $? -eq 0 ]; then
