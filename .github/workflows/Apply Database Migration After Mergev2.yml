@@ -16,132 +16,54 @@ jobs:
         with:
           version: latest
       
-      - name: Install Dependencies
-        run: |
-          sudo apt-get update && sudo apt-get install -y postgresql-client
-          pip install migra psycopg2-binary
-      
-      - name: Generate Migration
+      - name: Generate and Apply Migration
         id: migration
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          # Force IPv4 connections
-          PGHOST: "db.wmyekobfmvrylenwonrz.supabase.co"
-          PGSSLMODE: "require"
         run: |
-          echo "🔍 Generating migration diff..."
+          echo "Setting up..."
           
-          # Extract connection details and force IPv4
-          PROD_URL="${{ secrets.SUPABASE_PROD_DB_URL }}"
-          DEV_URL="${{ secrets.SUPABASE_DEV_DB_URL }}"
+          # Extract project ref from the prod URL
+          PROD_REF=$(echo "${{ secrets.SUPABASE_PROD_DB_URL }}" | grep -oE 'db\.([a-z]+)\.supabase' | cut -d. -f2)
           
-          # Test connections first
-          echo "Testing production connection..."
-          psql "$PROD_URL" -c "SELECT 1" || {
-            echo "::error::Failed to connect to production database"
-            exit 1
-          }
+          # Initialize and link to dev
+          supabase init
+          supabase link --project-ref ${{ secrets.SUPABASE_DEV_PROJECT_REF }}
           
-          echo "Testing dev connection..."
-          psql "$DEV_URL" -c "SELECT 1" || {
-            echo "::error::Failed to connect to dev database"
-            exit 1
-          }
+          # Pull dev schema
+          supabase db pull --schema public
           
-          # Use migra to generate diff between dev and prod
-          migra \
-            --unsafe \
-            "$PROD_URL" \
-            "$DEV_URL" \
-            > migration.sql || {
-              echo "Migra failed, trying with explicit IPv4..."
-              # Force IPv4 by modifying the connection strings
-              PROD_URL_IPV4=$(echo "$PROD_URL" | sed 's/supabase.co/supabase.co/')
-              DEV_URL_IPV4=$(echo "$DEV_URL" | sed 's/supabase.co/supabase.co/')
-              
-              migra \
-                --unsafe \
-                "$PROD_URL_IPV4" \
-                "$DEV_URL_IPV4" \
-                > migration.sql || true
-            }
+          # Generate migration by diffing against prod URL
+          supabase db diff \
+            --db-url "${{ secrets.SUPABASE_PROD_DB_URL }}" \
+            --file migration.sql
           
           # Check if there are changes
           if [ -s migration.sql ]; then
-            echo "📋 Migration preview:"
+            echo "Migration preview:"
             cat migration.sql
             
-            # Safety check for destructive operations
+            # Safety check
             if grep -iE "(DROP TABLE|DROP COLUMN|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE)" migration.sql; then
-              echo "::error::❌ DESTRUCTIVE OPERATIONS DETECTED!"
-              echo "::error::Found dangerous operations:"
-              grep -iE "(DROP TABLE|DROP COLUMN|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE)" migration.sql
-              
-              # Check for potential renames (ADD + DROP pattern)
-              add_count=$(grep -c "ADD COLUMN" migration.sql || echo 0)
-              drop_count=$(grep -c "DROP COLUMN" migration.sql || echo 0)
-              
-              if [ "$add_count" -gt 0 ] && [ "$drop_count" -gt 0 ]; then
-                echo "::warning::This might be a rename operation!"
-                echo "::warning::Manual review required - consider data migration"
-              fi
-              
+              echo "::error::DESTRUCTIVE OPERATIONS DETECTED!"
               exit 1
             fi
             
-            # Check for RLS policies
-            if grep -E "(CREATE POLICY|ALTER POLICY|DROP POLICY)" migration.sql; then
-              echo "📔 RLS policy changes detected"
-            fi
+            # Apply migration using psql
+            echo "Applying migration..."
+            PGPASSWORD=$(echo "${{ secrets.SUPABASE_PROD_DB_URL }}" | grep -oP '://[^:]+:\K[^@]+')
+            psql "${{ secrets.SUPABASE_PROD_DB_URL }}" -f migration.sql
             
-            echo "✅ Migration appears safe"
+            echo "Migration completed"
             echo "has_changes=true" >> $GITHUB_OUTPUT
           else
-            echo "No changes detected between dev and production"
+            echo "No changes detected"
             echo "has_changes=false" >> $GITHUB_OUTPUT
           fi
       
-      - name: Apply Migration to Production
+      - name: Save Artifact
         if: steps.migration.outputs.has_changes == 'true'
-        run: |
-          echo "🚀 Applying migration to production..."
-          psql "${{ secrets.SUPABASE_PROD_DB_URL }}" -f migration.sql
-          echo "✅ Migration completed successfully"
-      
-      - name: No Changes Needed
-        if: steps.migration.outputs.has_changes == 'false'
-        run: echo "✅ No database changes to migrate"
-      
-      - name: Save Migration Artifact
-        if: always() && steps.migration.outputs.has_changes == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: migration-PR-${{ github.event.pull_request.number }}-${{ github.sha }}
+          name: migration-${{ github.sha }}
           path: migration.sql
-          retention-days: 30
-      
-      - name: Comment on PR
-        if: always() && steps.migration.outputs.has_changes == 'true'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const migration = fs.readFileSync('migration.sql', 'utf8');
-            const comment = `## 🗄️ Database Migration Applied
-            
-            <details>
-            <summary>Migration Details</summary>
-            
-            \`\`\`sql
-            ${migration}
-            \`\`\`
-            </details>
-            
-            ✅ Migration has been successfully applied to production.`;
-            
-            github.rest.issues.createComment({
-              issue_number: context.payload.pull_request.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
