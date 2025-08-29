@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { Link, useLocation } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
+import Navigation from "@/components/layout/navigation";
 import {
   ArrowLeft,
   Thermometer,
@@ -32,6 +34,13 @@ export default function ViewFridges() {
 
   const { data: fridges = [], isLoading } = useQuery<FridgeWithLogs[]>({
     queryKey: ["/api/fridges/all"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/fridges/all");
+      if (!response.ok) {
+        throw new Error("Failed to fetch fridges");
+      }
+      return response.json();
+    },
     enabled: !!user,
   });
 
@@ -74,25 +83,7 @@ export default function ViewFridges() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="bg-card border-b border-border sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 py-4">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLocation("/dashboard")}
-                data-testid="button-back"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-              <div className="flex items-center gap-2">
-                <Thermometer className="h-6 w-6 text-blue-600" />
-                <h1 className="text-xl font-bold text-foreground">All Fridges</h1>
-              </div>
-            </div>
-          </div>
-        </header>
+        <Navigation />
 
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -118,37 +109,35 @@ export default function ViewFridges() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLocation("/dashboard")}
-                data-testid="button-back"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-              <div className="flex items-center gap-2">
-                <Thermometer className="h-6 w-6 text-blue-600" />
-                <h1 className="text-xl font-bold text-foreground">All Fridges</h1>
-              </div>
-            </div>
+      <Navigation />
 
-            <Button asChild data-testid="button-add-fridge">
-              <Link to="/add-fridge">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Fridge
-              </Link>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Page Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLocation("/dashboard")}
+              data-testid="button-back"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
             </Button>
+            <div className="flex items-center gap-2">
+              <Thermometer className="h-6 w-6 text-blue-600" />
+              <h1 className="text-2xl font-bold text-foreground">All Fridges</h1>
+            </div>
           </div>
-        </div>
-      </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-8" data-testid="view-fridges-container">
+          <Button asChild data-testid="button-add-fridge">
+            <Link to="/add-fridge">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Fridge
+            </Link>
+          </Button>
+        </div>
+
         {fridges.length === 0 ? (
           <div className="text-center py-12">
             <Thermometer className="h-12 w-12 text-gray-400 mx-auto mb-4" />

@@ -33,9 +33,9 @@ export default function Navigation({ onRefresh }: NavigationProps) {
           <div className="flex items-center gap-3">
             {/* Optional Refresh Button */}
             {onRefresh && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={onRefresh}
                 className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
               >
@@ -45,55 +45,55 @@ export default function Navigation({ onRefresh }: NavigationProps) {
 
             {/* User Account Dropdown */}
             <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800"
-                data-testid="user-menu"
-              >
-                <Avatar className="w-6 h-6">
-                  <AvatarFallback className="bg-blue-600 text-white text-xs font-medium">
-                    {user?.firstName?.[0] || user?.email?.[0] || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                  {user?.firstName || user?.email?.split("@")[0] || "User"}
-                </span>
-                {user?.role === "admin" && <Crown className="w-4 h-4 text-yellow-500" />}
-                {user?.role === "manager" && <Shield className="w-4 h-4 text-blue-500" />}
-                {user?.role === "staff" && <Star className="w-4 h-4 text-green-500" />}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem asChild>
-                <Link to="/account">
-                  <User className="w-4 h-4 mr-2" />
-                  Account Settings
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/settings">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Manage Account
-                </Link>
-              </DropdownMenuItem>
-              {user?.role === "admin" && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/admin/dashboard">
-                      <Crown className="w-4 h-4 mr-2" />
-                      Admin Dashboard
-                    </Link>
-                  </DropdownMenuItem>
-                </>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  data-testid="user-menu"
+                >
+                  <Avatar className="w-6 h-6">
+                    <AvatarFallback className="bg-blue-600 text-white text-xs font-medium">
+                      {user?.firstName?.[0] || user?.email?.[0] || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                    {user?.firstName || user?.email?.split("@")[0] || "User"}
+                  </span>
+                  {user?.role === "admin" && <Crown className="w-4 h-4 text-yellow-500" />}
+                  {user?.role === "manager" && <Shield className="w-4 h-4 text-blue-500" />}
+                  {user?.role === "staff" && <Star className="w-4 h-4 text-green-500" />}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem asChild>
+                  <Link to="/account">
+                    <User className="w-4 h-4 mr-2" />
+                    Account Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/settings">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Manage Account
+                  </Link>
+                </DropdownMenuItem>
+                {user?.role === "admin" && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin/dashboard">
+                        <Crown className="w-4 h-4 mr-2" />
+                        Admin Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={logout}>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
