@@ -29,18 +29,23 @@ jobs:
           # Initialize Supabase
           supabase init
           
-          # Link to dev project using access token (no password needed with token)
+          # Link to dev project using access token
           supabase link --project-ref ${{ secrets.SUPABASE_DEV_PROJECT_REF }}
           
+          # Pull the remote database schema from dev
+          supabase db remote commit
+          
           # Generate diff between dev and prod
-          # Using the correct secret names from your GitHub
+          # Note: SUPABASE_PROD_DB_URL must be on a single line with no whitespace
+          PROD_URL=$(echo "${{ secrets.SUPABASE_PROD_DB_URL }}" | tr -d '\n' | tr -d ' ')
+          
           supabase db diff \
-            --schema public,auth,storage \
-            --db-url "${{ secrets.SUPABASE_PROD_DB_URL }}" \
+            --linked \
+            --db-url "${PROD_URL}" \
             --file supabase/migration.sql
           
-          # Check if migration file has content
-          if [ ! -s supabase/migration.sql ]; then
+          # Check if migration file exists and has content
+          if [ ! -f supabase/migration.sql ] || [ ! -s supabase/migration.sql ]; then
             echo "✅ No database changes detected between dev and production"
             exit 0
           fi
@@ -51,20 +56,20 @@ jobs:
           echo "================================"
           
           # Safety check for destructive operations
-          DANGEROUS_PATTERNS="DROP TABLE|DROP COLUMN|DROP INDEX|DROP VIEW|DROP FUNCTION|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE"
+          DANGEROUS_PATTERNS="DROP TABLE|DROP COLUMN|DROP INDEX|DROP VIEW|DROP FUNCTION|DROP SCHEMA|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE"
           
           if grep -iE "($DANGEROUS_PATTERNS)" supabase/migration.sql; then
-            echo "::error::❌ DESTRUCTIVE OPERATIONS DETECTED!"
+            echo "❌ DESTRUCTIVE OPERATIONS DETECTED!"
             echo ""
             echo "Found the following dangerous operations:"
             grep -iE "($DANGEROUS_PATTERNS)" supabase/migration.sql
             echo ""
-            echo "::error::Manual intervention required. Please handle these changes safely:"
+            echo "Manual intervention required. Please handle these changes safely:"
             echo "1. For renames: Create new, migrate data, then remove old after code update"
             echo "2. For type changes: Create new column, migrate data, update code, then remove old"
             echo "3. For deletions: Ensure no dependencies exist and data is backed up"
             
-            # Save migration as artifact for review
+            # Save migration for manual review
             mkdir -p artifacts
             cp supabase/migration.sql artifacts/blocked_migration_$(date +%Y%m%d_%H%M%S).sql
             exit 1
@@ -75,22 +80,29 @@ jobs:
           # Apply migration to production
           echo "🚀 Applying migration to production..."
           
-          # Apply using the production database URL
-          psql "${{ secrets.SUPABASE_PROD_DB_URL }}" -f supabase/migration.sql
+          # Use psql to apply the migration
+          psql "${PROD_URL}" -f supabase/migration.sql
           
           if [ $? -eq 0 ]; then
             echo "✅ Migration successfully applied to production!"
+            
+            # Log the applied migration
+            echo "Applied migration at $(date):" >> migration_log.txt
+            cat supabase/migration.sql >> migration_log.txt
+            echo "---" >> migration_log.txt
           else
-            echo "::error::❌ Migration failed to apply"
+            echo "❌ Migration failed to apply"
             exit 1
           fi
       
       - name: Upload Migration Artifacts
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4  # Fixed: Using v4 instead of deprecated v3
         with:
-          name: migration-files
+          name: migration-files-${{ github.run_number }}
           path: |
             supabase/migration.sql
             artifacts/*.sql
+            migration_log.txt
           retention-days: 30
+          if-no-files-found: ignore
