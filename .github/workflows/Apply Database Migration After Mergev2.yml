@@ -26,12 +26,11 @@ jobs:
           # Extract password from prod DB URL
           PROD_PASSWORD=$(echo "${{ secrets.SUPABASE_PROD_DB_URL }}" | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p')
           
-          # Link with password provided
+          # Link to production
           supabase link --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_REF }} --password "$PROD_PASSWORD"
           
-          # Generate diff
+          # Generate diff: prod (linked) is the baseline, dev (db-url) has the new changes
           supabase db diff \
-            --linked \
             --db-url "${{ secrets.SUPABASE_DEV_DB_URL }}" \
             --schema public \
             -f supabase/migrations/$(date +%Y%m%d%H%M%S)_sync.sql
@@ -52,6 +51,6 @@ jobs:
           fi
           
           echo "🚀 Applying migration to production..."
-          supabase db push --linked
+          supabase db push
           
           echo "✅ Migration successfully applied!"
