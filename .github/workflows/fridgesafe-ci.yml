@@ -37,7 +37,7 @@ jobs:
         run: npm run security:test 2>&1 | tee security-errors.log
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
+      
       - name: 📤 Upload security errors
         if: failure()
         uses: actions/upload-artifact@v4
@@ -66,7 +66,7 @@ jobs:
 
       - name: 🔍 Run ESLint
         run: npm run lint 2>&1 | tee lint-errors.log
-
+        
       - name: 📤 Upload lint errors
         if: failure()
         uses: actions/upload-artifact@v4
@@ -94,7 +94,7 @@ jobs:
 
       - name: 🎨 Check code formatting
         run: npm run format:check 2>&1 | tee prettier-errors.log
-
+        
       - name: 📤 Upload prettier errors
         if: failure()
         uses: actions/upload-artifact@v4
@@ -122,7 +122,7 @@ jobs:
 
       - name: 🔍 TypeScript compilation check
         run: npm run type-check 2>&1 | tee typecheck-errors.log
-
+        
       - name: 📤 Upload typecheck errors
         if: failure()
         uses: actions/upload-artifact@v4
@@ -175,7 +175,7 @@ jobs:
           NODE_ENV: test
           SESSION_SECRET: test-secret
         run: npm run test 2>&1 | tee jest-errors.log
-
+        
       - name: 📤 Upload Jest errors
         if: failure()
         uses: actions/upload-artifact@v4
@@ -206,7 +206,7 @@ jobs:
         run: npm run build 2>&1 | tee build-errors.log
         env:
           VITE_STRIPE_PUBLIC_KEY: ${{ secrets.VITE_STRIPE_PUBLIC_KEY }}
-
+          
       - name: 📤 Upload build errors
         if: failure()
         uses: actions/upload-artifact@v4
@@ -255,17 +255,17 @@ jobs:
           pattern: "*-errors"
           path: errors/
           merge-multiple: true
-
+          
       - name: 📊 Generate Pipeline Summary
         run: |
           echo "# 🔍 FridgeSafe CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-
+          
           # Count results
           PASSED=0
           FAILED=0
           SKIPPED=0
-
+          
           # Security job
           if [[ "${{ needs.security.result }}" == "success" ]]; then
             SECURITY_STATUS="✅ Passed"
@@ -279,7 +279,7 @@ jobs:
           else
             SECURITY_STATUS="⚪ ${{ needs.security.result }}"
           fi
-
+          
           # Lint job
           if [[ "${{ needs.lint.result }}" == "success" ]]; then
             LINT_STATUS="✅ Passed"
@@ -293,7 +293,7 @@ jobs:
           else
             LINT_STATUS="⚪ ${{ needs.lint.result }}"
           fi
-
+          
           # Prettier job
           if [[ "${{ needs.prettier.result }}" == "success" ]]; then
             PRETTIER_STATUS="✅ Passed"
@@ -307,7 +307,7 @@ jobs:
           else
             PRETTIER_STATUS="⚪ ${{ needs.prettier.result }}"
           fi
-
+          
           # TypeCheck job
           if [[ "${{ needs.typecheck.result }}" == "success" ]]; then
             TYPECHECK_STATUS="✅ Passed"
@@ -321,7 +321,7 @@ jobs:
           else
             TYPECHECK_STATUS="⚪ ${{ needs.typecheck.result }}"
           fi
-
+          
           # Test job
           if [[ "${{ needs.test.result }}" == "success" ]]; then
             TEST_STATUS="✅ Passed"
@@ -335,7 +335,7 @@ jobs:
           else
             TEST_STATUS="⚪ ${{ needs.test.result }}"
           fi
-
+          
           # Build job
           if [[ "${{ needs.build.result }}" == "success" ]]; then
             BUILD_STATUS="✅ Passed"
@@ -349,7 +349,7 @@ jobs:
           else
             BUILD_STATUS="⚪ ${{ needs.build.result }}"
           fi
-
+          
           # Deployment job (optional)
           if [[ "${{ needs.deployment.result }}" == "success" ]]; then
             DEPLOYMENT_STATUS="✅ Passed"
@@ -363,7 +363,7 @@ jobs:
           else
             DEPLOYMENT_STATUS="⚪ ${{ needs.deployment.result }}"
           fi
-
+          
           # Overall status
           if [[ $FAILED -gt 0 ]]; then
             OVERALL_STATUS="❌ Pipeline Failed"
@@ -372,13 +372,13 @@ jobs:
           else
             OVERALL_STATUS="⚪ Pipeline Status Unknown"
           fi
-
+          
           # Write summary header
           echo "## $OVERALL_STATUS" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Total**: $PASSED passed, $FAILED failed, $SKIPPED skipped" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-
+          
           # Write summary table
           echo "| Job | Status | Details |" >> $GITHUB_STEP_SUMMARY
           echo "|-----|--------|---------|" >> $GITHUB_STEP_SUMMARY
@@ -390,7 +390,7 @@ jobs:
           echo "| 🏗️ Build | $BUILD_STATUS | Application build with Vite |" >> $GITHUB_STEP_SUMMARY
           echo "| 🚀 Deployment | $DEPLOYMENT_STATUS | Production deployment readiness |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-
+          
           # Show detailed error information for failed jobs
           if [[ "${{ needs.security.result }}" == "failure" ]]; then
             echo "### ❌ Security Scan Errors" >> $GITHUB_STEP_SUMMARY
@@ -406,7 +406,7 @@ jobs:
             fi
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
-
+          
           if [[ "${{ needs.lint.result }}" == "failure" ]]; then
             echo "### ❌ ESLint Errors" >> $GITHUB_STEP_SUMMARY
             if [[ -f "errors/lint-errors.log" ]]; then
@@ -421,7 +421,7 @@ jobs:
             fi
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
-
+          
           if [[ "${{ needs.prettier.result }}" == "failure" ]]; then
             echo "### ❌ Prettier Errors" >> $GITHUB_STEP_SUMMARY
             if [[ -f "errors/prettier-errors.log" ]]; then
@@ -438,7 +438,7 @@ jobs:
             fi
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
-
+          
           if [[ "${{ needs.typecheck.result }}" == "failure" ]]; then
             echo "### ❌ TypeScript Errors" >> $GITHUB_STEP_SUMMARY
             if [[ -f "errors/typecheck-errors.log" ]]; then
@@ -453,7 +453,7 @@ jobs:
             fi
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
-
+          
           if [[ "${{ needs.test.result }}" == "failure" ]]; then
             echo "### ❌ Jest Test Errors" >> $GITHUB_STEP_SUMMARY
             if [[ -f "errors/jest-errors.log" ]]; then
@@ -471,7 +471,7 @@ jobs:
             fi
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
-
+          
           if [[ "${{ needs.build.result }}" == "failure" ]]; then
             echo "### ❌ Build Errors" >> $GITHUB_STEP_SUMMARY
             if [[ -f "errors/build-errors.log" ]]; then
@@ -486,7 +486,7 @@ jobs:
             fi
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
-
+          
           # Add timestamp
           echo "---" >> $GITHUB_STEP_SUMMARY
           echo "*Generated at $(date -u '+%Y-%m-%d %H:%M:%S UTC')*" >> $GITHUB_STEP_SUMMARY
