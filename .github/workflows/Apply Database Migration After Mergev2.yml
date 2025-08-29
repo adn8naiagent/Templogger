@@ -1,116 +1,212 @@
 name: Apply Database Migration After Merge
 on:
- pull_request:
-   types: [closed]
-   branches: [main]
+  pull_request:
+    types: [closed]
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
- migrate:
-   if: github.event.pull_request.merged == true
-   runs-on: ubuntu-latest
-   
-   steps:
-     - uses: actions/checkout@v4
-     
-     - uses: supabase/setup-cli@v1
-       with:
-         version: latest
-     
-     - name: Install Dependencies
-       run: |
-         sudo apt-get update && sudo apt-get install -y postgresql-client
-         pip install migra psycopg2-binary
-     
-     - name: Generate Migration
-       id: migration
-       env:
-         SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-       run: |
-         echo "🔍 Generating migration diff..."
-         
-         # Use migra to generate diff between dev and prod
-         migra \
-           "${{ secrets.SUPABASE_PROD_DB_URL }}" \
-           "${{ secrets.SUPABASE_DEV_DB_URL }}" \
-           --unsafe \
-           > migration.sql || true
-         
-         # Check if there are changes
-         if [ -s migration.sql ]; then
-           echo "📋 Migration preview:"
-           cat migration.sql
-           
-           # Safety check for destructive operations
-           if grep -iE "(DROP TABLE|DROP COLUMN|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE)" migration.sql; then
-             echo "::error::❌ DESTRUCTIVE OPERATIONS DETECTED!"
-             echo "::error::Found dangerous operations:"
-             grep -iE "(DROP TABLE|DROP COLUMN|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE)" migration.sql
-             
-             # Check for potential renames (ADD + DROP pattern)
-             add_count=$(grep -c "ADD COLUMN" migration.sql || echo 0)
-             drop_count=$(grep -c "DROP COLUMN" migration.sql || echo 0)
-             
-             if [ "$add_count" -gt 0 ] && [ "$drop_count" -gt 0 ]; then
-               echo "::warning::This might be a rename operation!"
-               echo "::warning::Manual review required - consider data migration"
-             fi
-             
-             exit 1
-           fi
-           
-           # Check for RLS policies
-           if grep -E "(CREATE POLICY|ALTER POLICY|DROP POLICY)" migration.sql; then
-             echo "📔 RLS policy changes detected"
-           fi
-           
-           echo "✅ Migration appears safe"
-           echo "has_changes=true" >> $GITHUB_OUTPUT
-         else
-           echo "No changes detected between dev and production"
-           echo "has_changes=false" >> $GITHUB_OUTPUT
-         fi
-     
-     - name: Apply Migration to Production
-       if: steps.migration.outputs.has_changes == 'true'
-       run: |
-         echo "🚀 Applying migration to production..."
-         psql "${{ secrets.SUPABASE_PROD_DB_URL }}" -f migration.sql
-         echo "✅ Migration completed successfully"
-     
-     - name: No Changes Needed
-       if: steps.migration.outputs.has_changes == 'false'
-       run: echo "✅ No database changes to migrate"
-     
-     - name: Save Migration Artifact
-       if: always() && steps.migration.outputs.has_changes == 'true'
-       uses: actions/upload-artifact@v4
-       with:
-         name: migration-PR-${{ github.event.pull_request.number }}-${{ github.sha }}
-         path: migration.sql
-         retention-days: 30
-     
-     - name: Comment on PR
-       if: always() && steps.migration.outputs.has_changes == 'true'
-       uses: actions/github-script@v7
-       with:
-         script: |
-           const fs = require('fs');
-           const migration = fs.readFileSync('migration.sql', 'utf8');
-           const comment = `## 🗄️ Database Migration Applied
-           
-           <details>
-           <summary>Migration Details</summary>
-           
-           \`\`\`sql
-           ${migration}
-           \`\`\`
-           </details>
-           
-           ✅ Migration has been successfully applied to production.`;
-           
-           github.rest.issues.createComment({
-             issue_number: context.payload.pull_request.number,
-             owner: context.repo.owner,
-             repo: context.repo.repo,
-             body: comment
-           });
+  migrate:
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Generate and Apply Migration
+        run: |
+          echo "🔄 Generating migration between dev and production..."
+          
+          # Initialize tracking files
+          > migration.sql
+          > new_objects.txt
+          > dropped_objects.txt
+          
+          # Test connections first (using pooler URLs with port 6543)
+          echo "Testing database connections..."
+          psql "${{ secrets.SUPABASE_DEV_DB_URL }}" -c "SELECT 1" || { echo "Dev connection failed"; exit 1; }
+          psql "${{ secrets.SUPABASE_PROD_DB_URL }}" -c "SELECT 1" || { echo "Prod connection failed"; exit 1; }
+          
+          # 1. Extract full schemas for comparison (SMRM Req #6: includes auth schema)
+          echo "Extracting schemas..."
+          pg_dump "${{ secrets.SUPABASE_DEV_DB_URL }}" \
+            --schema-only --no-owner --no-privileges \
+            --schema=public --schema=auth \
+            -f dev_schema.sql
+          
+          pg_dump "${{ secrets.SUPABASE_PROD_DB_URL }}" \
+            --schema-only --no-owner --no-privileges \
+            --schema=public --schema=auth \
+            -f prod_schema.sql
+          
+          # 2. Find NEW TABLES (SMRM Req #2)
+          echo "Analyzing tables..."
+          psql "${{ secrets.SUPABASE_DEV_DB_URL }}" -t -A -c "
+            SELECT table_schema || '.' || table_name 
+            FROM information_schema.tables 
+            WHERE table_schema IN ('public', 'auth') 
+            AND table_type = 'BASE TABLE'
+            ORDER BY 1
+          " > dev_tables.txt
+          
+          psql "${{ secrets.SUPABASE_PROD_DB_URL }}" -t -A -c "
+            SELECT table_schema || '.' || table_name 
+            FROM information_schema.tables 
+            WHERE table_schema IN ('public', 'auth') 
+            AND table_type = 'BASE TABLE'
+            ORDER BY 1
+          " > prod_tables.txt
+          
+          # New tables in dev
+          NEW_TABLES=$(comm -13 prod_tables.txt dev_tables.txt)
+          if [ -n "$NEW_TABLES" ]; then
+            echo "New tables found:"
+            echo "$NEW_TABLES"
+            echo "$NEW_TABLES" >> new_objects.txt
+            
+            for table_full in $NEW_TABLES; do
+              echo "-- New table: $table_full" >> migration.sql
+              grep -A 1000 "CREATE TABLE $table_full" dev_schema.sql | sed '/^CREATE TABLE/,$!d; /;$/q' >> migration.sql
+              echo "" >> migration.sql
+            done
+          fi
+          
+          # Tables removed from dev (for rename detection - SMRM Req #5)
+          DROPPED_TABLES=$(comm -23 prod_tables.txt dev_tables.txt)
+          if [ -n "$DROPPED_TABLES" ]; then
+            echo "Tables removed from dev:"
+            echo "$DROPPED_TABLES"
+            echo "$DROPPED_TABLES" >> dropped_objects.txt
+          fi
+          
+          # 3. Find NEW COLUMNS (SMRM Req #3)
+          echo "Analyzing columns..."
+          for table_full in $(comm -12 prod_tables.txt dev_tables.txt); do
+            schema=$(echo $table_full | cut -d. -f1)
+            table=$(echo $table_full | cut -d. -f2)
+            
+            # Get columns from both databases
+            psql "${{ secrets.SUPABASE_DEV_DB_URL }}" -t -A -c "
+              SELECT column_name || '|' || data_type || '|' || 
+                COALESCE(character_maximum_length::text, '') || '|' ||
+                is_nullable || '|' ||
+                COALESCE(column_default, '')
+              FROM information_schema.columns 
+              WHERE table_schema = '$schema' AND table_name = '$table'
+              ORDER BY ordinal_position
+            " > dev_cols_$table.txt
+            
+            psql "${{ secrets.SUPABASE_PROD_DB_URL }}" -t -A -c "
+              SELECT column_name || '|' || data_type || '|' || 
+                COALESCE(character_maximum_length::text, '') || '|' ||
+                is_nullable || '|' ||
+                COALESCE(column_default, '')
+              FROM information_schema.columns 
+              WHERE table_schema = '$schema' AND table_name = '$table'
+              ORDER BY ordinal_position
+            " > prod_cols_$table.txt
+            
+            # Find new columns
+            NEW_COLS=$(comm -13 prod_cols_$table.txt dev_cols_$table.txt)
+            if [ -n "$NEW_COLS" ]; then
+              echo "New columns in $table_full:"
+              echo "$NEW_COLS" | cut -d'|' -f1
+              
+              echo "$NEW_COLS" | while IFS='|' read -r col dtype maxlen nullable default; do
+                echo "$table_full.$col" >> new_objects.txt
+                
+                SQL="ALTER TABLE $table_full ADD COLUMN $col $dtype"
+                [ -n "$maxlen" ] && SQL="$SQL($maxlen)"
+                [ "$nullable" = "NO" ] && SQL="$SQL NOT NULL"
+                [ -n "$default" ] && SQL="$SQL DEFAULT $default"
+                echo "$SQL;" >> migration.sql
+              done
+            fi
+            
+            # Find dropped columns (for rename detection)
+            DROPPED_COLS=$(comm -23 prod_cols_$table.txt dev_cols_$table.txt)
+            if [ -n "$DROPPED_COLS" ]; then
+              echo "$DROPPED_COLS" | cut -d'|' -f1 | while read col; do
+                echo "$table_full.$col" >> dropped_objects.txt
+              done
+            fi
+          done
+          
+          # 4. Check if we have any changes
+          if [ ! -s migration.sql ]; then
+            echo "✅ No database changes detected"
+            exit 0
+          fi
+          
+          echo ""
+          echo "📋 Migration to apply:"
+          echo "================================"
+          cat migration.sql
+          echo "================================"
+          
+          # 5. Check for DESTRUCTIVE OPERATIONS (SMRM Req #4)
+          DANGEROUS_PATTERNS="DROP TABLE|DROP COLUMN|DROP INDEX|DROP VIEW|DROP FUNCTION|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE"
+          if grep -iE "($DANGEROUS_PATTERNS)" migration.sql; then
+            echo ""
+            echo "❌ DESTRUCTIVE OPERATIONS DETECTED!"
+            echo "Found:"
+            grep -iE "($DANGEROUS_PATTERNS)" migration.sql
+            
+            mkdir -p artifacts
+            cp migration.sql artifacts/blocked_migration_$(date +%Y%m%d_%H%M%S).sql
+            cp dropped_objects.txt artifacts/dropped_objects_$(date +%Y%m%d_%H%M%S).txt 2>/dev/null || true
+            exit 1
+          fi
+          
+          # 6. Check for POTENTIAL RENAMES (SMRM Req #5)
+          if [ -s new_objects.txt ] && [ -s dropped_objects.txt ]; then
+            echo ""
+            echo "⚠️ POTENTIAL RENAMES DETECTED!"
+            echo ""
+            echo "New objects:"
+            cat new_objects.txt
+            echo ""
+            echo "Dropped objects:"
+            cat dropped_objects.txt
+            echo ""
+            echo "If these are renames:"
+            echo "1. Create new tables/columns"
+            echo "2. Migrate data with INSERT/UPDATE"
+            echo "3. Update application code"
+            echo "4. Drop old tables/columns in a later migration"
+            
+            mkdir -p artifacts
+            cp migration.sql artifacts/blocked_migration_$(date +%Y%m%d_%H%M%S).sql
+            cp new_objects.txt artifacts/
+            cp dropped_objects.txt artifacts/
+            exit 1
+          fi
+          
+          # 7. Apply migration (SMRM Req #10)
+          echo "✅ Safety checks passed - only additive changes"
+          echo "🚀 Applying migration to production..."
+          
+          psql "${{ secrets.SUPABASE_PROD_DB_URL }}" < migration.sql
+          
+          if [ $? -eq 0 ]; then
+            echo "✅ Migration successfully applied!"
+            
+            # Save successful migration (SMRM Req #9)
+            mkdir -p artifacts
+            cp migration.sql artifacts/applied_migration_$(date +%Y%m%d_%H%M%S).sql
+          else
+            echo "❌ Migration failed to apply"
+            exit 1
+          fi
+      
+      - name: Upload Migration Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-${{ github.run_number }}
+          path: |
+            artifacts/*
+            *.sql
+            *.txt
+          retention-days: 30
+          if-no-files-found: ignore
