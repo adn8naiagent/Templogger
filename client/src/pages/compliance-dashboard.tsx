@@ -267,16 +267,7 @@ export default function ComplianceDashboard() {
                 </Link>
               </Button>
 
-              <Button
-                variant="outline"
-                size="default"
-                onClick={() => setAutoRefresh(!autoRefresh)}
-                className="border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
-                data-testid="button-auto-refresh"
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${autoRefresh ? "animate-spin" : ""}`} />
-                <span className="hidden sm:inline">Auto Refresh</span> {autoRefresh ? "On" : "Off"}
-              </Button>
+              
 
               <Button
                 variant="outline"
