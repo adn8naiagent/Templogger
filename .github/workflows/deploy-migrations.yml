@@ -1,21 +1,76 @@
-name: Deploy Migrations to Production
-
+name: Deploy Database Migrations to Production
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches: [main]
-    paths:
-      - 'prisma/migrations/**'
 
 jobs:
-  deploy:
+  deploy-migrations:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    
     steps:
       - uses: actions/checkout@v4
+      
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
-      - run: npm ci
-      - name: Deploy to Production
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Analyze migrations for safety
+        id: safety_check
+        run: |
+          echo "Checking migration files for destructive operations..."
+          
+          # Check all pending migration files
+          DANGEROUS_PATTERNS="DROP TABLE|DROP COLUMN|DROP INDEX|DROP VIEW|DROP FUNCTION|DROP SCHEMA|DELETE FROM|TRUNCATE|ALTER COLUMN.*TYPE"
+          FOUND_DANGERS=""
+          
+          for migration in prisma/migrations/*/migration.sql; do
+            if [ -f "$migration" ]; then
+              echo "Checking $migration"
+              
+              # Check for destructive operations
+              if grep -iE "($DANGEROUS_PATTERNS)" "$migration"; then
+                FOUND_DANGERS="true"
+                echo "❌ DANGEROUS OPERATIONS DETECTED in $migration"
+                
+                # Check for potential renames (DROP + CREATE pattern)
+                DROPPED=$(grep -iE "DROP TABLE|DROP COLUMN" "$migration" | sed 's/.*DROP //' | sed 's/[; ].*//')
+                CREATED=$(grep -iE "CREATE TABLE|ADD COLUMN" "$migration" | sed 's/.*CREATE TABLE //' | sed 's/.*ADD COLUMN //' | sed 's/[( ].*//')
+                
+                if [ -n "$DROPPED" ] && [ -n "$CREATED" ]; then
+                  echo "⚠️ POTENTIAL RENAME DETECTED:"
+                  echo "Dropped: $DROPPED"
+                  echo "Created: $CREATED"
+                fi
+              fi
+            fi
+          done
+          
+          if [ -n "$FOUND_DANGERS" ]; then
+            echo "❌ MIGRATION BLOCKED: Destructive operations found"
+            exit 1
+          else
+            echo "✅ All migrations passed safety checks"
+          fi
+      
+      - name: Deploy migrations to production
         env:
           DATABASE_URL: ${{ secrets.RAILWAY_PROD_DB_URL }}
-        run: npx prisma migrate deploy
+        run: |
+          echo "Applying migrations to production database..."
+          npx prisma migrate deploy
+          echo "✅ Migrations successfully applied"
+      
+      - name: Upload migration artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-${{ github.run_number }}
+          path: prisma/migrations/
+          retention-days: 30
+          if-no-files-found: ignore
