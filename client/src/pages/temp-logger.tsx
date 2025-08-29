@@ -689,7 +689,6 @@ export default function TempLogger() {
                                       {...field}
                                       type="number"
                                       step="0.1"
-                                      placeholder="e.g. 2.1"
                                       className="h-11 border-slate-300 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400"
                                       data-testid="input-min-temperature"
                                     />
@@ -712,7 +711,6 @@ export default function TempLogger() {
                                       {...field}
                                       type="number"
                                       step="0.1"
-                                      placeholder="e.g. 7.8"
                                       className="h-11 border-slate-300 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400"
                                       data-testid="input-max-temperature"
                                     />
@@ -735,7 +733,6 @@ export default function TempLogger() {
                                       {...field}
                                       type="number"
                                       step="0.1"
-                                      placeholder="e.g. 4.5"
                                       className="h-11 border-slate-300 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400"
                                       data-testid="input-current-temperature"
                                     />
