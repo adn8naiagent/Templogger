@@ -74,6 +74,12 @@ export default function Account() {
       email: user?.email || "",
       firstName: user?.firstName || "",
       lastName: user?.lastName || "",
+      displayName: user?.displayName || "",
+      businessName: user?.businessName || "",
+      city: user?.city || "",
+      stateProvince: user?.stateProvince || "",
+      country: user?.country || "",
+      timezone: user?.timezone || "",
     },
   });
 
@@ -315,8 +321,11 @@ export default function Account() {
                   </div>
                   <div>
                     <p className="font-semibold">
-                      {user?.firstName} {user?.lastName}
+                      {user?.displayName || `${user?.firstName} ${user?.lastName}`}
                     </p>
+                    {user?.businessName && (
+                      <p className="text-sm text-blue-600 font-medium">{user.businessName}</p>
+                    )}
                     <p className="text-sm text-muted-foreground">{user?.email}</p>
                     <div className="flex gap-2 mt-1">
                       {user?.subscriptionStatus && getSubscriptionBadge(user.subscriptionStatus)}
@@ -377,6 +386,98 @@ export default function Account() {
                     />
                   </div>
 
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField
+                      control={profileForm.control}
+                      name="displayName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Display Name (Optional)</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="John Smith" data-testid="input-display-name" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={profileForm.control}
+                      name="businessName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Business Name (Optional)</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Acme Corporation" data-testid="input-business-name" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground">Location (Optional)</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField
+                        control={profileForm.control}
+                        name="city"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>City</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="New York" data-testid="input-city" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={profileForm.control}
+                        name="stateProvince"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>State/Province</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="NY" data-testid="input-state" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField
+                        control={profileForm.control}
+                        name="country"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Country</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="United States" data-testid="input-country" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={profileForm.control}
+                        name="timezone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Timezone</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="America/New_York" data-testid="input-timezone" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
 
                   <Button
                     type="submit"

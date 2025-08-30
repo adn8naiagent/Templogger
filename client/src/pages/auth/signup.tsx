@@ -40,6 +40,8 @@ export default function Signup() {
       password: "",
       firstName: "",
       lastName: "",
+      displayName: "",
+      businessName: "",
       city: "",
       state_province: "",
       country: "",
@@ -140,6 +142,46 @@ export default function Signup() {
                           {...field}
                           placeholder="Doe"
                           data-testid="input-lastname"
+                          disabled={signupMutation.isPending}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="displayName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Display Name (Optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="John Smith"
+                          data-testid="input-displayname"
+                          disabled={signupMutation.isPending}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="businessName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Business Name (Optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Acme Corporation"
+                          data-testid="input-businessname"
                           disabled={signupMutation.isPending}
                         />
                       </FormControl>

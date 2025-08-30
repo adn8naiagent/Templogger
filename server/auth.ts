@@ -83,7 +83,7 @@ export async function signUp(req: Request, res: Response): Promise<Response | vo
       });
     }
 
-    const { email, password, firstName, lastName, city, state_province, country, timezone } = result.data;
+    const { email, password, firstName, lastName, displayName, businessName, city, state_province, country, timezone } = result.data;
 
     // Check if user already exists
     const existingUser = await storage.getUserByEmail(email);
@@ -99,8 +99,10 @@ export async function signUp(req: Request, res: Response): Promise<Response | vo
       password: hashedPassword,
       firstName,
       lastName,
+      displayName,
+      businessName,
       city,
-      state_province,
+      stateProvince: state_province,
       country,
       timezone,
       role: "user",
