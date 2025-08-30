@@ -192,11 +192,41 @@ app.get("/health", (req, res) => {
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
+  
+  // Detect production mode more reliably for Railway deployment
+  const isProduction = process.env.NODE_ENV === "production" || 
+                      process.env.RAILWAY_ENVIRONMENT === "production" ||
+                      process.env.PORT !== undefined; // Railway always sets PORT in production
+  
+  console.log("Environment Detection:", {
+    NODE_ENV: process.env.NODE_ENV,
+    RAILWAY_ENVIRONMENT: process.env.RAILWAY_ENVIRONMENT,
+    PORT: process.env.PORT,
+    isProduction
+  });
+  
+  if (!isProduction) {
+    console.log("Running in development mode - setting up Vite");
     await setupVite(app, server);
   } else {
+    console.log("Running in production mode - serving static files");
+    
     // Production: Serve static files from React build
     const buildPath = path.join(import.meta.dirname, "../dist/public");
+    console.log("Build path:", buildPath);
+    
+    // Verify build files exist
+    try {
+      const fs = await import("fs/promises");
+      const indexExists = await fs.access(path.join(buildPath, "index.html")).then(() => true).catch(() => false);
+      console.log("index.html exists:", indexExists);
+      if (indexExists) {
+        const assetsDir = await fs.readdir(path.join(buildPath, "assets")).catch(() => []);
+        console.log("Assets found:", assetsDir.length, "files");
+      }
+    } catch (error) {
+      console.error("Error checking build files:", error);
+    }
 
     // Serve static files with proper caching
     app.use(
