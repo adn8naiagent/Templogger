@@ -20,6 +20,14 @@
 - For "renames": Create new table/column, copy data, keep old marked as deprecated
 - Check .database-safety-rules.md before ANY database operation
 
+#### Database Schema Synchronization - REQUIRED
+- **ALWAYS apply schema changes to dev database in real time during development**
+- After creating migration files, immediately run: `npx prisma migrate deploy`
+- This prevents schema drift when changes are merged to main branch
+- Dev database must stay synchronized with schema files during development
+- GitHub Actions only updates production database, NOT dev database
+- Dev database synchronization is manual and required for each schema change
+
 ### Code Quality - Continuous Checks
 
 - Run TypeScript checking after every change: `npm run type-check`
@@ -44,6 +52,7 @@
 2. After implementing features:
    - Run: `npm run validate-all` (types, lint, format, tests)
    - Verify any DB changes were additive-only
+   - **CRITICAL: If schema changed, apply to dev database: `npx prisma migrate deploy`**
    - Run security scan if dependencies changed
 
 3. Before committing:
