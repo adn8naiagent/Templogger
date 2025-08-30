@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Thermometer, Settings, User, LogOut, Crown, Shield, Star, RefreshCw } from "lucide-react";
+import { Thermometer, Settings, User, LogOut, Crown, Shield, Star, RefreshCw, Building2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "wouter";
 
@@ -60,6 +60,7 @@ export default function Navigation({ onRefresh }: NavigationProps) {
                     {user?.firstName || user?.email?.split("@")[0] || "User"}
                   </span>
                   {user?.role === "admin" && <Crown className="w-4 h-4 text-yellow-500" />}
+                  {user?.role === "management_company" && <Building2 className="w-4 h-4 text-purple-500" />}
                   {user?.role === "manager" && <Shield className="w-4 h-4 text-blue-500" />}
                   {user?.role === "staff" && <Star className="w-4 h-4 text-green-500" />}
                 </Button>
@@ -84,6 +85,17 @@ export default function Navigation({ onRefresh }: NavigationProps) {
                       <Link to="/admin/dashboard">
                         <Crown className="w-4 h-4 mr-2" />
                         Admin Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {user?.role === "management_company" && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/management">
+                        <Building2 className="w-4 h-4 mr-2" />
+                        Management Dashboard
                       </Link>
                     </DropdownMenuItem>
                   </>

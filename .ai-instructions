@@ -7,4 +7,12 @@ CRITICAL DATABASE RULES:
 Never use DROP, DELETE, TRUNCATE on schema
 Only add tables/columns, never remove
 Read .database-safety-rules.md first
+
+## Make DB schema changes to the Dev database as well as local schema to ensure sync
+- When making schema changes, ALWAYS apply them to dev database in real time
+- Use "npx prisma migrate deploy" after creating migration files
+- This prevents schema drift when changes are merged to main
+- Dev database must stay synchronized with schema files during development
+- GitHub Actions only updates production, not dev - so dev must be updated manually
+
 Run code quality checks after changes

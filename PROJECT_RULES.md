@@ -19,6 +19,16 @@
 ❌ ALTER COLUMN TYPE - can corrupt data
 ❌ RENAME TABLE/COLUMN - use create new + deprecate old
 
+### 🔄 Schema Synchronization - MANDATORY
+
+**CRITICAL: Always keep dev database in sync with schema changes**
+
+- After creating migration files: **IMMEDIATELY run `npx prisma migrate deploy`**
+- This prevents schema drift between dev and production
+- GitHub Actions only updates production, NOT dev database
+- Dev database synchronization is manual and required for every schema change
+- Never commit schema changes without applying to dev database first
+
 ### Safe Development Patterns
 
 #### For Column "Renames"
