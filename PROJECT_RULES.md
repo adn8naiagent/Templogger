@@ -69,6 +69,16 @@ INSERT INTO new_table SELECT * FROM old_table;
 - Update dependencies promptly
 - Run: `npm run security-check`
 
+## 🔒 Code Safety
+
+**NEVER PUSH TO MAIN BRANCH ON GITHUB. YOU ARE UNAUTHORIZED FROM EVERY TOUCHING THIS BRANCH. ONLY EVER PUSH TO DEV**
+
+- Main branch is production-protected
+- All changes must go through dev branch
+- Use pull requests for code review
+- Never force push to any branch
+- Always verify branch before pushing
+
 ## 🤖 AI Assistant Behavior
 
 - After code changes, always run validation

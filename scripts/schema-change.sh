@@ -20,13 +20,11 @@ echo ""
 
 # Step 1: Ensure we're working with clean state
 echo "📋 Step 1: Checking Prisma status..."
-unset DATABASE_URL
 npx prisma migrate status
 
 # Step 2: Generate and apply migration
 echo ""
-echo "🚀 Step 2: Creating migration and applying to Railway dev..."
-unset DATABASE_URL
+echo "🚀 Step 2: Creating migration and applying to Neon dev..."
 npx prisma migrate dev --name "$MIGRATION_NAME"
 
 # Step 3: Verify migration was created
@@ -44,7 +42,7 @@ git status --porcelain | grep prisma/
 
 echo ""
 echo "✅ Database schema change complete!"
-echo "🔄 Railway dev database updated"
+echo "🔄 Neon dev database updated"
 echo "📁 Migration files ready for commit"
 echo ""
 echo "Next steps:"

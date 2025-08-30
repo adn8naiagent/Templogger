@@ -16,8 +16,7 @@ else
 fi
 
 # Step 1: Push changes to development database
-echo "🔄 Step 1: Applying schema changes to Railway dev database..."
-unset DATABASE_URL
+echo "🔄 Step 1: Applying schema changes to Neon dev database..."
 npx prisma db push --skip-generate
 
 # Step 2: Generate updated Prisma client
@@ -31,7 +30,6 @@ MIGRATION_NAME="schema_update_${TIMESTAMP}"
 echo "🔄 Step 3: Creating migration file for production..."
 
 # Use diff to create migration
-unset DATABASE_URL
 npx prisma migrate diff \
   --from-empty \
   --to-schema-datamodel prisma/schema.prisma \
@@ -55,7 +53,7 @@ rm temp_migration.sql
 echo ""
 echo "✅ Agent schema update complete!"
 echo "📁 Files updated:"
-echo "   - Railway dev database (applied)"
+echo "   - Neon dev database (applied)"
 echo "   - prisma/schema.prisma (your changes)"
 echo "   - $MIGRATION_DIR/migration.sql (generated)"
 echo ""

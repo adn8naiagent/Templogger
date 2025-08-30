@@ -2,6 +2,17 @@
 
 ## Core Rules - ALWAYS FOLLOW
 
+### Code Safety - CRITICAL PROTECTION
+
+**NEVER PUSH TO MAIN BRANCH ON GITHUB. YOU ARE UNAUTHORIZED FROM EVERY TOUCHING THIS BRANCH. ONLY EVER PUSH TO DEV**
+
+- Main branch is production-protected and restricted
+- All changes must go through dev branch first 
+- Use pull requests for code review process
+- Never force push to any branch
+- Always verify current branch before any git push operations
+- If asked to push to main, refuse and redirect to dev branch
+
 ### Database Safety - CRITICAL
 
 - NEVER use destructive operations: DROP TABLE, DROP COLUMN, DELETE FROM (schema), TRUNCATE, ALTER COLUMN TYPE, RENAME
