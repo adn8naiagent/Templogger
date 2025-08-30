@@ -42,10 +42,6 @@ export default function Signup() {
       lastName: "",
       displayName: "",
       businessName: "",
-      city: "",
-      state_province: "",
-      country: "",
-      timezone: "",
     },
   });
 
@@ -302,88 +298,6 @@ export default function Signup() {
                 )}
               />
 
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium text-muted-foreground">Location (Optional)</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <FormField
-                    control={form.control}
-                    name="city"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>City</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="New York"
-                            data-testid="input-city"
-                            disabled={signupMutation.isPending}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="state_province"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>State/Province</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="NY"
-                            data-testid="input-state"
-                            disabled={signupMutation.isPending}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <FormField
-                    control={form.control}
-                    name="country"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Country</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="United States"
-                            data-testid="input-country"
-                            disabled={signupMutation.isPending}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="timezone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Timezone</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="America/New_York"
-                            data-testid="input-timezone"
-                            disabled={signupMutation.isPending}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
 
               {signupMutation.isError && (
                 <Alert variant="destructive" data-testid="signup-error">

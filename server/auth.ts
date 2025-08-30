@@ -83,7 +83,7 @@ export async function signUp(req: Request, res: Response): Promise<Response | vo
       });
     }
 
-    const { email, password, firstName, lastName, displayName, businessName, city, state_province, country, timezone } = result.data;
+    const { email, password, firstName, lastName, displayName, businessName } = result.data;
 
     // Check if user already exists
     const existingUser = await storage.getUserByEmail(email);
@@ -101,10 +101,6 @@ export async function signUp(req: Request, res: Response): Promise<Response | vo
       lastName,
       displayName,
       businessName,
-      city,
-      stateProvince: state_province,
-      country,
-      timezone,
       role: "user",
       trialStartDate: now,
       trialEndDate: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
