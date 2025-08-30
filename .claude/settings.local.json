@@ -49,7 +49,9 @@
       "Bash(./start-with-railway.sh:*)",
       "Bash(git restore:*)",
       "Bash(rm:*)",
-      "Bash(DATABASE_URL=\"$FIXED_DATABASE_URL\" npx prisma migrate dev --name init)"
+      "Bash(DATABASE_URL=\"$FIXED_DATABASE_URL\" npx prisma migrate dev --name init)",
+      "Bash(npx js-yaml:*)",
+      "Bash(mv:*)"
     ],
     "deny": [],
     "ask": []
