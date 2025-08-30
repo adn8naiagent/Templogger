@@ -483,10 +483,6 @@ export const signUpSchema = z.object({
   lastName: z.string().min(1, "Last name is required"),
   displayName: z.string().optional(),
   businessName: z.string().optional(),
-  city: z.string().optional(),
-  state_province: z.string().optional(),
-  country: z.string().optional(),
-  timezone: z.string().optional(),
 });
 
 // Sign in schema
@@ -502,10 +498,6 @@ export const updateProfileSchema = z.object({
   lastName: z.string().min(1, "Last name is required"),
   displayName: z.string().optional(),
   businessName: z.string().optional(),
-  city: z.string().optional(),
-  stateProvince: z.string().optional(),
-  country: z.string().optional(),
-  timezone: z.string().optional(),
   subscriptionStatus: z.enum(["trial", "paid"]).optional(),
   darkMode: z.boolean().optional(),
 });
