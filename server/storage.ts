@@ -67,12 +67,19 @@ import { eq, and, desc, sql } from "drizzle-orm";
 export interface IStorage {
   // User methods
   getUser(_id: string): Promise<User | undefined>;
+  getUserById(_id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
   createUser(userData: InsertUser): Promise<User>;
   upsertUser(userData: UpsertUser): Promise<User>;
   updateUser(_id: string, _updates: Partial<User>): Promise<User | undefined>;
   deleteUser(_id: string): Promise<boolean>;
+
+  // Management relationship methods
+  getManagementRelationships(managementCompanyId: string): Promise<any[]>;
+  createManagementRelationship(data: any): Promise<any>;
+  updateManagementRelationship(id: string, data: any): Promise<any>;
+  deleteManagementRelationship(id: string): Promise<boolean>;
 
   // Fridge methods
   getFridges(_userId: string): Promise<Fridge[]>;
@@ -321,6 +328,10 @@ export class DatabaseStorage implements IStorage {
     return result[0]!;
   }
 
+  async getUserById(_id: string): Promise<User | undefined> {
+    return this.getUser(_id);
+  }
+
   async getUserByEmail(email: string): Promise<User | undefined> {
     const result = await this.db.select().from(users).where(eq(users.email, email)).limit(1);
     return result[0]!;
@@ -369,6 +380,28 @@ export class DatabaseStorage implements IStorage {
     } catch (_) {
       return false;
     }
+  }
+
+  // Management relationship methods
+  async getManagementRelationships(managementCompanyId: string): Promise<any[]> {
+    // For now, return empty array since this is a placeholder implementation
+    // In a real implementation, this would query the managementRelationships table
+    return [];
+  }
+
+  async createManagementRelationship(data: any): Promise<any> {
+    // Placeholder implementation
+    throw new Error("Management relationships not yet implemented in database");
+  }
+
+  async updateManagementRelationship(id: string, data: any): Promise<any> {
+    // Placeholder implementation
+    throw new Error("Management relationships not yet implemented in database");
+  }
+
+  async deleteManagementRelationship(id: string): Promise<boolean> {
+    // Placeholder implementation
+    return false;
   }
 
   // Fridge methods

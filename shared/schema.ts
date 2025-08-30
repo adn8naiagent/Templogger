@@ -54,6 +54,23 @@ export const subscriptions = pgTable("subscriptions", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Management relationships table for linking management companies to pharmacy locations
+export const managementRelationships = pgTable("management_relationships", {
+  _id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  _managementCompanyId: varchar("management_company_id")
+    .notNull()
+    .references(() => users._id),
+  _pharmacyUserId: varchar("pharmacy_user_id")
+    .notNull()
+    .references(() => users._id),
+  locationName: text("location_name"), // Optional name for this pharmacy location
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const fridges = pgTable("fridges", {
   _id: varchar("id")
     .primaryKey()
@@ -343,6 +360,13 @@ export const insertSubscriptionSchema = createInsertSchema(subscriptions).pick({
   _userId: true,
   tier: true,
   status: true,
+});
+
+export const insertManagementRelationshipSchema = createInsertSchema(managementRelationships).pick({
+  _managementCompanyId: true,
+  _pharmacyUserId: true,
+  locationName: true,
+  isActive: true,
 });
 
 export const insertFridgeSchema = createInsertSchema(fridges).pick({
@@ -736,7 +760,9 @@ export type UpdateProfileData = z.infer<typeof updateProfileSchema>;
 export type ChangePasswordData = z.infer<typeof changePasswordSchema>;
 export type ResetPasswordData = z.infer<typeof resetPasswordSchema>;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type InsertManagementRelationship = z.infer<typeof insertManagementRelationshipSchema>;
 export type Subscription = typeof subscriptions.$inferSelect;
+export type ManagementRelationship = typeof managementRelationships.$inferSelect;
 export type InsertFridge = z.infer<typeof insertFridgeSchema>;
 export type Fridge = typeof fridges.$inferSelect;
 export type InsertTemperatureLog = z.infer<typeof insertTemperatureLogSchema>;
@@ -925,6 +951,7 @@ export const subscriptionStatus = {
 export const userRoles = {
   STAFF: "staff",
   MANAGER: "manager",
+  MANAGEMENT_COMPANY: "management_company",
   ADMIN: "admin",
 } as const;
 

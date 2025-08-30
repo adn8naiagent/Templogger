@@ -2365,6 +2365,176 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Management Company API endpoints
+  app.get("/api/management/overview", requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      
+      // Only management companies can access this endpoint
+      if (user.role !== 'management_company') {
+        return res.status(403).json({ error: "Access denied. Management company role required." });
+      }
+
+      // Get all pharmacy locations managed by this company
+      const managedLocations = await storage.getManagementRelationships(user._id);
+      
+      // For each location, gather compliance data
+      const locationsData = await Promise.all(
+        managedLocations.map(async (relationship: any) => {
+          const pharmacyUser = await storage.getUserById(relationship._pharmacyUserId);
+          if (!pharmacyUser) return null;
+
+          // Get fridges for this pharmacy
+          const fridges = await storage.getFridges(relationship._pharmacyUserId);
+          
+          // Calculate compliance data
+          const complianceData = await calculateLocationCompliance(relationship._pharmacyUserId, fridges);
+          
+          // Get recent alerts
+          const recentAlerts = await getRecentAlertsForLocation(relationship._pharmacyUserId);
+
+          return {
+            _id: relationship._id,
+            locationName: relationship.locationName,
+            pharmacyUser: {
+              _id: pharmacyUser._id,
+              businessName: pharmacyUser.businessName,
+              email: pharmacyUser.email,
+              firstName: pharmacyUser.firstName,
+              lastName: pharmacyUser.lastName,
+            },
+            complianceData,
+            recentAlerts,
+          };
+        })
+      );
+
+      // Filter out null entries
+      const validLocations = locationsData.filter(Boolean);
+
+      // Calculate overview statistics
+      const totalLocations = validLocations.length;
+      const totalFridges = validLocations.reduce((sum: number, loc: any) => sum + (loc?.complianceData.fridgeCount || 0), 0);
+      const averageCompliance = totalLocations > 0 
+        ? validLocations.reduce((sum: number, loc: any) => sum + (loc?.complianceData.overallCompliance || 0), 0) / totalLocations
+        : 0;
+      const activeAlerts = validLocations.reduce((sum: number, loc: any) => sum + (loc?.complianceData.activeAlertsCount || 0), 0);
+
+      return res.json({
+        totalLocations,
+        totalFridges,
+        averageCompliance,
+        activeAlerts,
+        locationsData: validLocations,
+      });
+    } catch (error) {
+      console.error("Management overview error:", error);
+      return res.status(500).json({ error: "Failed to get management overview" });
+    }
+  });
+
+  // Helper function to calculate compliance for a location
+  async function calculateLocationCompliance(userId: string, fridges: any[]) {
+    const fridgeCount = fridges.length;
+    let overallCompliance = 100; // Default to 100% if no data
+    let activeAlertsCount = 0;
+    let temperatureLogsToday = 0;
+    let lastCheckTime: string | null = null;
+
+    if (fridgeCount > 0) {
+      // Get today's temperature logs for all fridges
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const allLogs = await Promise.all(
+        fridges.map(fridge => storage.getTemperatureLogs(fridge._id, userId))
+      );
+
+      const todaysLogs = allLogs.flat().filter(log => {
+        const logDate = new Date(log.createdAt || '');
+        return logDate >= today && logDate < tomorrow;
+      });
+
+      temperatureLogsToday = todaysLogs.length;
+
+      // Count active alerts (logs marked as alerts)
+      activeAlertsCount = todaysLogs.filter(log => log.isAlert).length;
+
+      // Calculate compliance based on on-time logs vs total required
+      const onTimeLogs = todaysLogs.filter(log => log.isOnTime).length;
+      if (temperatureLogsToday > 0) {
+        overallCompliance = Math.round((onTimeLogs / temperatureLogsToday) * 100);
+      }
+
+      // Get the most recent log time
+      if (todaysLogs.length > 0) {
+        const mostRecent = todaysLogs.sort((a, b) => 
+          new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()
+        )[0];
+        lastCheckTime = mostRecent?.createdAt?.toString() || null;
+      }
+    }
+
+    return {
+      overallCompliance,
+      fridgeCount,
+      activeAlertsCount,
+      temperatureLogsToday,
+      lastCheckTime,
+    };
+  }
+
+  // Helper function to get recent alerts for a location
+  async function getRecentAlertsForLocation(userId: string) {
+    try {
+      const fridges = await storage.getFridges(userId);
+      const recentAlerts: any[] = [];
+
+      // Get alerts from the last 24 hours
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      for (const fridge of fridges) {
+        const logs = await storage.getTemperatureLogs(fridge._id, userId);
+        const alertLogs = logs.filter(log => 
+          log.isAlert && new Date(log.createdAt || '') > yesterday
+        );
+
+        alertLogs.forEach(log => {
+          recentAlerts.push({
+            fridgeName: fridge.name,
+            temperature: Number(log.currentTempReading) || 0,
+            timestamp: log.createdAt || '',
+            severity: determineSeverity(Number(log.currentTempReading) || 0, fridge.minTemp || 0, fridge.maxTemp || 0),
+          });
+        });
+      }
+
+      // Sort by most recent first and limit to 10
+      return recentAlerts
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, 10);
+    } catch (error) {
+      console.error("Error getting recent alerts:", error);
+      return [];
+    }
+  }
+
+  // Helper function to determine alert severity
+  function determineSeverity(temp: number, minTemp: number, maxTemp: number): "high" | "medium" | "low" {
+    const range = maxTemp - minTemp;
+    const deviation = Math.max(
+      temp < minTemp ? minTemp - temp : 0,
+      temp > maxTemp ? temp - maxTemp : 0
+    );
+
+    if (deviation > range * 0.5) return "high";
+    if (deviation > range * 0.2) return "medium";
+    return "low";
+  }
+
   const httpServer = createServer(app);
   return httpServer;
 }

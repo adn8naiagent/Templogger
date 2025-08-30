@@ -26,6 +26,7 @@ import SelfAuditChecklists from "@/pages/self-audit-checklists";
 import CreateAuditTemplate from "@/pages/create-audit-template";
 import CompleteSelfAudit from "@/pages/complete-self-audit";
 import ViewAuditCompletion from "@/pages/view-audit-completion";
+import ManagementDashboard from "@/pages/management-dashboard";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -58,6 +59,7 @@ function Router() {
           <Route path="/settings" component={Settings} />
           <Route path="/subscribe" component={Subscribe} />
           <Route path="/subscribe/success" component={SubscribeSuccess} />
+          <Route path="/management" component={ManagementDashboard} />
           <Route path="/admin/dashboard" component={AdminDashboard} />
           <Route path="/admin/users" component={AdminUsers} />
           <Route path="/admin/subscriptions" component={AdminSubscriptions} />
