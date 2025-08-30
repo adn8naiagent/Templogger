@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, decimal, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -26,7 +26,9 @@ export const users = pgTable("users", {
   darkMode: boolean("dark_mode").default(false),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
-  test: text("test"),
+  paidMemberSince: timestamp("paid_member_since"),
+  currentPaidPeriodStart: timestamp("current_paid_period_start"),
+  totalPaidDays: integer("total_paid_days").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -471,10 +473,6 @@ export const signUpSchema = z.object({
     ),
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  city: z.string().optional(),
-  state_province: z.string().optional(),
-  country: z.string().optional(),
-  timezone: z.string().optional(),
 });
 
 // Sign in schema
@@ -490,10 +488,6 @@ export const updateProfileSchema = z.object({
   lastName: z.string().min(1, "Last name is required"),
   subscriptionStatus: z.enum(["trial", "paid"]).optional(),
   darkMode: z.boolean().optional(),
-  city: z.string().optional(),
-  stateProvince: z.string().optional(),
-  country: z.string().optional(),
-  timezone: z.string().optional(),
 });
 
 // Change password schema
