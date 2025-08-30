@@ -1,16 +1,14 @@
 #!/bin/bash
-# Force connection to Railway dev database by unsetting Supabase variables
+# Setup script for development with Neon database
 
-unset DATABASE_URL
+# Unset old Supabase variables (cleanup)
 unset SUPABASE_URL 
 unset SUPABASE_ANON_KEY
 unset SUPABASE_SERVICE_ROLE_KEY
 unset PGDATABASE
 
-export DATABASE_URL="postgresql://postgres:mOqIZEvuvCijScmaYSUIZaIdoOPqKAsU@shortline.proxy.rlwy.net:42180/railway"
-
-echo "✅ Switched to Railway database"
-echo "DATABASE_URL: $DATABASE_URL"
+echo "✅ Using Neon database from environment"
+echo "DATABASE_URL configured from .env"
 
 # Test connection
 npx prisma db pull --print | head -20

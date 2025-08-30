@@ -47,7 +47,9 @@
       "Bash(source:*)",
       "Bash(lsof:*)",
       "Bash(./start-with-railway.sh:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(rm:*)",
+      "Bash(DATABASE_URL=\"$FIXED_DATABASE_URL\" npx prisma migrate dev --name init)"
     ],
     "deny": [],
     "ask": []

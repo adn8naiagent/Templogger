@@ -1,0 +1,201 @@
+name: 🚀 Deploy Database Migrations to Production
+
+on:
+  # Trigger on successful PR merges to main branch
+  push:
+    branches: [main]
+    paths: 
+      - 'prisma/migrations/**'
+      - 'prisma/schema.prisma'
+  
+  # Allow manual triggering for testing
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment even with warnings (use with caution)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  migrate-production:
+    name: 🔄 Apply Migrations to Production
+    runs-on: ubuntu-latest
+    
+    environment: production
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: 📚 Install dependencies
+        run: npm ci
+        
+      - name: 🔍 Check migration status
+        env:
+          DATABASE_URL: ${{ secrets.NEON_PROD_DATABASE_URL }}
+        run: |
+          echo "🔍 Checking current migration status..."
+          npx prisma migrate status
+          
+      - name: 📋 List pending migrations
+        env:
+          DATABASE_URL: ${{ secrets.NEON_PROD_DATABASE_URL }}
+        run: |
+          echo "📋 Checking for pending migrations..."
+          PENDING=$(npx prisma migrate status --json | jq -r '.pendingMigrations[]?.name // empty')
+          
+          if [ -z "$PENDING" ]; then
+            echo "✅ No pending migrations found"
+            echo "PENDING_MIGRATIONS=" >> $GITHUB_ENV
+          else
+            echo "📝 Pending migrations:"
+            echo "$PENDING"
+            echo "PENDING_MIGRATIONS<<EOF" >> $GITHUB_ENV
+            echo "$PENDING" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+          fi
+          
+      - name: 🛡️ Safety check for destructive operations
+        if: env.PENDING_MIGRATIONS != ''
+        run: |
+          echo "🛡️ Scanning migration files for destructive operations..."
+          
+          # Define destructive patterns
+          DESTRUCTIVE_PATTERNS=(
+            "DROP TABLE"
+            "DROP COLUMN"
+            "DELETE FROM"
+            "TRUNCATE"
+            "ALTER COLUMN.*TYPE"
+            "ALTER TABLE.*DROP"
+          )
+          
+          FOUND_DESTRUCTIVE=false
+          DESTRUCTIVE_OPERATIONS=""
+          
+          # Scan each pending migration
+          while IFS= read -r migration; do
+            if [ -n "$migration" ]; then
+              MIGRATION_FILE="prisma/migrations/$migration/migration.sql"
+              if [ -f "$MIGRATION_FILE" ]; then
+                echo "🔍 Checking migration: $migration"
+                
+                for pattern in "${DESTRUCTIVE_PATTERNS[@]}"; do
+                  if grep -qi "$pattern" "$MIGRATION_FILE"; then
+                    echo "⚠️  DESTRUCTIVE OPERATION DETECTED: $pattern in $migration"
+                    FOUND_DESTRUCTIVE=true
+                    DESTRUCTIVE_OPERATIONS+="- $migration: Contains $pattern"$'\n'
+                  fi
+                done
+              fi
+            fi
+          done <<< "$PENDING_MIGRATIONS"
+          
+          if [ "$FOUND_DESTRUCTIVE" = true ]; then
+            echo "🚨 DESTRUCTIVE OPERATIONS DETECTED:"
+            echo "$DESTRUCTIVE_OPERATIONS"
+            echo "DESTRUCTIVE_FOUND=true" >> $GITHUB_ENV
+            echo "DESTRUCTIVE_DETAILS<<EOF" >> $GITHUB_ENV
+            echo "$DESTRUCTIVE_OPERATIONS" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+            
+            if [ "${{ github.event.inputs.force_deploy }}" != "true" ]; then
+              echo "❌ Migration blocked due to destructive operations"
+              echo "💡 To force deployment, use workflow_dispatch with force_deploy=true"
+              exit 1
+            else
+              echo "⚠️  FORCING deployment despite destructive operations"
+            fi
+          else
+            echo "✅ No destructive operations detected"
+            echo "DESTRUCTIVE_FOUND=false" >> $GITHUB_ENV
+          fi
+          
+      - name: 📊 Migration summary
+        if: env.PENDING_MIGRATIONS != ''
+        run: |
+          echo "📊 MIGRATION SUMMARY"
+          echo "===================="
+          echo "🎯 Target: Production Database"
+          echo "📝 Pending Migrations:"
+          
+          while IFS= read -r migration; do
+            if [ -n "$migration" ]; then
+              echo "  • $migration"
+            fi
+          done <<< "$PENDING_MIGRATIONS"
+          
+          if [ "$DESTRUCTIVE_FOUND" = "true" ]; then
+            echo ""
+            echo "⚠️  DESTRUCTIVE OPERATIONS:"
+            echo "$DESTRUCTIVE_DETAILS"
+          fi
+          
+          echo ""
+          echo "🚀 Ready to deploy migrations..."
+          
+      - name: 🚀 Deploy migrations to production
+        if: env.PENDING_MIGRATIONS != ''
+        env:
+          DATABASE_URL: ${{ secrets.NEON_PROD_DATABASE_URL }}
+        run: |
+          echo "🚀 Deploying migrations to production..."
+          echo "📍 Database: $(echo $DATABASE_URL | sed 's/:[^:]*@/:***@/' | sed 's/\?.*$//')"
+          
+          # Deploy migrations
+          npx prisma migrate deploy
+          
+          echo "✅ Migrations deployed successfully!"
+          
+      - name: ✅ Verify deployment
+        if: env.PENDING_MIGRATIONS != ''
+        env:
+          DATABASE_URL: ${{ secrets.NEON_PROD_DATABASE_URL }}
+        run: |
+          echo "✅ Verifying migration deployment..."
+          
+          # Check final status
+          npx prisma migrate status
+          
+          echo "🎉 Production database is up to date!"
+          
+      - name: 📝 Create deployment summary
+        if: env.PENDING_MIGRATIONS != ''
+        run: |
+          echo "## 🚀 Database Migration Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Target Environment:** Production (Neon)" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment Time:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Applied Migrations:" >> $GITHUB_STEP_SUMMARY
+          
+          while IFS= read -r migration; do
+            if [ -n "$migration" ]; then
+              echo "- \`$migration\`" >> $GITHUB_STEP_SUMMARY
+            fi
+          done <<< "$PENDING_MIGRATIONS"
+          
+          if [ "$DESTRUCTIVE_FOUND" = "true" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### ⚠️ Destructive Operations Applied:" >> $GITHUB_STEP_SUMMARY
+            echo "$DESTRUCTIVE_DETAILS" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Status:** Successfully deployed to production" >> $GITHUB_STEP_SUMMARY
+          
+      - name: 📢 No migrations notice
+        if: env.PENDING_MIGRATIONS == ''
+        run: |
+          echo "📢 No pending migrations found - production database is already up to date"
+          echo "## ℹ️ Database Migration Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Result:** No pending migrations" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** Production database is up to date ✅" >> $GITHUB_STEP_SUMMARY
