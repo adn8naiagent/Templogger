@@ -1,8 +1,9 @@
 name: 🚀 Deploy Database Migrations to Production
 
 on:
-  # Trigger on successful PR merges to main branch
-  push:
+  # Trigger only on successful PR merges to main branch (not direct pushes)
+  pull_request:
+    types: [closed]
     branches: [main]
     paths: 
       - 'prisma/migrations/**'
@@ -21,6 +22,9 @@ jobs:
   migrate-production:
     name: 🔄 Apply Database Migrations
     runs-on: ubuntu-latest
+    
+    # Only run if PR was actually merged (not just closed)
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     
     environment: production
     
