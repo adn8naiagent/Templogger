@@ -41,7 +41,13 @@
       "Bash(cat:*)",
       "Bash(git checkout:*)",
       "Bash(./scripts/agent-db-change.sh:*)",
-      "Bash(./scripts/agent-schema-update.sh:*)"
+      "Bash(./scripts/agent-schema-update.sh:*)",
+      "Bash(unset:*)",
+      "Bash(./use-railway.sh)",
+      "Bash(source:*)",
+      "Bash(lsof:*)",
+      "Bash(./start-with-railway.sh:*)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []
